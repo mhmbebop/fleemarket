@@ -33,8 +33,10 @@ const activeStatuses = new Set();
 const activeEvents = new Set();
 let filterHasShiny = false;
 
-// Immediate Tab Switching
-function switchTab(targetTab) {
+const TAB_KEY_PREF = 'flee_active_tab_v1';
+
+// Immediate Tab Switching with Persistent Memory
+function switchTab(targetTab, saveToStorage = true) {
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.getAttribute('data-tab') === targetTab);
   });
@@ -53,17 +55,35 @@ function switchTab(targetTab) {
       dock.classList.add('visible');
     }
   }
+
+  if (saveToStorage) {
+    try {
+      localStorage.setItem(TAB_KEY_PREF, targetTab);
+    } catch (e) {
+      console.warn('Failed to save tab preference:', e);
+    }
+  }
 }
 
 function initTabNavigation() {
   const tabsContainer = document.querySelector('.nav-tabs');
   if (!tabsContainer) return;
 
+  // Restore last used tab on boot
+  try {
+    const savedTab = localStorage.getItem(TAB_KEY_PREF);
+    if (savedTab) {
+      switchTab(savedTab, false);
+    }
+  } catch (e) {
+    console.warn('Failed to load tab preference:', e);
+  }
+
   tabsContainer.addEventListener('click', (e) => {
     const btn = e.target.closest('.tab-btn');
     if (!btn) return;
     const targetTab = btn.getAttribute('data-tab');
-    if (targetTab) switchTab(targetTab);
+    if (targetTab) switchTab(targetTab, true);
   });
 }
 
