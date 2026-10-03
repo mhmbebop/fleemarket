@@ -13,7 +13,7 @@
       --bg-dark: #090b10;
       --surface-1: #11141c;
       --surface-2: #181c26;
-      --surface-glass: rgba(22, 27, 38, 0.85);
+      --surface-glass: rgba(22, 27, 38, 0.88);
       --border: rgba(255, 255, 255, 0.08);
       --border-focus: rgba(157, 125, 253, 0.4);
       --primary: #9d7dfd;
@@ -38,7 +38,7 @@
     body {
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       margin: 0;
-      padding: clamp(14px, 3vw, 32px) clamp(10px, 3vw, 24px) 80px;
+      padding: clamp(14px, 3vw, 32px) clamp(10px, 3vw, 24px) 110px;
       background-color: var(--bg-dark);
       background-image: 
         radial-gradient(circle at 15% 10%, rgba(157, 125, 253, 0.08) 0%, transparent 40%),
@@ -241,7 +241,6 @@
     .side-your .side-title { color: var(--accent-cyan); }
     .side-their .side-title { color: var(--accent-green); }
 
-    /* Calculator Input Controls Stack */
     .calc-controls-stack {
       display: flex;
       flex-direction: column;
@@ -250,7 +249,6 @@
       position: relative;
     }
 
-    /* Search Box Container with Inside 'X' Button */
     .calc-search-box-wrap {
       position: relative;
       width: 100%;
@@ -294,7 +292,6 @@
       color: var(--accent-rose);
     }
 
-    /* Matching Results Box - Same Width as Search Bar */
     .calc-matches-panel {
       position: absolute;
       top: calc(100% + 4px);
@@ -351,7 +348,6 @@
       font-weight: 600;
     }
 
-    /* Selected Item Preview Bar */
     .calc-selected-preview {
       display: flex;
       justify-content: space-between;
@@ -374,15 +370,12 @@
       text-overflow: ellipsis;
     }
 
-    /* Actions Row */
     .calc-actions-row {
       display: flex;
       gap: 8px;
       align-items: center;
       margin-top: 2px;
     }
-
-    /* Shiny Checkbox Toggle in Calculator */
     .calc-shiny-toggle {
       display: inline-flex;
       align-items: center;
@@ -1047,38 +1040,285 @@
       text-align: right;
     }
 
-    /* Quick Action Buttons */
+    /* Card Action Button Groups (Add + Inline Quick Remove) */
     .card-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 5px;
+      gap: 6px;
       margin-top: 2px;
     }
-    .card-add-btn {
+    .card-btn-group {
+      display: flex;
+      align-items: stretch;
+      gap: 2px;
       background: var(--surface-2);
       border: 1px solid var(--border);
-      color: var(--text-muted);
-      padding: 7px 0;
       border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .card-add-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 7px 4px;
       font-size: 11px;
       font-weight: 700;
       font-family: inherit;
       cursor: pointer;
       text-align: center;
       touch-action: manipulation;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .card-add-btn:active {
-      transform: scale(0.96);
+      transform: scale(0.97);
     }
-    .card-add-btn.side-your:hover, .card-add-btn.side-your:active {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: var(--accent-cyan);
+    .card-btn-group.side-your:hover .card-add-btn {
       color: var(--accent-cyan);
     }
-    .card-add-btn.side-their:hover, .card-add-btn.side-their:active {
-      background: rgba(52, 211, 153, 0.15);
-      border-color: var(--accent-green);
+    .card-btn-group.side-their:hover .card-add-btn {
       color: var(--accent-green);
+    }
+
+    .card-minus-btn {
+      background: rgba(244, 63, 94, 0.15);
+      border: none;
+      border-left: 1px solid var(--border);
+      color: var(--accent-rose);
+      padding: 0 7px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+    }
+    .card-minus-btn:hover {
+      background: var(--accent-rose);
+      color: #fff;
+    }
+    .card-btn-group.has-items .card-minus-btn {
+      display: flex;
+    }
+
+    /* --- Floating Bottom Quick-Trade Dock & Tray --- */
+    .floating-trade-dock {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      width: calc(100% - 24px);
+      max-width: 680px;
+      background: rgba(17, 20, 28, 0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-focus);
+      border-radius: 16px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.85), 0 0 20px rgba(157, 125, 253, 0.2);
+      z-index: 1000;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .floating-trade-dock.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .dock-stats {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
+    }
+    .dock-stat-pill {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+    }
+    .dock-stat-pill:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .dock-stat-pill.your b { color: var(--accent-cyan); font-family: 'Outfit', sans-serif; font-size: 13px; }
+    .dock-stat-pill.their b { color: var(--accent-green); font-family: 'Outfit', sans-serif; font-size: 13px; }
+    .dock-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+    .dock-action-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dock-tray-toggle-btn {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      touch-action: manipulation;
+    }
+    .dock-tray-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: var(--primary);
+    }
+    .dock-open-btn {
+      background: linear-gradient(135deg, #9d7dfd 0%, #7c54f5 100%);
+      color: #0b0f17;
+      border: none;
+      padding: 9px 16px;
+      border-radius: var(--radius-sm);
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      touch-action: manipulation;
+    }
+    .dock-open-btn:hover {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+    }
+    .dock-open-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Floating Quick-Remove Drawer Overlay */
+    .dock-items-drawer {
+      position: fixed;
+      bottom: 84px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      width: calc(100% - 24px);
+      max-width: 680px;
+      max-height: 50vh;
+      background: rgba(17, 20, 28, 0.98);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-focus);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.9);
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 1001;
+      overflow-y: auto;
+    }
+    .dock-items-drawer.open {
+      display: flex;
+      animation: tabFadeIn 0.2s ease-out;
+      transform: translateX(-50%) translateY(0);
+    }
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .drawer-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .drawer-clear-btn {
+      background: transparent;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      color: var(--accent-rose);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+    .drawer-clear-btn:hover {
+      background: rgba(244, 63, 94, 0.15);
+    }
+    .drawer-sections {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 580px) {
+      .drawer-sections {
+        grid-template-columns: 1fr;
+      }
+    }
+    .drawer-col-title {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .drawer-col-title.your { color: var(--accent-cyan); }
+    .drawer-col-title.their { color: var(--accent-green); }
+    .drawer-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .drawer-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface-2);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      border: 1px solid var(--border);
+    }
+
+    @media (max-width: 500px) {
+      .floating-trade-dock {
+        bottom: 10px;
+        padding: 8px 10px;
+      }
+      .dock-stats {
+        gap: 6px;
+      }
+      .dock-stat-pill {
+        padding: 2px 4px;
+      }
+      .dock-tray-toggle-btn {
+        padding: 7px 9px;
+        font-size: 11px;
+      }
+      .dock-open-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+      .dock-items-drawer {
+        bottom: 74px;
+      }
     }
   </style>
 </head>
@@ -1215,20 +1455,17 @@
             </div>
             
             <div class="calc-controls-stack">
-              <!-- Live Prefix Search with Inside 'X' Button -->
               <div class="calc-search-box-wrap">
                 <input type="text" id="calc-search-your" class="calc-search-input" placeholder="Type weapon name (e.g. Amber...)" autocomplete="off" />
                 <button type="button" id="btn-clear-calc-your" class="clear-calc-search-btn" title="Clear search">✕</button>
                 <div class="calc-matches-panel" id="matches-panel-your"></div>
               </div>
 
-              <!-- Selected Item Bar -->
               <div class="calc-selected-preview" id="preview-your">
                 <span class="calc-selected-name" id="preview-name-your">Type above to select an item</span>
                 <span style="font-size: 11px; color: var(--text-muted);" id="preview-meta-your">-</span>
               </div>
 
-              <!-- Actions: Shiny Checkbox + Add -->
               <div class="calc-actions-row">
                 <label class="calc-shiny-toggle disabled" id="label-shiny-your" title="Select an item with shiny">
                   <input type="checkbox" id="shiny-your" disabled />
@@ -1252,20 +1489,17 @@
             </div>
 
             <div class="calc-controls-stack">
-              <!-- Live Prefix Search with Inside 'X' Button -->
               <div class="calc-search-box-wrap">
                 <input type="text" id="calc-search-their" class="calc-search-input" placeholder="Type weapon name (e.g. Fried...)" autocomplete="off" />
                 <button type="button" id="btn-clear-calc-their" class="clear-calc-search-btn" title="Clear search">✕</button>
                 <div class="calc-matches-panel" id="matches-panel-their"></div>
               </div>
 
-              <!-- Selected Item Bar -->
               <div class="calc-selected-preview" id="preview-their">
                 <span class="calc-selected-name" id="preview-name-their">Type above to select an item</span>
                 <span style="font-size: 11px; color: var(--text-muted);" id="preview-meta-their">-</span>
               </div>
 
-              <!-- Actions: Shiny Checkbox + Add -->
               <div class="calc-actions-row">
                 <label class="calc-shiny-toggle disabled" id="label-shiny-their" title="Select an item with shiny">
                   <input type="checkbox" id="shiny-their" disabled />
@@ -1290,6 +1524,46 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- FLOATING QUICK-REMOVE DRAWER OVERLAY -->
+  <div class="dock-items-drawer" id="dock-items-drawer">
+    <div class="drawer-header">
+      <span class="drawer-title">Trade Basket Preview</span>
+      <button type="button" class="drawer-clear-btn" id="btn-drawer-clear-all">Clear All</button>
+    </div>
+    <div class="drawer-sections">
+      <div>
+        <div class="drawer-col-title your">Your Offer (<span id="tray-count-your">0</span>)</div>
+        <ul class="drawer-list" id="tray-list-your"></ul>
+      </div>
+      <div>
+        <div class="drawer-col-title their">Their Offer (<span id="tray-count-their">0</span>)</div>
+        <ul class="drawer-list" id="tray-list-their"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING STICKY QUICK-TRADE DOCK -->
+  <div class="floating-trade-dock" id="floating-trade-dock">
+    <div class="dock-stats">
+      <div class="dock-stat-pill your" id="pill-dock-your" title="Click to view/remove items">
+        <span>You (<span id="dock-count-your">0</span>) ▾</span>
+        <b id="dock-val-your">0</b>
+      </div>
+      <div class="dock-divider"></div>
+      <div class="dock-stat-pill their" id="pill-dock-their" title="Click to view/remove items">
+        <span>Them (<span id="dock-count-their">0</span>) ▾</span>
+        <b id="dock-val-their">0</b>
+      </div>
+    </div>
+    <div class="dock-action-group">
+      <button type="button" class="dock-tray-toggle-btn" id="btn-dock-tray-toggle">Items ▾</button>
+      <button type="button" class="dock-open-btn" id="btn-dock-open">
+        <span>Calculate</span>
+        <span>⚖️</span>
+      </button>
+    </div>
   </div>
 
   <script src="app.js"></script>
