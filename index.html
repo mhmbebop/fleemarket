@@ -312,6 +312,40 @@
       color: #ff7b72;
       font-weight: bold;
     }
+
+    /* Quick Add Buttons on Cards */
+    .card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+      border-top: 1px solid #21262d;
+      padding-top: 10px;
+    }
+    .card-add-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 6px 0;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .card-add-btn:hover {
+      background: #30363d;
+      color: #fff;
+    }
+    .card-add-btn.side-a:hover {
+      border-color: #58a6ff;
+      color: #58a6ff;
+    }
+    .card-add-btn.side-b:hover {
+      border-color: #3fb950;
+      color: #3fb950;
+    }
   </style>
 </head>
 <body>
@@ -321,7 +355,7 @@
   <div id="status">Loading items from Google Sheets...</div>
 
   <!-- TRADE CALCULATOR SECTION -->
-  <div class="calculator-container">
+  <div class="calculator-container" id="calculator">
     <div class="calculator-title">
       <span>⚖️ Trade Calculator</span>
       <button class="reset-btn" id="btn-reset">Reset Trade</button>
