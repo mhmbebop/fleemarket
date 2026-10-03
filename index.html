@@ -57,12 +57,14 @@
       padding: clamp(14px, 3vw, 28px) clamp(10px, 3vw, 24px) 110px;
       background-color: #0f111a;
       background-image: 
-        url("images/goose-left.png"),
-        url("images/goose-right.png"),
+        url("images/full-goose-left.png"),
+        url("images/full-goose-right.png"),
         radial-gradient(circle at 50% 0%, rgba(157, 125, 253, 0.05) 0%, transparent 70%);
-      background-position: 0 0, 120px 180px, 0 0;
+      background-position: 10px 20px, 140px 180px, 0 0;
       background-repeat: repeat, repeat, no-repeat;
-      background-size: 130px auto, 150px auto, auto;
+      background-size: 50px auto, 45px auto, auto;
+      background-blend-mode: luminosity;
+      opacity: 1;
       color: var(--text-main);
       min-height: 100vh;
       overflow-x: hidden;
