@@ -789,7 +789,7 @@ function removeItemFromTrade(itemId, sideTarget) {
   updateTradeVerdict();
 }
 
-// Render Catalog Grid with Image Loading & Direct Emoji Fallbacks
+// Render Catalog Grid with Robust Image Fallbacks
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
@@ -840,9 +840,10 @@ function renderItems(items) {
           src="images/${item.id}.png" 
           alt="${safeName}" 
           class="card-img" 
-          onerror="this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';}; this.src='images/${encodeURIComponent(item.name)}.png';"
+          onload="this.style.display='block'; this.nextElementSibling.style.display='none';"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
         />
-        <div class="card-img-fallback" style="display: none; align-items: center; justify-content: center; font-size: 42px; width: 100%; height: 100%; background: #090b10;">${fallbackEmoji}</div>
+        <div class="card-img-fallback" style="display: flex; align-items: center; justify-content: center; font-size: 42px; width: 100%; height: 100%; background: #090b10;">${fallbackEmoji}</div>
       </div>
       <div class="card-top-info">
         <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 3px;">
