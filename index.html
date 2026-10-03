@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>10 Player Flee - Official Value List</title>
+  <title>10 Player Flee - Value List & Trade Calculator</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -13,7 +13,7 @@
       color: #e6edf3;
     }
     h1 {
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       color: #9d7dfd;
     }
     p {
@@ -25,6 +25,152 @@
       color: #58a6ff;
       margin-bottom: 16px;
     }
+    
+    /* Trade Calculator Styles */
+    .calculator-container {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 32px;
+    }
+    .calculator-title {
+      margin-top: 0;
+      font-size: 20px;
+      color: #f0f6fc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .reset-btn {
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .reset-btn:hover {
+      background: #30363d;
+    }
+    .trade-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 16px;
+    }
+    @media (max-width: 768px) {
+      .trade-columns {
+        grid-template-columns: 1fr;
+      }
+    }
+    .trade-side {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .side-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #21262d;
+      padding-bottom: 8px;
+    }
+    .side-title {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .item-select-row {
+      display: flex;
+      gap: 8px;
+    }
+    .select-dropdown {
+      flex: 1;
+      padding: 8px 12px;
+      background: #161b22;
+      color: #fff;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+    .add-btn {
+      background: #238636;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .add-btn:hover {
+      background: #2ea043;
+    }
+    .selected-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .trade-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #161b22;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #21262d;
+      font-size: 14px;
+    }
+    .remove-btn {
+      background: none;
+      border: none;
+      color: #f85149;
+      cursor: pointer;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+    .side-summary {
+      border-top: 1px solid #21262d;
+      padding-top: 8px;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      color: #8b949e;
+    }
+    .side-summary b {
+      color: #f0f6fc;
+    }
+    .verdict-box {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+      background: #0d1117;
+      border: 1px solid #30363d;
+    }
+    .verdict-text {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .verdict-details {
+      font-size: 14px;
+      color: #8b949e;
+    }
+    .status-win { color: #3fb950; }
+    .status-fair { color: #f2cc60; }
+    .status-loss { color: #f85149; }
+
+    /* Catalog / Inventory Section */
     .search-box {
       width: 100%;
       max-width: 400px;
@@ -75,7 +221,7 @@
       font-size: 14px;
       color: #8b949e;
     }
-    .value {
+    .val {
       color: #f2cc60;
       font-weight: bold;
     }
@@ -87,12 +233,64 @@
 </head>
 <body>
 
-  <h1>10 Player Flee - Items & Values</h1>
-  <p>Live inventory synced with Google Sheets</p>
-
-  <input type="text" id="search" class="search-box" placeholder="Search hammer or gem..." />
+  <h1>10 Player Flee - Value Hub</h1>
+  <p>Live inventory and trade fairness calculator synced with Google Sheets</p>
   <div id="status">Loading items from Google Sheets...</div>
 
+  <!-- TRADE CALCULATOR SECTION -->
+  <div class="calculator-container">
+    <div class="calculator-title">
+      <span>⚖️ Trade Calculator</span>
+      <button class="reset-btn" id="btn-reset">Reset Trade</button>
+    </div>
+
+    <div class="trade-columns">
+      <!-- SIDE A -->
+      <div class="trade-side">
+        <div class="side-header">
+          <span class="side-title">Side A (Your Offer)</span>
+        </div>
+        <div class="item-select-row">
+          <select id="select-a" class="select-dropdown">
+            <option value="">Select an item to add...</option>
+          </select>
+          <button class="add-btn" id="btn-add-a">Add</button>
+        </div>
+        <ul id="list-a" class="selected-list"></ul>
+        <div class="side-summary">
+          <span>Total Value: <b id="total-val-a" class="val">0</b></span>
+          <span>Avg Demand: <b id="avg-dem-a" class="demand">-</b></span>
+        </div>
+      </div>
+
+      <!-- SIDE B -->
+      <div class="trade-side">
+        <div class="side-header">
+          <span class="side-title">Side B (Their Offer)</span>
+        </div>
+        <div class="item-select-row">
+          <select id="select-b" class="select-dropdown">
+            <option value="">Select an item to add...</option>
+          </select>
+          <button class="add-btn" id="btn-add-b">Add</button>
+        </div>
+        <ul id="list-b" class="selected-list"></ul>
+        <div class="side-summary">
+          <span>Total Value: <b id="total-val-b" class="val">0</b></span>
+          <span>Avg Demand: <b id="avg-dem-b" class="demand">-</b></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="verdict-box" id="verdict-box">
+      <div class="verdict-text" id="verdict-text">Add items to both sides</div>
+      <div class="verdict-details" id="verdict-details">Difference: 0 Value</div>
+    </div>
+  </div>
+
+  <!-- ITEM CATALOG SECTION -->
+  <h2>Item Database</h2>
+  <input type="text" id="search" class="search-box" placeholder="Search hammer or gem..." />
   <div class="grid" id="items-grid"></div>
 
   <script src="app.js"></script>
