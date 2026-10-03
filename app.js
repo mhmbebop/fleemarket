@@ -58,12 +58,11 @@ function parseCSV(text) {
   });
 }
 
-// Determines accurate game rarity (including Eternaswan, Pan, Sapphira as Mythical)
+// Determines accurate game rarity
 function getItemRarity(item) {
   const name = (item.name || '').toLowerCase();
   const cat = (item.category || '').toLowerCase();
 
-  // Known Mythicals from screenshot and official list
   if (
     name.includes('eternaswan') ||
     name.includes('pan') ||
@@ -77,12 +76,10 @@ function getItemRarity(item) {
   if (name.includes('common')) return 'Common';
   if (name.includes('rare')) return 'Rare';
 
-  // High tier / bundle sets
   if (item.baseValue >= 70 || item.isNilValue || cat.includes('special') || cat.includes('bundle')) {
     return 'Legendary';
   }
 
-  // Mid tier event weapons
   if (item.baseValue >= 20) {
     return 'Epic';
   }
@@ -90,16 +87,12 @@ function getItemRarity(item) {
   return 'Rare';
 }
 
-function getShinyMultiplier(item) {
-  const name = (item.name || '').toLowerCase();
-  if (name.includes('rare') || name.includes('common')) return 4;
-  return 10;
-}
-
+// Separates base items and strictly matches ONLY explicit shiny rows from the sheet
 function processAndDeduplicateItems(rawItems) {
   const baseMap = new Map();
   const explicitShinies = [];
 
+  // 1. Separate regular items from any rows starting with "Shiny "
   rawItems.forEach((item) => {
     if (item.name.toLowerCase().startsWith('shiny ')) {
       explicitShinies.push(item);
@@ -111,6 +104,7 @@ function processAndDeduplicateItems(rawItems) {
     }
   });
 
+  // 2. ONLY enable shiny if an explicit matching shiny entry was found in the sheet
   explicitShinies.forEach((shinyItem) => {
     const baseName = shinyItem.name.replace(/^shiny\s+/i, '').trim().toLowerCase();
     const key = `${baseName}_${shinyItem.type.toLowerCase()}`;
@@ -124,20 +118,6 @@ function processAndDeduplicateItems(rawItems) {
         demandTier: shinyItem.demandTier,
         demandLabel: shinyItem.demandLabel,
         status: shinyItem.status,
-      };
-    }
-  });
-
-  baseMap.forEach((item) => {
-    if (!item.hasShiny && !item.name.toLowerCase().includes('permanent') && !item.category.toLowerCase().includes('permanent')) {
-      const mult = getShinyMultiplier(item);
-      item.hasShiny = true;
-      item.shinyData = {
-        value: item.isNilValue ? 0 : item.baseValue * mult,
-        isNilValue: item.isNilValue,
-        demandTier: item.demandTier,
-        demandLabel: item.demandLabel,
-        status: item.status,
       };
     }
   });
@@ -347,7 +327,7 @@ function renderItems(items) {
 
   items.forEach((item) => {
     const card = document.createElement('div');
-    const isShiny = !!shinyState[item.id];
+    const isShiny = item.hasShiny && !!shinyState[item.id];
     const rarity = getItemRarity(item);
     const rarityClass = `rarity-${rarity.toLowerCase()}`;
 
@@ -358,6 +338,7 @@ function renderItems(items) {
     const fallbackEmoji = isGem ? '💎' : '🔨';
     const imagePath = isShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
 
+    // The yellow star button ONLY renders if matching shiny data was actually synced
     const starButtonHtml = item.hasShiny
       ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-id="${item.id}" title="Toggle Shiny Version">★</div>`
       : '';
@@ -452,10 +433,10 @@ function renderItems(items) {
     }
 
     card.querySelector('.card-add-btn.side-a').addEventListener('click', (e) => {
-      addItemToTrade(e.currentTarget.getAttribute('data-id'), 'A', !!shinyState[item.id]);
+      addItemToTrade(e.currentTarget.getAttribute('data-id'), 'A', item.hasShiny && !!shinyState[item.id]);
     });
     card.querySelector('.card-add-btn.side-b').addEventListener('click', (e) => {
-      addItemToTrade(e.currentTarget.getAttribute('data-id'), 'B', !!shinyState[item.id]);
+      addItemToTrade(e.currentTarget.getAttribute('data-id'), 'B', item.hasShiny && !!shinyState[item.id]);
     });
 
     grid.appendChild(card);
