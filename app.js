@@ -789,7 +789,7 @@ function removeItemFromTrade(itemId, sideTarget) {
   updateTradeVerdict();
 }
 
-// Render Catalog Grid with Foolproof Image Fallbacks
+// Render Catalog Grid with CSS Absolute Overlay Image Fallbacks
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
@@ -835,14 +835,15 @@ function renderItems(items) {
     card.innerHTML = `
       ${audioButtonHtml}
       ${starButtonHtml}
-      <div class="card-image-wrap">
+      <div class="card-image-wrap" style="position: relative; overflow: hidden;">
+        <div class="card-img-fallback" style="display: flex; align-items: center; justify-content: center; font-size: 42px; width: 100%; height: 100%; background: #090b10; position: absolute; top: 0; left: 0; z-index: 1;">${fallbackEmoji}</div>
         <img 
           src="images/${item.id}.png" 
           alt="" 
           class="card-img" 
-          onerror="this.remove();"
+          style="position: relative; z-index: 2; width: 100%; height: 100%; object-fit: contain;" 
+          onerror="this.style.display='none';"
         />
-        <div class="card-img-fallback" style="display: flex; align-items: center; justify-content: center; font-size: 42px; width: 100%; height: 100%; background: #090b10;">${fallbackEmoji}</div>
       </div>
       <div class="card-top-info">
         <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 3px;">
