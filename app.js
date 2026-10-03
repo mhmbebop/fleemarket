@@ -2,6 +2,11 @@ const PRIMARY_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2R
 const SPREADSHEET_ID = '1XKPloRF46l0GGQOCdH0ce6Krjriitvj1LAdGTl_kkLI';
 const GVIZ_CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
 
+// LocalStorage Cache Configuration
+const CACHE_KEY_DATA = 'flee_items_cache_v1';
+const CACHE_KEY_TIME = 'flee_items_time_v1';
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes cache duration
+
 let allItems = [];
 let yourOffer = [];
 let theirOffer = [];
@@ -920,10 +925,10 @@ window.forceSyncNow = async function(event) {
   const startTime = Date.now();
   await loadData(true);
 
-  // Keep feedback visible for at least 500ms
+  // Keep feedback visible for at least 600ms
   const elapsed = Date.now() - startTime;
-  if (elapsed < 500) {
-    await new Promise((resolve) => setTimeout(resolve, 500 - elapsed));
+  if (elapsed < 600) {
+    await new Promise((resolve) => setTimeout(resolve, 600 - elapsed));
   }
 
   if (btn) btn.classList.remove('is-syncing');
@@ -1161,59 +1166,99 @@ function setupEventListeners() {
   }
 }
 
-// Direct Data Loader with optional Cache-Busting Force Sync
-async function loadData(forceRefresh = false) {
-  const statusEl = document.getElementById('status');
-  let csvText = null;
-
-  const cacheBust = forceRefresh ? `&_t=${Date.now()}` : '';
-
-  if (forceRefresh && statusEl) {
-    statusEl.textContent = 'Syncing live with Google Sheets...';
-    statusEl.style.color = 'var(--accent-cyan)';
-  }
+// Network fetcher that tries Google endpoints then local fallback
+async function fetchFreshCSV() {
+  const cacheBust = `&_t=${Date.now()}`;
 
   try {
     const res = await fetch(PRIMARY_CSV_URL + cacheBust);
-    if (res.ok) csvText = await res.text();
+    if (res.ok) return await res.text();
   } catch (err) {
     console.warn('Primary CSV fetch failed, trying GVIZ fallback...', err);
   }
 
-  if (!csvText) {
-    try {
-      const res = await fetch(GVIZ_CSV_URL + cacheBust);
-      if (res.ok) csvText = await res.text();
-    } catch (err) {
-      console.warn('GVIZ fallback also failed, trying local file...', err);
-    }
+  try {
+    const res = await fetch(GVIZ_CSV_URL + cacheBust);
+    if (res.ok) return await res.text();
+  } catch (err) {
+    console.warn('GVIZ fallback fetch failed, trying local file...', err);
   }
 
-  if (!csvText) {
-    try {
-      const res = await fetch('10_Player_Flee_Items_Database_Complete.csv');
-      if (res.ok) csvText = await res.text();
-    } catch (err) {
-      console.error('All fetch sources failed.', err);
-    }
+  try {
+    const res = await fetch('10_Player_Flee_Items_Database_Complete.csv');
+    if (res.ok) return await res.text();
+  } catch (err) {
+    console.error('All fetch sources failed.', err);
   }
 
-  if (csvText) {
-    allItems = parseCSV(csvText);
-    if (statusEl) {
-      const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-      statusEl.textContent = forceRefresh
-        ? `✓ Live synced ${allItems.length} items (${timeStr})`
-        : `✓ Synced ${allItems.length} items successfully`;
-      statusEl.style.color = 'var(--accent-green)';
+  return null;
+}
+
+// Resilient Stale-While-Revalidate Caching Loader with Force Refresh
+async function loadData(forceRefresh = false) {
+  const statusEl = document.getElementById('status');
+
+  // 1. Check LocalStorage cache first if not manually forcing refresh
+  if (!forceRefresh) {
+    try {
+      const cachedCSV = localStorage.getItem(CACHE_KEY_DATA);
+      const cachedTime = Number(localStorage.getItem(CACHE_KEY_TIME)) || 0;
+      const isFresh = Date.now() - cachedTime < CACHE_TTL_MS;
+
+      if (cachedCSV) {
+        allItems = parseCSV(cachedCSV);
+        if (allItems.length > 0) {
+          if (statusEl) {
+            statusEl.textContent = `✓ Loaded ${allItems.length} items (Cached)`;
+            statusEl.style.color = 'var(--accent-green)';
+          }
+          populateEventFilters(allItems);
+          applyFilters();
+
+          // If cache is under 10 minutes old, don't ping network
+          if (isFresh) return;
+        }
+      }
+    } catch (e) {
+      console.warn('LocalStorage access warning:', e);
     }
-    populateEventFilters(allItems);
-    applyFilters();
   } else {
     if (statusEl) {
-      statusEl.textContent = '⚠️ Could not reach Google Sheets. Please verify permissions.';
-      statusEl.style.color = 'var(--accent-rose)';
+      statusEl.textContent = 'Syncing live with Google Sheets...';
+      statusEl.style.color = 'var(--accent-cyan)';
     }
+  }
+
+  // 2. Fetch fresh CSV from Google Sheets
+  const freshCSV = await fetchFreshCSV();
+  if (freshCSV) {
+    const parsed = parseCSV(freshCSV);
+    if (parsed.length > 0) {
+      allItems = parsed;
+
+      try {
+        localStorage.setItem(CACHE_KEY_DATA, freshCSV);
+        localStorage.setItem(CACHE_KEY_TIME, String(Date.now()));
+      } catch (e) {
+        console.warn('Failed to save to localStorage:', e);
+      }
+
+      if (statusEl) {
+        const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        statusEl.textContent = forceRefresh
+          ? `✓ Live synced ${allItems.length} items (${timeStr})`
+          : `✓ Synced ${allItems.length} items successfully`;
+        statusEl.style.color = 'var(--accent-green)';
+      }
+      populateEventFilters(allItems);
+      applyFilters();
+      return;
+    }
+  }
+
+  if (allItems.length === 0 && statusEl) {
+    statusEl.textContent = '⚠️ Could not reach Google Sheets. Please verify permissions.';
+    statusEl.style.color = 'var(--accent-rose)';
   }
 }
 
