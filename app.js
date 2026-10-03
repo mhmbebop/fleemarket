@@ -1,7 +1,4 @@
-// Primary Published CSV URL
 const PRIMARY_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2RfYHa6ffWiale6czVqih6e7BrrZ-ZmRdnT10WTsS5M1ZJF9-jKSvcpyyrv5imytQ9lZsvL8su/pub?gid=0&single=true&output=csv';
-
-// Backup GVIZ Endpoint (CORS-friendly direct export)
 const SPREADSHEET_ID = '1XKPloRF46l0GGQOCdH0ce6Krjriitvj1LAdGTl_kkLI';
 const GVIZ_CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
 
@@ -31,6 +28,18 @@ function switchTab(targetTab) {
   document.querySelectorAll('.tab-panel').forEach((panel) => {
     panel.classList.toggle('active', panel.id === `tab-${targetTab}`);
   });
+
+  const dock = document.getElementById('floating-trade-dock');
+  const drawer = document.getElementById('dock-items-drawer');
+  if (drawer) drawer.classList.remove('open');
+
+  if (dock) {
+    if (targetTab === 'calculator' || (yourOffer.length === 0 && theirOffer.length === 0)) {
+      dock.classList.remove('visible');
+    } else {
+      dock.classList.add('visible');
+    }
+  }
 }
 
 function initTabNavigation() {
@@ -156,19 +165,6 @@ function updateFilterBadge() {
   }
 }
 
-function updateCalculatorTabBadge() {
-  const badge = document.getElementById('trade-count-badge');
-  const totalItems = yourOffer.length + theirOffer.length;
-  if (badge) {
-    if (totalItems > 0) {
-      badge.textContent = totalItems;
-      badge.style.display = 'inline-block';
-    } else {
-      badge.style.display = 'none';
-    }
-  }
-}
-
 function getItemActiveDisplay(item, isShiny = false) {
   if (isShiny && item.hasShiny) {
     return {
@@ -190,7 +186,116 @@ function getItemActiveDisplay(item, isShiny = false) {
   };
 }
 
-// Sequential Prefix Search & Autocomplete
+// Syncs tab badges, floating dock, and floating tray
+function updateCalculatorUI() {
+  const badge = document.getElementById('trade-count-badge');
+  const dock = document.getElementById('floating-trade-dock');
+  const totalItems = yourOffer.length + theirOffer.length;
+
+  if (badge) {
+    if (totalItems > 0) {
+      badge.textContent = totalItems;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  const dataYour = calculateSide(yourOffer);
+  const dataTheir = calculateSide(theirOffer);
+
+  // Sync dock stats
+  if (dock) {
+    const countYour = document.getElementById('dock-count-your');
+    const valYour = document.getElementById('dock-val-your');
+    const countTheir = document.getElementById('dock-count-their');
+    const valTheir = document.getElementById('dock-val-their');
+
+    if (countYour) countYour.textContent = yourOffer.length;
+    if (valYour) valYour.textContent = dataYour.hasNil ? `${dataYour.totalValue} + Nil` : dataYour.totalValue;
+    if (countTheir) countTheir.textContent = theirOffer.length;
+    if (valTheir) valTheir.textContent = dataTheir.hasNil ? `${dataTheir.totalValue} + Nil` : dataTheir.totalValue;
+
+    const catalogActive = document.getElementById('tab-catalog')?.classList.contains('active');
+    if (totalItems > 0 && catalogActive) {
+      dock.classList.add('visible');
+    } else {
+      dock.classList.remove('visible');
+    }
+  }
+
+  // Sync floating tray lists
+  renderTrayList(yourOffer, 'tray-list-your', 'your');
+  renderTrayList(theirOffer, 'tray-list-their', 'their');
+  const trayCountYour = document.getElementById('tray-count-your');
+  const trayCountTheir = document.getElementById('tray-count-their');
+  if (trayCountYour) trayCountYour.textContent = yourOffer.length;
+  if (trayCountTheir) trayCountTheir.textContent = theirOffer.length;
+
+  // Refresh card button states on catalog without losing scroll
+  refreshCardButtonBadges();
+}
+
+function renderTrayList(sideItems, listId, sideTarget) {
+  const ul = document.getElementById(listId);
+  if (!ul) return;
+  ul.innerHTML = '';
+
+  if (sideItems.length === 0) {
+    ul.innerHTML = '<li style="font-size: 11px; color: var(--text-muted); padding: 4px 0;">No items added</li>';
+    return;
+  }
+
+  sideItems.forEach((item, index) => {
+    const li = document.createElement('li');
+    li.className = 'drawer-item';
+    const valText = item.isNilValue ? 'Nil' : item.tradeValue;
+    li.innerHTML = `
+      <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;">
+        <b>${item.name}</b> ${item.isShiny ? '<span style="color:#fbbf24;">★</span>' : ''}
+        <span style="color:var(--text-muted); font-size:10px;">(${valText})</span>
+      </div>
+      <button type="button" class="remove-btn" style="width:22px; height:22px; font-size:11px;">✕</button>
+    `;
+
+    li.querySelector('.remove-btn').addEventListener('click', () => {
+      sideItems.splice(index, 1);
+      renderTradeList(yourOffer, 'list-your');
+      renderTradeList(theirOffer, 'list-their');
+      updateTradeVerdict();
+    });
+
+    ul.appendChild(li);
+  });
+}
+
+function refreshCardButtonBadges() {
+  document.querySelectorAll('.card').forEach((card) => {
+    const starBtn = card.querySelector('.shiny-star-btn');
+    const itemId = starBtn ? starBtn.getAttribute('data-id') : null;
+    if (!itemId) return;
+
+    const countYour = yourOffer.filter((i) => i.id === itemId).length;
+    const countTheir = theirOffer.filter((i) => i.id === itemId).length;
+
+    const groupYour = card.querySelector('.card-btn-group.side-your');
+    const groupTheir = card.querySelector('.card-btn-group.side-their');
+
+    if (groupYour) {
+      const btnAdd = groupYour.querySelector('.card-add-btn');
+      if (btnAdd) btnAdd.textContent = countYour > 0 ? `+ You (${countYour})` : '+ Your Offer';
+      groupYour.classList.toggle('has-items', countYour > 0);
+    }
+
+    if (groupTheir) {
+      const btnAdd = groupTheir.querySelector('.card-add-btn');
+      if (btnAdd) btnAdd.textContent = countTheir > 0 ? `+ Them (${countTheir})` : '+ Their Offer';
+      groupTheir.classList.toggle('has-items', countTheir > 0);
+    }
+  });
+}
+
+// Sequential Word-Prefix Search & Autocomplete
 function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
   const input = document.getElementById(inputId);
   const clearBtn = document.getElementById(clearBtnId);
@@ -236,7 +341,7 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
     });
 
     if (matches.length === 0) {
-      panel.innerHTML = `<div class="calc-no-match-msg">⚠️ No items matching "${query}"</div>`;
+      panel.innerHTML = `<div class="calc-no-match-msg">⚠️ No items starting with "${query}"</div>`;
       panel.classList.add('open');
       return;
     }
@@ -385,7 +490,7 @@ function updateTradeVerdict() {
   if (valTheir) valTheir.textContent = dataTheir.hasNil ? `${dataTheir.totalValue} + Nil` : dataTheir.totalValue;
   if (demTheir) demTheir.textContent = dataTheir.avgDemand;
 
-  updateCalculatorTabBadge();
+  updateCalculatorUI();
 
   if (!verdictEl || !detailsEl) return;
   verdictEl.className = 'verdict-text';
@@ -495,6 +600,22 @@ function addItemToTrade(item, sideTarget, isShiny = false) {
   updateTradeVerdict();
 }
 
+function removeItemFromTrade(itemId, sideTarget) {
+  const targetArray = sideTarget === 'your' ? yourOffer : theirOffer;
+  const listId = sideTarget === 'your' ? 'list-your' : 'list-their';
+
+  // Find last added instance of this item
+  for (let i = targetArray.length - 1; i >= 0; i--) {
+    if (targetArray[i].id === itemId) {
+      targetArray.splice(i, 1);
+      break;
+    }
+  }
+
+  renderTradeList(targetArray, listId);
+  updateTradeVerdict();
+}
+
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
@@ -517,6 +638,9 @@ function renderItems(items) {
     const display = getItemActiveDisplay(item, isShiny);
     const fallbackEmoji = isGem ? '💎' : '🔨';
     const imagePath = isShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
+
+    const countYour = yourOffer.filter((i) => i.id === item.id).length;
+    const countTheir = theirOffer.filter((i) => i.id === item.id).length;
 
     const starButtonHtml = item.hasShiny
       ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-id="${item.id}" title="Toggle Shiny Version">★</div>`
@@ -558,11 +682,18 @@ function renderItems(items) {
         </div>
       </div>
       <div class="card-actions">
-        <button class="card-add-btn side-your" data-id="${item.id}">+ Your Offer</button>
-        <button class="card-add-btn side-their" data-id="${item.id}">+ Their Offer</button>
+        <div class="card-btn-group side-your ${countYour > 0 ? 'has-items' : ''}">
+          <button class="card-add-btn" data-id="${item.id}">${countYour > 0 ? `+ You (${countYour})` : '+ Your Offer'}</button>
+          <button class="card-minus-btn" data-id="${item.id}" title="Remove one from Your Offer">−</button>
+        </div>
+        <div class="card-btn-group side-their ${countTheir > 0 ? 'has-items' : ''}">
+          <button class="card-add-btn" data-id="${item.id}">${countTheir > 0 ? `+ Them (${countTheir})` : '+ Their Offer'}</button>
+          <button class="card-minus-btn" data-id="${item.id}" title="Remove one from Their Offer">−</button>
+        </div>
       </div>
     `;
 
+    // Touch & Click In-place Shiny Toggle
     const starBtn = card.querySelector('.shiny-star-btn');
     if (starBtn) {
       starBtn.addEventListener('click', (e) => {
@@ -614,19 +745,34 @@ function renderItems(items) {
       });
     }
 
-    const btnYour = card.querySelector('.card-add-btn.side-your');
-    if (btnYour) {
-      btnYour.addEventListener('click', () => {
+    // Card Add & Remove Click Handlers
+    const btnAddYour = card.querySelector('.card-btn-group.side-your .card-add-btn');
+    const btnMinusYour = card.querySelector('.card-btn-group.side-your .card-minus-btn');
+
+    if (btnAddYour) {
+      btnAddYour.addEventListener('click', () => {
         const itemObj = allItems.find((i) => i.id === item.id);
         addItemToTrade(itemObj, 'your', item.hasShiny && !!shinyState[item.id]);
       });
     }
+    if (btnMinusYour) {
+      btnMinusYour.addEventListener('click', () => {
+        removeItemFromTrade(item.id, 'your');
+      });
+    }
 
-    const btnTheir = card.querySelector('.card-add-btn.side-their');
-    if (btnTheir) {
-      btnTheir.addEventListener('click', () => {
+    const btnAddTheir = card.querySelector('.card-btn-group.side-their .card-add-btn');
+    const btnMinusTheir = card.querySelector('.card-btn-group.side-their .card-minus-btn');
+
+    if (btnAddTheir) {
+      btnAddTheir.addEventListener('click', () => {
         const itemObj = allItems.find((i) => i.id === item.id);
         addItemToTrade(itemObj, 'their', item.hasShiny && !!shinyState[item.id]);
+      });
+    }
+    if (btnMinusTheir) {
+      btnMinusTheir.addEventListener('click', () => {
+        removeItemFromTrade(item.id, 'their');
       });
     }
 
@@ -646,11 +792,9 @@ function applyFilters() {
     const itemDemand = String(item.demandTier);
     const itemStatus = (item.status || '').trim().toLowerCase();
 
-    // 1. Hammer / Gem pill filter
     if (currentFilter === 'hammer' && itemType !== 'hammer') return false;
     if (currentFilter === 'gem' && itemType !== 'gem') return false;
 
-    // 2. Multi-select Rarity filter
     if (activeRarities.size > 0) {
       let matchesRarity = false;
       for (const selRarity of activeRarities) {
@@ -666,12 +810,8 @@ function applyFilters() {
       if (!matchesRarity) return false;
     }
 
-    // 3. Multi-select Demand filter
-    if (activeDemands.size > 0 && !activeDemands.has(itemDemand)) {
-      return false;
-    }
+    if (activeDemands.size > 0 && !activeDemands.has(itemDemand)) return false;
 
-    // 4. Multi-select Status filter
     if (activeStatuses.size > 0) {
       let matchesStatus = false;
       for (const selStatus of activeStatuses) {
@@ -683,17 +823,10 @@ function applyFilters() {
       if (!matchesStatus) return false;
     }
 
-    // 5. Has Shiny property filter
-    if (filterHasShiny && !item.hasShiny) {
-      return false;
-    }
+    if (filterHasShiny && !item.hasShiny) return false;
 
-    // 6. Multi-select Event/Crate filter
-    if (activeEvents.size > 0 && !activeEvents.has(itemEvent)) {
-      return false;
-    }
+    if (activeEvents.size > 0 && !activeEvents.has(itemEvent)) return false;
 
-    // 7. Search query matching
     const matchesSearch =
       !query ||
       (item.name && item.name.toLowerCase().includes(query)) ||
@@ -703,21 +836,13 @@ function applyFilters() {
     return matchesSearch;
   });
 
-  // Sorting
   filtered.sort((a, b) => {
-    if (currentSort === 'val-desc') {
-      return b.baseValue - a.baseValue;
-    } else if (currentSort === 'val-asc') {
-      return a.baseValue - b.baseValue;
-    } else if (currentSort === 'dem-desc') {
-      return b.demandTier - a.demandTier;
-    } else if (currentSort === 'dem-asc') {
-      return a.demandTier - b.demandTier;
-    } else if (currentSort === 'name-asc') {
-      return a.name.localeCompare(b.name);
-    } else if (currentSort === 'name-desc') {
-      return b.name.localeCompare(a.name);
-    }
+    if (currentSort === 'val-desc') return b.baseValue - a.baseValue;
+    if (currentSort === 'val-asc') return a.baseValue - b.baseValue;
+    if (currentSort === 'dem-desc') return b.demandTier - a.demandTier;
+    if (currentSort === 'dem-asc') return a.demandTier - b.demandTier;
+    if (currentSort === 'name-asc') return a.name.localeCompare(b.name);
+    if (currentSort === 'name-desc') return b.name.localeCompare(a.name);
     return 0;
   });
 
@@ -780,6 +905,39 @@ function setupEventListeners() {
       if (inTheir) inTheir.value = '';
       if (clrYour) clrYour.style.display = 'none';
       if (clrTheir) clrTheir.style.display = 'none';
+      updateTradeVerdict();
+    });
+  }
+
+  // Floating Dock & Tray Listeners
+  const btnDockOpen = document.getElementById('btn-dock-open');
+  if (btnDockOpen) {
+    btnDockOpen.addEventListener('click', () => {
+      switchTab('calculator');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  const btnTrayToggle = document.getElementById('btn-dock-tray-toggle');
+  const pillYour = document.getElementById('pill-dock-your');
+  const pillTheir = document.getElementById('pill-dock-their');
+  const drawer = document.getElementById('dock-items-drawer');
+
+  const toggleDrawer = () => {
+    if (drawer) drawer.classList.toggle('open');
+  };
+
+  if (btnTrayToggle) btnTrayToggle.addEventListener('click', toggleDrawer);
+  if (pillYour) pillYour.addEventListener('click', toggleDrawer);
+  if (pillTheir) pillTheir.addEventListener('click', toggleDrawer);
+
+  const btnClearAllDrawer = document.getElementById('btn-drawer-clear-all');
+  if (btnClearAllDrawer) {
+    btnClearAllDrawer.addEventListener('click', () => {
+      yourOffer = [];
+      theirOffer = [];
+      renderTradeList(yourOffer, 'list-your');
+      renderTradeList(theirOffer, 'list-their');
       updateTradeVerdict();
     });
   }
@@ -896,35 +1054,26 @@ async function loadData() {
   const statusEl = document.getElementById('status');
   let csvText = null;
 
-  // Attempt 1: Fetch Primary Published Sheet URL
   try {
     const res = await fetch(PRIMARY_CSV_URL);
-    if (res.ok) {
-      csvText = await res.text();
-    }
+    if (res.ok) csvText = await res.text();
   } catch (err) {
     console.warn('Primary CSV link failed (likely CORS), attempting GVIZ fallback...', err);
   }
 
-  // Attempt 2: Fetch GVIZ Endpoint if primary blocked
   if (!csvText) {
     try {
       const res = await fetch(GVIZ_CSV_URL);
-      if (res.ok) {
-        csvText = await res.text();
-      }
+      if (res.ok) csvText = await res.text();
     } catch (err) {
       console.warn('GVIZ fallback also failed, attempting relative dataset...', err);
     }
   }
 
-  // Attempt 3: Fetch local backup CSV in repo
   if (!csvText) {
     try {
       const res = await fetch('10_Player_Flee_Items_Database_Complete.csv');
-      if (res.ok) {
-        csvText = await res.text();
-      }
+      if (res.ok) csvText = await res.text();
     } catch (err) {
       console.error('All fetch strategies failed.', err);
     }
@@ -946,7 +1095,7 @@ async function loadData() {
   }
 }
 
-// Initialize Navigation & UI Controls immediately
+// Mount controls immediately
 initTabNavigation();
 setupEventListeners();
 
