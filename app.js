@@ -668,7 +668,7 @@ function updateTradeVerdict() {
     verdictEl.classList.add('status-win');
     verdictString = 'Small Win';
   } else if (percentDiff >= -5) {
-    verdictEl.textContent = '⚖️️ Fair Trade';
+    verdictEl.textContent = '⚖️ Fair Trade';
     verdictEl.classList.add('status-fair');
     verdictString = 'Fair Trade';
   } else if (percentDiff >= -15) {
@@ -802,7 +802,7 @@ function removeItemFromTrade(itemId, sideTarget) {
   updateTradeVerdict();
 }
 
-// Render Catalog Grid with Direct Emoji Fallbacks (No Missing Image Requests)
+// Render Catalog Grid with Direct Emoji Fallbacks
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
