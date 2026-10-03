@@ -34,6 +34,17 @@ const activeStatuses = new Set();
 const activeEvents = new Set();
 let filterHasShiny = false;
 
+// Security Input Sanitization
+function sanitizeInput(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 // Immediate Tab Switching with Persistent Memory
 function switchTab(targetTab, saveToStorage = true) {
   document.querySelectorAll('.tab-btn').forEach((btn) => {
@@ -175,7 +186,8 @@ function populateEventFilters(items) {
   uniqueEvents.forEach((ev) => {
     const label = document.createElement('label');
     label.className = 'drawer-label';
-    label.innerHTML = `<input type="checkbox" class="cb-event" value="${ev}" ${activeEvents.has(ev) ? 'checked' : ''}> ${ev}`;
+    const safeEv = sanitizeInput(ev);
+    label.innerHTML = `<input type="checkbox" class="cb-event" value="${safeEv}" ${activeEvents.has(ev) ? 'checked' : ''}> ${safeEv}`;
 
     label.querySelector('input').addEventListener('change', (e) => {
       if (e.target.checked) {
@@ -318,9 +330,10 @@ function renderTrayList(sideItems, listId, sideTarget) {
     const li = document.createElement('li');
     li.className = 'drawer-item';
     const valText = item.isNilValue ? 'Nil' : item.tradeValue;
+    const safeName = sanitizeInput(item.name);
     li.innerHTML = `
       <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;">
-        <b>${item.name}</b> ${item.isShiny ? '<span style="color:#fbbf24;">★</span>' : ''}
+        <b>${safeName}</b> ${item.isShiny ? '<span style="color:#fbbf24;">★</span>' : ''}
         <span style="color:var(--text-muted); font-size:10px;">(${valText})</span>
       </div>
       <button type="button" class="remove-btn" style="width:22px; height:22px; font-size:11px;">✕</button>
@@ -363,7 +376,7 @@ function refreshCardButtonBadges() {
   });
 }
 
-// Sequential Word-Prefix Search & Autocomplete
+// Sequential Word-Prefix Search & Autocomplete with Sanitization
 function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
   const input = document.getElementById(inputId);
   const clearBtn = document.getElementById(clearBtnId);
@@ -371,7 +384,7 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
   if (!input || !panel) return;
 
   function renderMatches(query) {
-    const cleanQuery = query.toLowerCase().trim();
+    const cleanQuery = sanitizeInput(query).toLowerCase().trim();
     panel.innerHTML = '';
 
     if (clearBtn) {
@@ -409,7 +422,7 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
     });
 
     if (matches.length === 0) {
-      panel.innerHTML = `<div class="calc-no-match-msg">⚠️ No items starting with "${query}"</div>`;
+      panel.innerHTML = `<div class="calc-no-match-msg">⚠️ No items starting with "${sanitizeInput(query)}"</div>`;
       panel.classList.add('open');
       return;
     }
@@ -419,14 +432,16 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
       row.className = 'calc-match-item';
       const valText = item.isNilValue ? 'Nil' : item.baseValue;
       const shinyTag = item.hasShiny ? '★' : '';
+      const safeName = sanitizeInput(item.name);
+      const safeType = sanitizeInput(item.type);
 
       row.innerHTML = `
         <div class="calc-match-item-name">
-          <span>${item.name}</span>
-          <span style="font-size: 10px; color: var(--accent-cyan);">(${item.type})</span>
+          <span>${safeName}</span>
+          <span style="font-size: 10px; color: var(--accent-cyan);">(${safeType})</span>
           ${shinyTag ? '<span style="color: var(--accent-gold); font-size: 10px;">★</span>' : ''}
         </div>
-        <div class="calc-match-item-meta">Val: ${valText} | Dem: ${item.demandLabel}</div>
+        <div class="calc-match-item-meta">Val: ${valText} | Dem: ${sanitizeInput(item.demandLabel)}</div>
       `;
 
       row.addEventListener('click', () => {
@@ -510,14 +525,16 @@ function updateSidePreview(side, item) {
   }
 
   const valText = item.isNilValue ? 'Nil' : item.baseValue;
-  if (nameEl) nameEl.innerHTML = `${item.name} <span style="font-size: 11px; color: var(--accent-cyan);">(${item.type})</span>`;
-  if (metaEl) metaEl.textContent = `Val: ${valText} • Dem: ${item.demandLabel}`;
+  const safeName = sanitizeInput(item.name);
+  const safeType = sanitizeInput(item.type);
+  if (nameEl) nameEl.innerHTML = `${safeName} <span style="font-size: 11px; color: var(--accent-cyan);">(${safeType})</span>`;
+  if (metaEl) metaEl.textContent = `Val: ${valText} • Dem: ${sanitizeInput(item.demandLabel)}`;
 
   if (cb && label) {
     if (item.hasShiny) {
       cb.disabled = false;
       label.classList.remove('disabled');
-      label.title = `Add Shiny ${item.name} (Val: ${item.shinyValue})`;
+      label.title = `Add Shiny ${safeName} (Val: ${item.shinyValue})`;
     } else {
       cb.checked = false;
       cb.disabled = true;
@@ -604,7 +621,7 @@ function updateTradeVerdict() {
   detailsEl.textContent = `Their Offer has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
 }
 
-// Group duplicate items by quantity stacking (x2, x3)
+// Group duplicate items by quantity stacking (x2, x3) with WebP image support
 function renderTradeList(sideItems, listElementId) {
   const ul = document.getElementById(listElementId);
   if (!ul) return;
@@ -630,23 +647,26 @@ function renderTradeList(sideItems, listElementId) {
     li.className = 'trade-item';
     const valText = group.isNilValue ? 'Nil' : group.tradeValue * group.quantity;
     const fallbackEmoji = (group.type || '').toLowerCase() === 'gem' ? '💎' : '🔨';
-    const imagePath = group.isShiny ? `images/${group.id}_shiny.png` : `images/${group.id}.png`;
+    
+    const imagePath = group.isShiny ? `images/${group.id}_shiny.webp` : `images/${group.id}.webp`;
+    const fallbackPng = group.isShiny ? `images/${group.id}_shiny.png` : `images/${group.id}.png`;
+    const safeName = sanitizeInput(group.name);
 
     li.innerHTML = `
       <div class="trade-item-left">
         <img 
           src="${imagePath}" 
-          alt="${group.name}" 
+          alt="${safeName}" 
           class="trade-thumb"
-          onerror="this.src='images/${group.id}.png'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';};"
+          onerror="this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';}; this.src='${fallbackPng}';"
         />
         <div class="trade-thumb-fallback" style="display: none;">${fallbackEmoji}</div>
         <div style="min-width: 0; flex: 1;">
           <div class="trade-item-title">
-            ${group.name}
+            ${safeName}
             ${group.isShiny ? '<span style="color: #fbbf24; font-size: 10px; margin-left: 2px;">★</span>' : ''}
           </div>
-          <span style="font-size: 10px; color: var(--text-muted);">Val: <b style="color: var(--accent-gold);">${valText}</b> • Dem: ${group.demandLabel}</span>
+          <span style="font-size: 10px; color: var(--text-muted);">Val: <b style="color: var(--accent-gold);">${valText}</b> • Dem: ${sanitizeInput(group.demandLabel)}</span>
         </div>
       </div>
       <div class="trade-item-controls">
@@ -739,7 +759,7 @@ function renderItems(items) {
     const card = document.createElement('div');
     const isShiny = item.hasShiny && !!shinyState[item.id];
     const displayRarity = item.rarity === 'Unobtainable' ? 'Untradeable' : item.rarity;
-    const rarityClass = `rarity-${displayRarity.toLowerCase()}`;
+    const rarityClass = `rarity-${sanitizeInput(displayRarity).toLowerCase()}`;
     const isMythical = (item.rarity || '').toLowerCase() === 'mythical';
 
     card.className = `card ${rarityClass} ${isShiny ? 'is-shiny' : ''}`;
@@ -747,7 +767,13 @@ function renderItems(items) {
     const isGem = (item.type || '').toLowerCase() === 'gem';
     const display = getItemActiveDisplay(item, isShiny);
     const fallbackEmoji = isGem ? '💎' : '🔨';
-    const imagePath = isShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
+    
+    const imagePath = isShiny ? `images/${item.id}_shiny.webp` : `images/${item.id}.webp`;
+    const fallbackPng = isShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
+    const safeName = sanitizeInput(item.name);
+    const safeType = sanitizeInput(item.type);
+    const safeSet = sanitizeInput(item.setName || item.releaseEvent);
+    const safeStatus = sanitizeInput(display.status);
 
     const countYour = yourOffer.filter((i) => i.id === item.id).length;
     const countTheir = theirOffer.filter((i) => i.id === item.id).length;
@@ -766,22 +792,22 @@ function renderItems(items) {
       <div class="card-image-wrap">
         <img 
           src="${imagePath}" 
-          alt="${item.name}" 
+          alt="${safeName}" 
           class="card-img"
           loading="lazy"
-          onerror="this.src='images/${item.id}.png'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';};"
+          onerror="this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';}; this.src='${fallbackPng}';"
         />
         <div class="card-img-fallback" style="display: none;">${fallbackEmoji}</div>
       </div>
       <div class="card-top-info">
         <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 3px;">
-          <span class="badge ${isGem ? 'badge-gem' : ''}">${item.type}</span>
-          <span class="badge-rarity badge-${rarityClass}">${displayRarity}</span>
+          <span class="badge ${isGem ? 'badge-gem' : ''}">${safeType}</span>
+          <span class="badge-rarity badge-${rarityClass}">${sanitizeInput(displayRarity)}</span>
           ${isShiny ? '<span class="badge badge-shiny">★ SHINY</span>' : ''}
         </div>
-        <span class="set-tag" title="${item.setName || item.releaseEvent}">${item.setName || item.releaseEvent}</span>
+        <span class="set-tag" title="${safeSet}">${safeSet}</span>
       </div>
-      <h3 class="card-title" title="${item.name}">${item.name}</h3>
+      <h3 class="card-title" title="${safeName}">${safeName}</h3>
       <div class="meta-rows">
         <div class="row">
           <span>Value</span>
@@ -789,11 +815,11 @@ function renderItems(items) {
         </div>
         <div class="row">
           <span>Demand</span>
-          <span class="demand">${display.demandLabel}</span>
+          <span class="demand">${sanitizeInput(display.demandLabel)}</span>
         </div>
         <div class="row">
           <span>Status</span>
-          <span class="status-tag" title="${display.status}">${display.status}</span>
+          <span class="status-tag" title="${safeStatus}">${safeStatus}</span>
         </div>
       </div>
       <div class="card-actions">
@@ -808,7 +834,7 @@ function renderItems(items) {
       </div>
     `;
 
-    // Mythical Audio Preview with Safe Fallbacks
+    // Mythical Audio Preview
     const audioBtn = card.querySelector('.card-audio-btn');
     if (audioBtn) {
       audioBtn.addEventListener('click', (e) => {
@@ -870,7 +896,8 @@ function renderItems(items) {
         shinyState[item.id] = !shinyState[item.id];
         const isNowShiny = !!shinyState[item.id];
         const updatedDisplay = getItemActiveDisplay(item, isNowShiny);
-        const updatedImagePath = isNowShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
+        const updatedWebP = isNowShiny ? `images/${item.id}_shiny.webp` : `images/${item.id}.webp`;
+        const updatedPng = isNowShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
 
         card.classList.toggle('is-shiny', isNowShiny);
         starBtn.classList.toggle('active', isNowShiny);
@@ -879,19 +906,19 @@ function renderItems(items) {
         if (valEl) valEl.textContent = updatedDisplay.value;
 
         const demEl = card.querySelector('.demand');
-        if (demEl) demEl.textContent = updatedDisplay.demandLabel;
+        if (demEl) demEl.textContent = sanitizeInput(updatedDisplay.demandLabel);
 
         const statEl = card.querySelector('.status-tag');
         if (statEl) {
-          statEl.textContent = updatedDisplay.status;
-          statEl.title = updatedDisplay.status;
+          statEl.textContent = sanitizeInput(updatedDisplay.status);
+          statEl.title = sanitizeInput(updatedDisplay.status);
         }
 
         const imgEl = card.querySelector('.card-img');
         if (imgEl) {
-          imgEl.src = updatedImagePath;
+          imgEl.src = updatedWebP;
           imgEl.onerror = function () {
-            this.src = `images/${item.id}.png`;
+            this.src = updatedPng;
             this.onerror = function () {
               this.style.display = 'none';
               this.nextElementSibling.style.display = 'flex';
@@ -949,10 +976,10 @@ function renderItems(items) {
   });
 }
 
-// Multi-Criteria Filtering Logic
+// Multi-Criteria Filtering Logic with Sanitized Query
 function applyFilters() {
   const searchInput = document.getElementById('search');
-  const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+  const query = sanitizeInput(searchInput ? searchInput.value : '').toLowerCase().trim();
 
   let filtered = allItems.filter((item) => {
     const itemType = (item.type || '').toLowerCase().trim();
@@ -1052,7 +1079,7 @@ function setupEventListeners() {
   if (btnAddYour) {
     btnAddYour.addEventListener('click', () => {
       const input = document.getElementById('calc-search-your');
-      const query = (input ? input.value : '').toLowerCase().trim();
+      const query = sanitizeInput(input ? input.value : '').toLowerCase().trim();
 
       if (!selectedItemYour && query) {
         selectedItemYour = allItems.find((i) => 
@@ -1078,7 +1105,7 @@ function setupEventListeners() {
   if (btnAddTheir) {
     btnAddTheir.addEventListener('click', () => {
       const input = document.getElementById('calc-search-their');
-      const query = (input ? input.value : '').toLowerCase().trim();
+      const query = sanitizeInput(input ? input.value : '').toLowerCase().trim();
 
       if (!selectedItemTheir && query) {
         selectedItemTheir = allItems.find((i) => 
