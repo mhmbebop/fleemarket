@@ -136,10 +136,15 @@ function populateEventFilters(items) {
     ),
   ].sort();
 
+  if (uniqueEvents.length === 0) {
+    container.innerHTML = '<span style="font-size: 11px; color: var(--text-muted);">No events found</span>';
+    return;
+  }
+
   uniqueEvents.forEach((ev) => {
     const label = document.createElement('label');
     label.className = 'drawer-label';
-    label.innerHTML = `<input type="checkbox" class="cb-event" value="${ev}"> ${ev}`;
+    label.innerHTML = `<input type="checkbox" class="cb-event" value="${ev}" ${activeEvents.has(ev) ? 'checked' : ''}> ${ev}`;
 
     label.querySelector('input').addEventListener('change', (e) => {
       if (e.target.checked) {
