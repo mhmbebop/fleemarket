@@ -321,6 +321,36 @@ function loadTradeState() {
   }
 }
 
+// Dynamic validation for Calculate Trade button
+function updateCalculateButtonState() {
+  const btnFinalize = document.getElementById('btn-finalize-trade');
+  const helperText = document.getElementById('calculate-helper-text');
+  
+  const hasBothSides = yourOffer.length > 0 && theirOffer.length > 0;
+
+  if (btnFinalize) {
+    btnFinalize.disabled = !hasBothSides;
+    if (hasBothSides) {
+      btnFinalize.style.opacity = '1';
+      btnFinalize.title = 'Calculate and log this trade to history';
+      if (helperText) helperText.style.display = 'none';
+    } else {
+      btnFinalize.style.opacity = '0.4';
+      btnFinalize.title = 'Add items to both sides to calculate';
+      if (helperText) {
+        helperText.style.display = 'block';
+        if (yourOffer.length === 0 && theirOffer.length === 0) {
+          helperText.textContent = '⚠️ Add items to both sides to enable calculation';
+        } else if (yourOffer.length === 0) {
+          helperText.textContent = '⚠️ Add items to "Your Offer" to calculate';
+        } else {
+          helperText.textContent = '⚠️ Add items to "Their Offer" to calculate';
+        }
+      }
+    }
+  }
+}
+
 // Syncs tab badges, floating dock, and floating tray
 function updateCalculatorUI() {
   const badge = document.getElementById('trade-count-badge');
@@ -369,6 +399,7 @@ function updateCalculatorUI() {
   if (trayCountYour) trayCountYour.textContent = yourOffer.length;
   if (trayCountTheir) trayCountTheir.textContent = theirOffer.length;
 
+  updateCalculateButtonState();
   refreshCardButtonBadges();
   saveTradeState();
 }
@@ -1041,7 +1072,7 @@ function copyTradeForDiscord() {
     return Array.from(map.entries()).map(([k, count]) => count > 1 ? `${k} x${count}` : k).join(', ');
   };
 
-  const text = `### ⚖️ **FLEEMARKET Trade Breakdown**\n` +
+  const text = `### ⚖️️ **FLEEMARKET Trade Breakdown**\n` +
     `**Your Offer:** ${formatList(yourOffer)} (Val: **${dataYour.totalValue}**)\n` +
     `**Their Offer:** ${formatList(theirOffer)} (Val: **${dataTheir.totalValue}**)\n` +
     `**Verdict:** ${document.getElementById('verdict-text')?.textContent || 'Fair Trade'}\n` +
@@ -1104,7 +1135,7 @@ const formatTradeSummary = (items) => {
 
 // Trade History Log Management with Full Item Breakdown
 function saveCompletedTrade(verdict = 'Completed Trade') {
-  if (yourOffer.length === 0 && theirOffer.length === 0) return;
+  if (yourOffer.length === 0 || theirOffer.length === 0) return;
   try {
     let history = [];
     const saved = localStorage.getItem(HISTORY_KEY);
