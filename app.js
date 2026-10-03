@@ -8,10 +8,11 @@ const CACHE_KEY_DATA = 'flee_items_cache_v1';
 const CACHE_KEY_TIME = 'flee_items_time_v1';
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
-// Persistent Trade & Tab Keys
+// Persistent Trade, Tab & History Keys
 const TRADE_KEY_YOUR = 'flee_trade_your_v1';
 const TRADE_KEY_THEIR = 'flee_trade_their_v1';
 const TAB_KEY_PREF = 'flee_active_tab_v1';
+const HISTORY_KEY = 'flee_trade_history_v1';
 
 let allItems = [];
 let yourOffer = [];
@@ -46,10 +47,26 @@ function sanitizeInput(str) {
     .replace(/'/g, '&#x27;');
 }
 
+// 2. LocalStorage Housekeeping (Stale Cache Cleanup on Startup)
+function performLocalStorageHousekeeping() {
+  try {
+    const cachedTime = Number(localStorage.getItem(CACHE_KEY_TIME)) || 0;
+    // If cache is older than 24 hours, purge stale cache to keep mobile footprint lightweight
+    if (Date.now() - cachedTime > 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(CACHE_KEY_DATA);
+      localStorage.removeItem(CACHE_KEY_TIME);
+    }
+  } catch (e) {
+    console.warn('LocalStorage housekeeping warning:', e);
+  }
+}
+
 // Immediate Tab Switching with Persistent Memory
 function switchTab(targetTab, saveToStorage = true) {
   document.querySelectorAll('.tab-btn').forEach((btn) => {
-    btn.classList.toggle('active', btn.getAttribute('data-tab') === targetTab);
+    const isTarget = btn.getAttribute('data-tab') === targetTab;
+    btn.classList.toggle('active', isTarget);
+    btn.setAttribute('aria-selected', isTarget ? 'true' : 'false');
   });
   document.querySelectorAll('.tab-panel').forEach((panel) => {
     panel.classList.toggle('active', panel.id === `tab-${targetTab}`);
@@ -188,7 +205,7 @@ function populateEventFilters(items) {
     const label = document.createElement('label');
     label.className = 'drawer-label';
     const safeEv = sanitizeInput(ev);
-    label.innerHTML = `<input type="checkbox" class="cb-event" value="${safeEv}" ${activeEvents.has(ev) ? 'checked' : ''}> ${safeEv}`;
+    label.innerHTML = `<input type="checkbox" class="cb-event" value="${safeEv}" aria-label="Filter event ${safeEv}" ${activeEvents.has(ev) ? 'checked' : ''}> ${safeEv}`;
 
     label.querySelector('input').addEventListener('change', (e) => {
       if (e.target.checked) {
@@ -255,6 +272,47 @@ function saveTradeState() {
 }
 
 function loadTradeState() {
+  // Check URL query parameters first for shareable link loading (?you=...&them=...)
+  const params = new URLSearchParams(window.location.search);
+  const paramYou = params.get('you');
+  const paramTheir = params.get('them');
+
+  if (paramYou || paramTheir) {
+    try {
+      if (paramYou) {
+        yourOffer = [];
+        paramYou.split(',').forEach((part) => {
+          const [id, countStr, shinyStr] = part.split(':');
+          const item = allItems.find((i) => i.id === id);
+          if (item) {
+            const count = parseInt(countStr) || 1;
+            const isShiny = shinyStr === '1';
+            for (let c = 0; c < count; c++) {
+              addItemToTrade(item, 'your', isShiny);
+            }
+          }
+        });
+      }
+      if (paramTheir) {
+        theirOffer = [];
+        paramTheir.split(',').forEach((part) => {
+          const [id, countStr, shinyStr] = part.split(':');
+          const item = allItems.find((i) => i.id === id);
+          if (item) {
+            const count = parseInt(countStr) || 1;
+            const isShiny = shinyStr === '1';
+            for (let c = 0; c < count; c++) {
+              addItemToTrade(item, 'their', isShiny);
+            }
+          }
+        });
+      }
+      return;
+    } catch (e) {
+      console.warn('Failed to parse shareable URL trade link:', e);
+    }
+  }
+
   try {
     const savedYour = localStorage.getItem(TRADE_KEY_YOUR);
     const savedTheir = localStorage.getItem(TRADE_KEY_THEIR);
@@ -337,7 +395,7 @@ function renderTrayList(sideItems, listId, sideTarget) {
         <b>${safeName}</b> ${item.isShiny ? '<span style="color:#fbbf24;">★</span>' : ''}
         <span style="color:var(--text-muted); font-size:10px;">(${valText})</span>
       </div>
-      <button type="button" class="remove-btn" style="width:22px; height:22px; font-size:11px;">✕</button>
+      <button type="button" class="remove-btn" aria-label="Remove item" style="width:22px; height:22px; font-size:11px;">✕</button>
     `;
 
     li.querySelector('.remove-btn').addEventListener('click', () => {
@@ -594,6 +652,7 @@ function updateTradeVerdict() {
     verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
     detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
     verdictEl.classList.add('status-fair');
+    saveCompletedTrade();
     return;
   }
 
@@ -601,25 +660,33 @@ function updateTradeVerdict() {
   const maxVal = Math.max(dataYour.totalValue, dataTheir.totalValue, 1);
   const percentDiff = (diff / maxVal) * 100;
 
+  let verdictString = 'Fair Trade';
   if (percentDiff > 15) {
     verdictEl.textContent = '🎉 Big Win';
     verdictEl.classList.add('status-win');
+    verdictString = 'Big Win';
   } else if (percentDiff > 5) {
     verdictEl.textContent = '✅ Small Win';
     verdictEl.classList.add('status-win');
+    verdictString = 'Small Win';
   } else if (percentDiff >= -5) {
     verdictEl.textContent = '⚖️ Fair Trade';
     verdictEl.classList.add('status-fair');
+    verdictString = 'Fair Trade';
   } else if (percentDiff >= -15) {
     verdictEl.textContent = '🔻 Small Loss';
     verdictEl.classList.add('status-loss');
+    verdictString = 'Small Loss';
   } else {
     verdictEl.textContent = '❌ Big Loss';
     verdictEl.classList.add('status-loss');
+    verdictString = 'Big Loss';
   }
 
   const sign = diff > 0 ? '+' : '';
   detailsEl.textContent = `Their Offer has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
+
+  saveCompletedTrade(verdictString);
 }
 
 // Group duplicate items by quantity stacking (x2, x3) with WebP image support
@@ -671,10 +738,10 @@ function renderTradeList(sideItems, listElementId) {
         </div>
       </div>
       <div class="trade-item-controls">
-        <button class="qty-btn btn-minus" title="Decrease quantity">−</button>
+        <button class="qty-btn btn-minus" aria-label="Decrease quantity">−</button>
         <span class="qty-badge">×${group.quantity}</span>
-        <button class="qty-btn btn-plus" title="Increase quantity">+</button>
-        <button class="remove-btn btn-remove" title="Remove all">✕</button>
+        <button class="qty-btn btn-plus" aria-label="Increase quantity">+</button>
+        <button class="remove-btn btn-remove" aria-label="Remove item" title="Remove all">✕</button>
       </div>
     `;
 
@@ -784,11 +851,11 @@ function renderItems(items) {
     const countTheir = theirOffer.filter((i) => i.id === item.id).length;
 
     const starButtonHtml = item.hasShiny
-      ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-action="toggle-shiny" data-id="${item.id}" title="Toggle Shiny Version">★</div>`
+      ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-action="toggle-shiny" data-id="${item.id}" aria-label="Toggle shiny for ${safeName}" title="Toggle Shiny Version">★</div>`
       : '';
 
     const audioButtonHtml = isMythical
-      ? `<button type="button" class="card-audio-btn" data-action="play-audio" data-id="${item.id}" title="Play Sound Effect">🔊</button>`
+      ? `<button type="button" class="card-audio-btn" data-action="play-audio" data-id="${item.id}" aria-label="Play sound effect for ${safeName}" title="Play Sound Effect">🔊</button>`
       : '';
 
     card.innerHTML = `
@@ -829,12 +896,12 @@ function renderItems(items) {
       </div>
       <div class="card-actions">
         <div class="card-btn-group side-your ${countYour > 0 ? 'has-items' : ''}">
-          <button class="card-add-btn" data-action="add-your" data-id="${item.id}">${countYour > 0 ? `+ You (${countYour})` : '+ Your Offer'}</button>
-          <button class="card-minus-btn" data-action="minus-your" data-id="${item.id}" title="Remove one from Your Offer">−</button>
+          <button class="card-add-btn" data-action="add-your" data-id="${item.id}" aria-label="Add ${safeName} to your offer">${countYour > 0 ? `+ You (${countYour})` : '+ Your Offer'}</button>
+          <button class="card-minus-btn" data-action="minus-your" data-id="${item.id}" aria-label="Remove one ${safeName} from your offer">−</button>
         </div>
         <div class="card-btn-group side-their ${countTheir > 0 ? 'has-items' : ''}">
-          <button class="card-add-btn" data-action="add-their" data-id="${item.id}">${countTheir > 0 ? `+ Them (${countTheir})` : '+ Their Offer'}</button>
-          <button class="card-minus-btn" data-action="minus-their" data-id="${item.id}" title="Remove one from Their Offer">−</button>
+          <button class="card-add-btn" data-action="add-their" data-id="${item.id}" aria-label="Add ${safeName} to their offer">${countTheir > 0 ? `+ Them (${countTheir})` : '+ Their Offer'}</button>
+          <button class="card-minus-btn" data-action="minus-their" data-id="${item.id}" aria-label="Remove one ${safeName} from their offer">−</button>
         </div>
       </div>
     `;
@@ -984,6 +1051,131 @@ window.forceSyncNow = async function(event) {
   if (icon) icon.textContent = '↻';
 };
 
+// Discord Trade Export Formatter
+function copyTradeForDiscord() {
+  const dataYour = calculateSide(yourOffer);
+  const dataTheir = calculateSide(theirOffer);
+
+  const formatList = (items) => {
+    if (items.length === 0) return 'None';
+    const map = new Map();
+    items.forEach((i) => {
+      const key = `${i.name} ${i.isShiny ? '★' : ''}`;
+      map.set(key, (map.get(key) || 0) + 1);
+    });
+    return Array.from(map.entries()).map(([k, count]) => count > 1 ? `${k} x${count}` : k).join(', ');
+  };
+
+  const text = `### ⚖️ **FLEEMARKET Trade Breakdown**\n` +
+    `**Your Offer:** ${formatList(yourOffer)} (Val: **${dataYour.totalValue}**)\n` +
+    `**Their Offer:** ${formatList(theirOffer)} (Val: **${dataTheir.totalValue}**)\n` +
+    `**Verdict:** ${document.getElementById('verdict-text')?.textContent || 'Fair Trade'}\n` +
+    `_Generated via FLEEMARKET Trade Hub_`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-copy-discord');
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = '✓ Copied to Clipboard!';
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+  }).catch((err) => {
+    console.warn('Failed to copy to clipboard:', err);
+  });
+}
+
+// Shareable URL Trade Link Generator
+function copyShareableLink() {
+  const encodeSide = (items) => {
+    const map = new Map();
+    items.forEach((i) => {
+      const key = `${i.id}_${i.isShiny ? '1' : '0'}`;
+      map.set(key, (map.get(key) || 0) + 1);
+    });
+    return Array.from(map.entries()).map(([key, count]) => {
+      const [id, shiny] = key.split('_');
+      return `${id}:${count}:${shiny}`;
+    }).join(',');
+  };
+
+  const paramYou = encodeSide(yourOffer);
+  const paramTheir = encodeSide(theirOffer);
+  const url = new URL(window.location.origin + window.location.pathname);
+  if (paramYou) url.searchParams.set('you', paramYou);
+  if (paramTheir) url.searchParams.set('them', paramTheir);
+
+  navigator.clipboard.writeText(url.toString()).then(() => {
+    const btn = document.getElementById('btn-share-link');
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = '✓ Link Copied!';
+      setTimeout(() => btn.textContent = orig, 2000);
+    }
+  }).catch((err) => {
+    console.warn('Failed to copy shareable link:', err);
+  });
+}
+
+// Trade History Log Management
+function saveCompletedTrade(verdict = 'Completed Trade') {
+  if (yourOffer.length === 0 && theirOffer.length === 0) return;
+  try {
+    let history = [];
+    const saved = localStorage.getItem(HISTORY_KEY);
+    if (saved) history = JSON.parse(saved);
+
+    const dataYour = calculateSide(yourOffer);
+    const dataTheir = calculateSide(theirOffer);
+
+    const entry = {
+      date: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+      yourVal: dataYour.totalValue,
+      theirVal: dataTheir.totalValue,
+      verdict: verdict,
+      yourCount: yourOffer.length,
+      theirCount: theirOffer.length
+    };
+
+    history.unshift(entry);
+    if (history.length > 5) history = history.slice(0, 5); // Keep last 5
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    renderTradeHistory();
+  } catch (e) {
+    console.warn('Failed to save trade history:', e);
+  }
+}
+
+function renderTradeHistory() {
+  const ul = document.getElementById('trade-history-list');
+  if (!ul) return;
+  ul.innerHTML = '';
+
+  try {
+    const saved = localStorage.getItem(HISTORY_KEY);
+    if (!saved) {
+      ul.innerHTML = '<li style="font-size: 11px; color: var(--text-muted);">No recent trades saved</li>';
+      return;
+    }
+    const history = JSON.parse(saved);
+    if (history.length === 0) {
+      ul.innerHTML = '<li style="font-size: 11px; color: var(--text-muted);">No recent trades saved</li>';
+      return;
+    }
+
+    history.forEach((h) => {
+      const li = document.createElement('li');
+      li.style.cssText = 'font-size: 11px; color: var(--text-main); background: var(--surface-2); padding: 5px 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;';
+      li.innerHTML = `
+        <span><b>${h.date}</b>: You (${h.yourVal}) vs Them (${h.theirVal})</span>
+        <span style="color: var(--accent-cyan); font-weight: 700;">${h.verdict}</span>
+      `;
+      ul.appendChild(li);
+    });
+  } catch (e) {
+    console.warn('Failed to render trade history:', e);
+  }
+}
+
 function setupEventListeners() {
   setupPrefixSearch('calc-search-your', 'btn-clear-calc-your', 'matches-panel-your', 'your');
   setupPrefixSearch('calc-search-their', 'btn-clear-calc-their', 'matches-panel-their', 'their');
@@ -991,6 +1183,24 @@ function setupEventListeners() {
   const btnForceSync = document.getElementById('btn-force-sync');
   if (btnForceSync) {
     btnForceSync.addEventListener('click', (e) => window.forceSyncNow(e));
+  }
+
+  const btnCopyDiscord = document.getElementById('btn-copy-discord');
+  if (btnCopyDiscord) {
+    btnCopyDiscord.addEventListener('click', copyTradeForDiscord);
+  }
+
+  const btnShareLink = document.getElementById('btn-share-link');
+  if (btnShareLink) {
+    btnShareLink.addEventListener('click', copyShareableLink);
+  }
+
+  const btnClearHistory = document.getElementById('btn-clear-history');
+  if (btnClearHistory) {
+    btnClearHistory.addEventListener('click', () => {
+      localStorage.removeItem(HISTORY_KEY);
+      renderTradeHistory();
+    });
   }
 
   const itemsGrid = document.getElementById('items-grid');
@@ -1246,11 +1456,10 @@ function setupEventListeners() {
   }
 }
 
-// Multi-Source CSV Fallback Cascade (GVIZ -> Publish Web -> Local CSV -> LocalStorage Cache)
+// Multi-Source CSV Fallback Cascade
 async function fetchFreshCSV() {
   const cacheBust = `&_t=${Date.now()}`;
 
-  // 1. Try GVIZ export URL
   try {
     const res = await fetch(GVIZ_CSV_URL + cacheBust);
     if (res.ok) {
@@ -1258,10 +1467,9 @@ async function fetchFreshCSV() {
       if (text && text.length > 50) return text;
     }
   } catch (err) {
-    console.warn('GVIZ CSV fetch failed, trying Publish-to-Web CSV...', err);
+    console.warn('GVIZ CSV fetch failed...', err);
   }
 
-  // 2. Try Publish-to-Web CSV URL
   try {
     const res = await fetch(PRIMARY_CSV_URL + cacheBust);
     if (res.ok) {
@@ -1269,10 +1477,9 @@ async function fetchFreshCSV() {
       if (text && text.length > 50) return text;
     }
   } catch (err) {
-    console.warn('Publish-to-Web CSV fetch failed, trying local repository CSV...', err);
+    console.warn('Publish-to-Web CSV fetch failed...', err);
   }
 
-  // 3. Try Local Committed CSV File in Repository
   try {
     const res = await fetch(LOCAL_CSV_PATH + `?_t=${Date.now()}`);
     if (res.ok) {
@@ -1280,10 +1487,9 @@ async function fetchFreshCSV() {
       if (text && text.length > 50) return text;
     }
   } catch (err) {
-    console.warn('Local CSV fetch failed, falling back to LocalStorage cache...', err);
+    console.warn('Local CSV fetch failed...', err);
   }
 
-  // 4. Fall back to LocalStorage Cache
   try {
     const cachedCSV = localStorage.getItem(CACHE_KEY_DATA);
     if (cachedCSV) return cachedCSV;
@@ -1296,6 +1502,8 @@ async function fetchFreshCSV() {
 
 async function loadData(forceRefresh = false) {
   const statusEl = document.getElementById('status');
+
+  performLocalStorageHousekeeping();
 
   if (!forceRefresh) {
     try {
@@ -1318,6 +1526,7 @@ async function loadData(forceRefresh = false) {
             renderTradeList(yourOffer, 'list-your');
             renderTradeList(theirOffer, 'list-their');
             updateTradeVerdict();
+            renderTradeHistory();
             return;
           }
         }
@@ -1358,6 +1567,7 @@ async function loadData(forceRefresh = false) {
       renderTradeList(yourOffer, 'list-your');
       renderTradeList(theirOffer, 'list-their');
       updateTradeVerdict();
+      renderTradeHistory();
       return;
     }
   }
