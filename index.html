@@ -130,6 +130,32 @@
       border: 1px solid #21262d;
       font-size: 14px;
     }
+    .trade-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .trade-thumb {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      background: #21262d;
+      object-fit: contain;
+      border: 1px solid #30363d;
+      flex-shrink: 0;
+    }
+    .trade-thumb-fallback {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      background: #21262d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      border: 1px solid #30363d;
+      flex-shrink: 0;
+    }
     .remove-btn {
       background: none;
       border: none;
@@ -170,46 +196,48 @@
     .status-fair { color: #f2cc60; }
     .status-loss { color: #f85149; }
 
-    /* Thumbnail preview inside trade list */
-    .trade-item-left {
+    /* --- Catalog & Filter Controls --- */
+    .controls-row {
       display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
       align-items: center;
-      gap: 10px;
+      margin-bottom: 20px;
     }
-    .trade-thumb {
-      width: 36px;
-      height: 36px;
-      border-radius: 6px;
-      background: #21262d;
-      object-fit: contain;
-      border: 1px solid #30363d;
-      flex-shrink: 0;
-    }
-    .trade-thumb-fallback {
-      width: 36px;
-      height: 36px;
-      border-radius: 6px;
-      background: #21262d;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      border: 1px solid #30363d;
-      flex-shrink: 0;
-    }
-
-    /* --- Catalog Card Styles --- */
     .search-box {
       width: 100%;
-      max-width: 400px;
+      max-width: 350px;
       padding: 10px 14px;
-      margin-bottom: 20px;
       border-radius: 8px;
       border: 1px solid #30363d;
       background: #161b22;
       color: #fff;
-      font-size: 16px;
+      font-size: 14px;
       outline: none;
+    }
+    .filter-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    .filter-btn {
+      background: #161b22;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .filter-btn:hover {
+      background: #21262d;
+      color: #f0f6fc;
+    }
+    .filter-btn.active {
+      background: #9d7dfd;
+      border-color: #9d7dfd;
+      color: #0f111a;
     }
     .grid {
       display: grid;
@@ -345,7 +373,16 @@
 
   <!-- ITEM CATALOG SECTION -->
   <h2>Item Database</h2>
-  <input type="text" id="search" class="search-box" placeholder="Search hammer or gem..." />
+  
+  <div class="controls-row">
+    <input type="text" id="search" class="search-box" placeholder="Search hammer, gem, or crate..." />
+    <div class="filter-btn-group">
+      <button class="filter-btn active" data-filter="all">All Items</button>
+      <button class="filter-btn" data-filter="hammer">🔨 Hammers</button>
+      <button class="filter-btn" data-filter="gem">💎 Gems</button>
+    </div>
+  </div>
+
   <div class="grid" id="items-grid"></div>
 
   <script src="app.js"></script>
