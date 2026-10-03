@@ -549,42 +549,82 @@ function updateTradeVerdict() {
   detailsEl.textContent = `Their Offer has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
 }
 
+// Group duplicate items by quantity stacking (x2, x3)
 function renderTradeList(sideItems, listElementId) {
   const ul = document.getElementById(listElementId);
   if (!ul) return;
   ul.innerHTML = '';
 
-  sideItems.forEach((item, index) => {
+  if (sideItems.length === 0) {
+    return;
+  }
+
+  const groupedMap = new Map();
+  sideItems.forEach((item) => {
+    const key = `${item.id}_${item.isShiny ? 'shiny' : 'base'}`;
+    if (!groupedMap.has(key)) {
+      groupedMap.set(key, { ...item, quantity: 1 });
+    } else {
+      groupedMap.get(key).quantity += 1;
+    }
+  });
+
+  groupedMap.forEach((group, key) => {
     const li = document.createElement('li');
     li.className = 'trade-item';
-    const valText = item.isNilValue ? 'Nil' : item.tradeValue;
-    const fallbackEmoji = (item.type || '').toLowerCase() === 'gem' ? '💎' : '🔨';
-    const imagePath = item.isShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
+    const valText = group.isNilValue ? 'Nil' : group.tradeValue * group.quantity;
+    const fallbackEmoji = (group.type || '').toLowerCase() === 'gem' ? '💎' : '🔨';
+    const imagePath = group.isShiny ? `images/${group.id}_shiny.png` : `images/${group.id}.png`;
 
     li.innerHTML = `
       <div class="trade-item-left">
         <img 
           src="${imagePath}" 
-          alt="${item.name}" 
+          alt="${group.name}" 
           class="trade-thumb"
-          onerror="this.src='images/${item.id}.png'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';};"
+          onerror="this.src='images/${group.id}.png'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';};"
         />
         <div class="trade-thumb-fallback" style="display: none;">${fallbackEmoji}</div>
         <div style="min-width: 0; flex: 1;">
           <div class="trade-item-title">
-            ${item.name}
-            ${item.isShiny ? '<span style="color: #fbbf24; font-size: 10px; margin-left: 2px;">★</span>' : ''}
+            ${group.name}
+            ${group.isShiny ? '<span style="color: #fbbf24; font-size: 10px; margin-left: 2px;">★</span>' : ''}
           </div>
-          <span style="font-size: 10px; color: var(--text-muted);">Val: <b style="color: var(--accent-gold);">${valText}</b> • Dem: ${item.demandLabel}</span>
+          <span style="font-size: 10px; color: var(--text-muted);">Val: <b style="color: var(--accent-gold);">${valText}</b> • Dem: ${group.demandLabel}</span>
         </div>
       </div>
-      <button class="remove-btn" data-index="${index}">✕</button>
+      <div class="trade-item-controls">
+        <button class="qty-btn btn-minus" title="Decrease quantity">−</button>
+        <span class="qty-badge">×${group.quantity}</span>
+        <button class="qty-btn btn-plus" title="Increase quantity">+</button>
+        <button class="remove-btn btn-remove" title="Remove all">✕</button>
+      </div>
     `;
 
-    li.querySelector('.remove-btn').addEventListener('click', () => {
-      sideItems.splice(index, 1);
-      renderTradeList(yourOffer, 'list-your');
-      renderTradeList(theirOffer, 'list-their');
+    // Minus button
+    li.querySelector('.btn-minus').addEventListener('click', () => {
+      const idx = sideItems.findIndex((i) => i.id === group.id && !!i.isShiny === !!group.isShiny);
+      if (idx !== -1) {
+        sideItems.splice(idx, 1);
+        renderTradeList(sideItems, listElementId);
+        updateTradeVerdict();
+      }
+    });
+
+    // Plus button
+    li.querySelector('.btn-plus').addEventListener('click', () => {
+      addItemToTrade(group, listElementId === 'list-your' ? 'your' : 'their', group.isShiny);
+    });
+
+    // Remove all button
+    li.querySelector('.btn-remove').addEventListener('click', () => {
+      const targetArray = listElementId === 'list-your' ? yourOffer : theirOffer;
+      for (let i = targetArray.length - 1; i >= 0; i--) {
+        if (targetArray[i].id === group.id && !!targetArray[i].isShiny === !!group.isShiny) {
+          targetArray.splice(i, 1);
+        }
+      }
+      renderTradeList(targetArray, listElementId);
       updateTradeVerdict();
     });
 
