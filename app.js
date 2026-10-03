@@ -494,7 +494,7 @@ function updateTradeVerdict() {
 
   if (valYour) valYour.textContent = dataYour.hasNil ? `${dataYour.totalValue} + Nil` : dataYour.totalValue;
   if (demYour) demYour.textContent = dataYour.avgDemand;
-  if (valTheir) valTheir.textContent = dataTheir.hasNil ? `${dataTheir.totalValue} + Nil` : dataTheir.totalValue;
+  if (valTheir) valTheir.textContent = dataTheir.hasNil ? `${dataTheir.totalValue} + Nil` : dataDailyDemandText(dataTheir.avgDemand);
   if (demTheir) demTheir.textContent = dataTheir.avgDemand;
 
   updateCalculatorUI();
@@ -538,6 +538,10 @@ function updateTradeVerdict() {
 
   const sign = diff > 0 ? '+' : '';
   detailsEl.textContent = `Their Offer has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
+}
+
+function dataDailyDemandText(val) {
+  return val;
 }
 
 function renderTradeList(sideItems, listElementId) {
@@ -912,6 +916,16 @@ function setupEventListeners() {
   setupPrefixSearch('calc-search-your', 'btn-clear-calc-your', 'matches-panel-your', 'your');
   setupPrefixSearch('calc-search-their', 'btn-clear-calc-their', 'matches-panel-their', 'their');
 
+  // Manual Force-Sync Button
+  const btnForceSync = document.getElementById('btn-force-sync');
+  if (btnForceSync) {
+    btnForceSync.addEventListener('click', async () => {
+      btnForceSync.classList.add('is-syncing');
+      await loadData(true);
+      btnForceSync.classList.remove('is-syncing');
+    });
+  }
+
   // Calculator Add Buttons
   const btnAddYour = document.getElementById('btn-add-your');
   if (btnAddYour) {
@@ -1091,6 +1105,7 @@ function setupEventListeners() {
     });
   }
 
+  // Clear / Reset All Filters
   const btnClearFilters = document.getElementById('btn-clear-filters');
   if (btnClearFilters) {
     btnClearFilters.addEventListener('click', () => {
@@ -1111,13 +1126,21 @@ function setupEventListeners() {
   }
 }
 
-// Direct Data Loader
-async function loadData() {
+// Direct Data Loader with optional Cache-Busting Force Sync
+async function loadData(forceRefresh = false) {
   const statusEl = document.getElementById('status');
   let csvText = null;
 
+  // Append a cache-buster parameter if forceRefresh is requested
+  const cacheBust = forceRefresh ? `&_t=${Date.now()}` : '';
+
+  if (forceRefresh && statusEl) {
+    statusEl.textContent = 'Syncing live with Google Sheets...';
+    statusEl.style.color = 'var(--accent-cyan)';
+  }
+
   try {
-    const res = await fetch(PRIMARY_CSV_URL);
+    const res = await fetch(PRIMARY_CSV_URL + cacheBust);
     if (res.ok) csvText = await res.text();
   } catch (err) {
     console.warn('Primary CSV fetch failed, trying GVIZ fallback...', err);
@@ -1125,10 +1148,10 @@ async function loadData() {
 
   if (!csvText) {
     try {
-      const res = await fetch(GVIZ_CSV_URL);
+      const res = await fetch(GVIZ_CSV_URL + cacheBust);
       if (res.ok) csvText = await res.text();
     } catch (err) {
-      console.warn('GVIZ fallback fetch failed, trying local file...', err);
+      console.warn('GVIZ fallback also failed, trying local file...', err);
     }
   }
 
@@ -1144,7 +1167,10 @@ async function loadData() {
   if (csvText) {
     allItems = parseCSV(csvText);
     if (statusEl) {
-      statusEl.textContent = `✓ Synced ${allItems.length} items successfully`;
+      const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      statusEl.textContent = forceRefresh
+        ? `✓ Live synced ${allItems.length} items (${timeStr})`
+        : `✓ Synced ${allItems.length} items successfully`;
       statusEl.style.color = 'var(--accent-green)';
     }
     populateEventFilters(allItems);
