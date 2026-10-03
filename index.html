@@ -56,7 +56,7 @@
     }
 
     header {
-      margin-bottom: clamp(16px, 3.5vw, 28px);
+      margin-bottom: clamp(16px, 3vw, 24px);
     }
     .header-badge {
       display: inline-flex;
@@ -97,15 +97,75 @@
       display: inline-block;
     }
 
-    /* --- Trade Calculator --- */
+    /* --- Primary Navigation Tabs --- */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      background: var(--surface-1);
+      padding: 5px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: clamp(16px, 3vw, 24px);
+      width: 100%;
+      max-width: 480px;
+    }
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      touch-action: manipulation;
+    }
+    .tab-btn:hover {
+      color: #fff;
+    }
+    .tab-btn.active {
+      background: var(--surface-2);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .tab-badge {
+      background: var(--primary);
+      color: #0b0f17;
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    /* Tab Panels */
+    .tab-panel {
+      display: none;
+      width: 100%;
+    }
+    .tab-panel.active {
+      display: block;
+      animation: tabFadeIn 0.2s ease-out;
+    }
+    @keyframes tabFadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* --- Trade Calculator View --- */
     .calculator-container {
       background: var(--surface-glass);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: clamp(12px, 2.5vw, 24px);
-      margin-bottom: clamp(18px, 3.5vw, 36px);
+      padding: clamp(14px, 3vw, 26px);
       box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
       width: 100%;
       overflow: hidden;
@@ -118,7 +178,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
     .reset-btn {
       background: rgba(255, 255, 255, 0.05);
@@ -140,13 +200,13 @@
     .trade-columns {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      gap: 16px;
       width: 100%;
     }
     @media (max-width: 820px) {
       .trade-columns {
         grid-template-columns: 1fr;
-        gap: 12px;
+        gap: 14px;
       }
     }
 
@@ -154,7 +214,7 @@
       background: var(--surface-1);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: clamp(10px, 2.5vw, 16px);
+      padding: clamp(12px, 2.5vw, 18px);
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -162,8 +222,8 @@
       width: 100%;
       overflow: hidden;
     }
-    .trade-side.side-a { border-top: 3px solid var(--accent-cyan); }
-    .trade-side.side-b { border-top: 3px solid var(--accent-green); }
+    .trade-side.side-your { border-top: 3px solid var(--accent-cyan); }
+    .trade-side.side-their { border-top: 3px solid var(--accent-green); }
 
     .side-header {
       display: flex;
@@ -173,13 +233,13 @@
     }
     .side-title {
       font-family: 'Outfit', sans-serif;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    .side-a .side-title { color: var(--accent-cyan); }
-    .side-b .side-title { color: var(--accent-green); }
+    .side-your .side-title { color: var(--accent-cyan); }
+    .side-their .side-title { color: var(--accent-green); }
 
     .item-select-row {
       display: flex;
@@ -225,8 +285,8 @@
       white-space: nowrap;
       touch-action: manipulation;
     }
-    .side-a .add-btn { background: var(--accent-cyan); }
-    .side-b .add-btn { background: var(--accent-green); }
+    .side-your .add-btn { background: var(--accent-cyan); }
+    .side-their .add-btn { background: var(--accent-green); }
     .add-btn:active {
       transform: scale(0.97);
     }
@@ -247,8 +307,8 @@
       list-style: none;
       padding: 0;
       margin: 0;
-      min-height: 70px;
-      max-height: 240px;
+      min-height: 80px;
+      max-height: 260px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -260,7 +320,7 @@
       justify-content: space-between;
       align-items: center;
       background: var(--surface-2);
-      padding: 7px 10px;
+      padding: 8px 10px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       gap: 8px;
@@ -276,8 +336,8 @@
       overflow: hidden;
     }
     .trade-thumb, .trade-thumb-fallback {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       border-radius: var(--radius-sm);
       background: #090b10;
       object-fit: contain;
@@ -324,8 +384,8 @@
     }
 
     .verdict-box {
-      margin-top: 14px;
-      padding: clamp(10px, 2vw, 16px) 12px;
+      margin-top: 16px;
+      padding: clamp(12px, 2.5vw, 18px) 14px;
       border-radius: var(--radius-md);
       text-align: center;
       background: var(--surface-1);
@@ -696,6 +756,7 @@
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
     }
 
+    /* Touch-Optimized Star Button */
     .shiny-star-btn {
       position: absolute;
       top: 7px;
@@ -850,6 +911,7 @@
       text-align: right;
     }
 
+    /* Quick Action Buttons (Your Offer / Their Offer) */
     .card-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -872,12 +934,12 @@
     .card-add-btn:active {
       transform: scale(0.96);
     }
-    .card-add-btn.side-a:hover, .card-add-btn.side-a:active {
+    .card-add-btn.side-your:hover, .card-add-btn.side-your:active {
       background: rgba(56, 189, 248, 0.15);
       border-color: var(--accent-cyan);
       color: var(--accent-cyan);
     }
-    .card-add-btn.side-b:hover, .card-add-btn.side-b:active {
+    .card-add-btn.side-their:hover, .card-add-btn.side-their:active {
       background: rgba(52, 211, 153, 0.15);
       border-color: var(--accent-green);
       color: var(--accent-green);
@@ -894,150 +956,166 @@
       <div id="status">Syncing with Google Sheets...</div>
     </header>
 
-    <!-- TRADE CALCULATOR SECTION -->
-    <div class="calculator-container" id="calculator">
-      <div class="calculator-title">
+    <!-- NAVIGATION TABS -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" data-tab="catalog">
+        <span>📦 Item Catalog</span>
+      </button>
+      <button class="tab-btn" data-tab="calculator">
         <span>⚖️ Trade Calculator</span>
-        <button class="reset-btn" id="btn-reset">Reset</button>
-      </div>
+        <span class="tab-badge" id="trade-count-badge" style="display: none;">0</span>
+      </button>
+    </div>
 
-      <div class="trade-columns">
-        <!-- SIDE A -->
-        <div class="trade-side side-a">
-          <div class="side-header">
-            <span class="side-title">Side A • Your Offer</span>
+    <!-- TAB 1: ITEM CATALOG -->
+    <div class="tab-panel active" id="tab-catalog">
+      <div class="catalog-header">
+        <h2 class="catalog-title">Item Inventory</h2>
+        <div class="controls-row">
+          <div class="search-wrap">
+            <input type="text" id="search" class="search-box" placeholder="Search weapons, crates..." autocomplete="off" />
+            <button type="button" id="btn-clear-search" class="clear-search-btn" title="Clear search">✕</button>
           </div>
-          <div class="item-select-row">
-            <select id="select-a" class="select-dropdown">
-              <option value="">Select item...</option>
-            </select>
-            <button class="add-btn" id="btn-add-a">+ Add</button>
-          </div>
-          <ul id="list-a" class="selected-list"></ul>
-          <div class="side-summary">
-            <span>Total: <b id="total-val-a" class="val">0</b></span>
-            <span>Avg Dem: <b id="avg-dem-a" class="demand">-</b></span>
-          </div>
-        </div>
 
-        <!-- SIDE B -->
-        <div class="trade-side side-b">
-          <div class="side-header">
-            <span class="side-title">Side B • Their Offer</span>
+          <div class="filter-btn-group">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="hammer">🔨 Hammers</button>
+            <button class="filter-btn" data-filter="gem">💎 Gems</button>
           </div>
-          <div class="item-select-row">
-            <select id="select-b" class="select-dropdown">
-              <option value="">Select item...</option>
-            </select>
-            <button class="add-btn" id="btn-add-b">+ Add</button>
-          </div>
-          <ul id="list-b" class="selected-list"></ul>
-          <div class="side-summary">
-            <span>Total: <b id="total-val-b" class="val">0</b></span>
-            <span>Avg Dem: <b id="avg-dem-b" class="demand">-</b></span>
-          </div>
+          <button class="filter-drawer-btn" id="btn-toggle-filters">
+            <span>⚙ Filters</span>
+            <span class="filter-badge-count" id="filter-count" style="display: none;">0</span>
+          </button>
+          <select id="sort-select" class="select-dropdown sort-dropdown">
+            <option value="val-desc">Value: High to Low</option>
+            <option value="val-asc">Value: Low to High</option>
+            <option value="dem-desc">Demand: High to Low</option>
+            <option value="dem-asc">Demand: Low to High</option>
+            <option value="name-asc">Name: A to Z</option>
+            <option value="name-desc">Name: Z to A</option>
+          </select>
         </div>
       </div>
 
-      <div class="verdict-box" id="verdict-box">
-        <div class="verdict-text" id="verdict-text">Add items to both sides</div>
-        <div class="verdict-details" id="verdict-details">Difference: 0 Value</div>
+      <!-- EXPANDABLE MULTI-FILTER DRAWER -->
+      <div class="filter-drawer" id="filter-drawer">
+        <div class="drawer-grid">
+          <!-- RARITY OPTIONS -->
+          <div>
+            <div class="drawer-section-title">Rarity Tier</div>
+            <div class="drawer-checkbox-group">
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Untradeable"> Untradeable</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Mythical"> Mythical</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Legendary"> Legendary</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Epic"> Epic</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Rare"> Rare</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Common"> Common</label>
+            </div>
+          </div>
+
+          <!-- DEMAND TIER OPTIONS -->
+          <div>
+            <div class="drawer-section-title">Demand Tier</div>
+            <div class="drawer-checkbox-group">
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="6"> ★ (Star / Highest)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="5"> 5 (High)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="4"> 4 (Good)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="3"> 3 (Average)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="2"> 2 (Below Average)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="1"> 1 (Low)</label>
+            </div>
+          </div>
+
+          <!-- STATUS OPTIONS -->
+          <div>
+            <div class="drawer-section-title">Item Status</div>
+            <div class="drawer-checkbox-group">
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Exceptional"> Exceptional</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Overpaid For"> Overpaid For</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Doing Well"> Doing Well</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Stable"> Stable</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Fluctuating"> Fluctuating</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Subpar"> Subpar</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Untradeable"> Untradeable</label>
+            </div>
+          </div>
+
+          <!-- SPECIAL PROPERTIES -->
+          <div>
+            <div class="drawer-section-title">Properties</div>
+            <div class="drawer-checkbox-group">
+              <label class="drawer-label"><input type="checkbox" id="cb-has-shiny"> Has Shiny Variant</label>
+            </div>
+          </div>
+
+          <!-- EVENTS & CRATES (Unobtainable Excluded) -->
+          <div>
+            <div class="drawer-section-title">Event & Crate</div>
+            <div class="drawer-checkbox-group" id="events-checkbox-group"></div>
+          </div>
+        </div>
+
+        <div class="drawer-footer">
+          <button class="clear-filters-btn" id="btn-clear-filters">Reset All Filters</button>
+        </div>
+      </div>
+
+      <div class="grid" id="items-grid"></div>
+    </div>
+
+    <!-- TAB 2: TRADE CALCULATOR -->
+    <div class="tab-panel" id="tab-calculator">
+      <div class="calculator-container" id="calculator">
+        <div class="calculator-title">
+          <span>⚖️ Trade Fairness Calculator</span>
+          <button class="reset-btn" id="btn-reset">Reset Trade</button>
+        </div>
+
+        <div class="trade-columns">
+          <!-- YOUR OFFER -->
+          <div class="trade-side side-your">
+            <div class="side-header">
+              <span class="side-title">Your Offer</span>
+            </div>
+            <div class="item-select-row">
+              <select id="select-your" class="select-dropdown">
+                <option value="">Select item...</option>
+              </select>
+              <button class="add-btn" id="btn-add-your">+ Add</button>
+            </div>
+            <ul id="list-your" class="selected-list"></ul>
+            <div class="side-summary">
+              <span>Total: <b id="total-val-your" class="val">0</b></span>
+              <span>Avg Dem: <b id="avg-dem-your" class="demand">-</b></span>
+            </div>
+          </div>
+
+          <!-- THEIR OFFER -->
+          <div class="trade-side side-their">
+            <div class="side-header">
+              <span class="side-title">Their Offer</span>
+            </div>
+            <div class="item-select-row">
+              <select id="select-their" class="select-dropdown">
+                <option value="">Select item...</option>
+              </select>
+              <button class="add-btn" id="btn-add-their">+ Add</button>
+            </div>
+            <ul id="list-their" class="selected-list"></ul>
+            <div class="side-summary">
+              <span>Total: <b id="total-val-their" class="val">0</b></span>
+              <span>Avg Dem: <b id="avg-dem-their" class="demand">-</b></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="verdict-box" id="verdict-box">
+          <div class="verdict-text" id="verdict-text">Add items to compare trade</div>
+          <div class="verdict-details" id="verdict-details">Difference: 0 Value</div>
+        </div>
       </div>
     </div>
 
-    <!-- CATALOG & CONTROLS SECTION -->
-    <div class="catalog-header">
-      <h2 class="catalog-title">Item Catalog</h2>
-      <div class="controls-row">
-        <div class="search-wrap">
-          <input type="text" id="search" class="search-box" placeholder="Search weapons, crates..." autocomplete="off" />
-          <button type="button" id="btn-clear-search" class="clear-search-btn" title="Clear search">✕</button>
-        </div>
-
-        <div class="filter-btn-group">
-          <button class="filter-btn active" data-filter="all">All</button>
-          <button class="filter-btn" data-filter="hammer">🔨 Hammers</button>
-          <button class="filter-btn" data-filter="gem">💎 Gems</button>
-        </div>
-        <button class="filter-drawer-btn" id="btn-toggle-filters">
-          <span>⚙ Filters</span>
-          <span class="filter-badge-count" id="filter-count" style="display: none;">0</span>
-        </button>
-        <select id="sort-select" class="select-dropdown sort-dropdown">
-          <option value="val-desc">Value: High to Low</option>
-          <option value="val-asc">Value: Low to High</option>
-          <option value="dem-desc">Demand: High to Low</option>
-          <option value="dem-asc">Demand: Low to High</option>
-          <option value="name-asc">Name: A to Z</option>
-          <option value="name-desc">Name: Z to A</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- EXPANDABLE MULTI-FILTER DRAWER -->
-    <div class="filter-drawer" id="filter-drawer">
-      <div class="drawer-grid">
-        <!-- RARITY OPTIONS -->
-        <div>
-          <div class="drawer-section-title">Rarity Tier</div>
-          <div class="drawer-checkbox-group">
-            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Untradeable"> Untradeable</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Mythical"> Mythical</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Legendary"> Legendary</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Epic"> Epic</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Rare"> Rare</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Common"> Common</label>
-          </div>
-        </div>
-
-        <!-- DEMAND TIER OPTIONS -->
-        <div>
-          <div class="drawer-section-title">Demand Tier</div>
-          <div class="drawer-checkbox-group">
-            <label class="drawer-label"><input type="checkbox" class="cb-demand" value="6"> ★ (Star / Highest)</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-demand" value="5"> 5 (High)</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-demand" value="4"> 4 (Good)</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-demand" value="3"> 3 (Average)</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-demand" value="2"> 2 (Below Average)</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-demand" value="1"> 1 (Low)</label>
-          </div>
-        </div>
-
-        <!-- STATUS OPTIONS -->
-        <div>
-          <div class="drawer-section-title">Item Status</div>
-          <div class="drawer-checkbox-group">
-            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Exceptional"> Exceptional</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Overpaid For"> Overpaid For</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Doing Well"> Doing Well</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Stable"> Stable</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Fluctuating"> Fluctuating</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Subpar"> Subpar</label>
-            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Untradeable"> Untradeable</label>
-          </div>
-        </div>
-
-        <!-- SPECIAL PROPERTIES -->
-        <div>
-          <div class="drawer-section-title">Properties</div>
-          <div class="drawer-checkbox-group">
-            <label class="drawer-label"><input type="checkbox" id="cb-has-shiny"> Has Shiny Variant</label>
-          </div>
-        </div>
-
-        <!-- EVENTS & CRATES (Unobtainable Excluded) -->
-        <div>
-          <div class="drawer-section-title">Event & Crate</div>
-          <div class="drawer-checkbox-group" id="events-checkbox-group"></div>
-        </div>
-      </div>
-
-      <div class="drawer-footer">
-        <button class="clear-filters-btn" id="btn-clear-filters">Reset All Filters</button>
-      </div>
-    </div>
-
-    <div class="grid" id="items-grid"></div>
   </div>
 
   <script src="app.js"></script>
