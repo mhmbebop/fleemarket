@@ -97,7 +97,7 @@
       display: inline-block;
     }
 
-    /* --- Trade Calculator (Mobile Overflow Protected) --- */
+    /* --- Trade Calculator --- */
     .calculator-container {
       background: var(--surface-glass);
       backdrop-filter: blur(16px);
@@ -181,7 +181,6 @@
     .side-a .side-title { color: var(--accent-cyan); }
     .side-b .side-title { color: var(--accent-green); }
 
-    /* Dropdown + Add Button Row */
     .item-select-row {
       display: flex;
       gap: 8px;
@@ -232,7 +231,6 @@
       transform: scale(0.97);
     }
 
-    /* Mobile: Stack Add Button below dropdown when screen width is under 480px */
     @media (max-width: 480px) {
       .item-select-row {
         flex-direction: column;
@@ -454,8 +452,8 @@
       font-weight: 800;
     }
     .sort-dropdown {
-      flex: 1 1 130px;
-      max-width: 180px;
+      flex: 1 1 150px;
+      max-width: 210px;
     }
 
     /* --- Multi-Filter Accordion Drawer --- */
@@ -938,7 +936,9 @@
           <option value="val-desc">Value: High to Low</option>
           <option value="val-asc">Value: Low to High</option>
           <option value="dem-desc">Demand: High to Low</option>
+          <option value="dem-asc">Demand: Low to High</option>
           <option value="name-asc">Name: A to Z</option>
+          <option value="name-desc">Name: Z to A</option>
         </select>
       </div>
     </div>
