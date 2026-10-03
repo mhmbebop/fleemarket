@@ -194,6 +194,7 @@ function getItemActiveDisplay(item, isShiny = false) {
 function updateCalculatorUI() {
   const badge = document.getElementById('trade-count-badge');
   const dock = document.getElementById('floating-trade-dock');
+  const drawer = document.getElementById('dock-items-drawer');
   const totalItems = yourOffer.length + theirOffer.length;
 
   if (badge) {
@@ -208,8 +209,19 @@ function updateCalculatorUI() {
   const dataYour = calculateSide(yourOffer);
   const dataTheir = calculateSide(theirOffer);
 
+  // Automatically dismiss dock and preview drawer when 0 items remain
+  if (totalItems === 0) {
+    if (dock) dock.classList.remove('visible');
+    if (drawer) drawer.classList.remove('open');
+  } else {
+    const catalogActive = document.getElementById('tab-catalog')?.classList.contains('active');
+    if (dock && catalogActive) {
+      dock.classList.add('visible');
+    }
+  }
+
   // Sync dock stats
-  if (dock) {
+  if (dock && totalItems > 0) {
     const countYour = document.getElementById('dock-count-your');
     const valYour = document.getElementById('dock-val-your');
     const countTheir = document.getElementById('dock-count-their');
@@ -219,13 +231,6 @@ function updateCalculatorUI() {
     if (valYour) valYour.textContent = dataYour.hasNil ? `${dataYour.totalValue} + Nil` : dataYour.totalValue;
     if (countTheir) countTheir.textContent = theirOffer.length;
     if (valTheir) valTheir.textContent = dataTheir.hasNil ? `${dataTheir.totalValue} + Nil` : dataTheir.totalValue;
-
-    const catalogActive = document.getElementById('tab-catalog')?.classList.contains('active');
-    if (totalItems > 0 && catalogActive) {
-      dock.classList.add('visible');
-    } else {
-      dock.classList.remove('visible');
-    }
   }
 
   renderTrayList(yourOffer, 'tray-list-your', 'your');
@@ -351,7 +356,7 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
     matches.forEach((item) => {
       const row = document.createElement('div');
       row.className = 'calc-match-item';
-      const valText = item.isNilValue ? 'Nil' : item.tradeValue;
+      const valText = item.isNilValue ? 'Nil' : item.baseValue;
       const shinyTag = item.hasShiny ? '★' : '';
 
       row.innerHTML = `
@@ -959,6 +964,8 @@ function setupEventListeners() {
       if (inTheir) inTheir.value = '';
       if (clrYour) clrYour.style.display = 'none';
       if (clrTheir) clrTheir.style.display = 'none';
+      document.getElementById('dock-items-drawer')?.classList.remove('open');
+      document.getElementById('floating-trade-dock')?.classList.remove('visible');
       updateTradeVerdict();
     });
   }
@@ -992,6 +999,8 @@ function setupEventListeners() {
       theirOffer = [];
       renderTradeList(yourOffer, 'list-your');
       renderTradeList(theirOffer, 'list-their');
+      document.getElementById('dock-items-drawer')?.classList.remove('open');
+      document.getElementById('floating-trade-dock')?.classList.remove('visible');
       updateTradeVerdict();
     });
   }
