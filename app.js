@@ -47,6 +47,11 @@ function parseCSV(text) {
     headers.forEach((header, index) => {
       row[header] = cols[index] !== undefined ? cols[index] : '';
     });
+
+    const rawRarity = (row.rarity || 'Rare').trim();
+    // Normalize "Unobtainable" from sheet data into "Untradeable"
+    const normalizedRarity = rawRarity.toLowerCase() === 'unobtainable' ? 'Untradeable' : rawRarity;
+
     return {
       id: row.id,
       name: (row.name || '').trim(),
@@ -61,7 +66,7 @@ function parseCSV(text) {
       setName: (row.set_name || '').trim(),
       hasShiny: (row.has_shiny || '').toUpperCase() === 'TRUE',
       shinyValue: Number(row.shiny_value) || 0,
-      rarity: (row.rarity || 'Rare').trim(),
+      rarity: normalizedRarity,
     };
   });
 }
@@ -204,7 +209,7 @@ function updateTradeVerdict() {
   }
 
   if (dataA.hasNil || dataB.hasNil) {
-    verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
+    verdictEl.textContent = '⚠️️ Contains Indefinite / Nil Item(s)';
     detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
     verdictEl.classList.add('status-fair');
     return;
@@ -316,8 +321,8 @@ function renderItems(items) {
   items.forEach((item) => {
     const card = document.createElement('div');
     const isShiny = item.hasShiny && !!shinyState[item.id];
-    const rarityClean = (item.rarity || 'rare').toLowerCase();
-    const rarityClass = `rarity-${rarityClean}`;
+    const displayRarity = item.rarity === 'Unobtainable' ? 'Untradeable' : item.rarity;
+    const rarityClass = `rarity-${displayRarity.toLowerCase()}`;
 
     card.className = `card ${rarityClass} ${isShiny ? 'is-shiny' : ''}`;
 
@@ -344,7 +349,7 @@ function renderItems(items) {
       <div class="card-top-info">
         <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
           <span class="badge ${isGem ? 'badge-gem' : ''}">${item.type}</span>
-          <span class="badge-rarity badge-${rarityClass}">${item.rarity}</span>
+          <span class="badge-rarity badge-${rarityClass}">${displayRarity}</span>
           ${isShiny ? '<span class="badge badge-shiny">★ SHINY</span>' : ''}
         </div>
         <span class="set-tag" title="${item.setName || item.releaseEvent}">${item.setName || item.releaseEvent}</span>
@@ -450,12 +455,12 @@ function applyFilters() {
     if (currentFilter === 'hammer' && itemType !== 'hammer') return false;
     if (currentFilter === 'gem' && itemType !== 'gem') return false;
 
-    // 2. Multi-select Rarity filter (Supports matching "Unobtainable" and "Untradeable")
+    // 2. Multi-select Rarity filter (Matches Untradeable accurately)
     if (activeRarities.size > 0) {
       let matchesRarity = false;
       for (const selRarity of activeRarities) {
         const lowerSel = selRarity.toLowerCase();
-        if (lowerSel === 'unobtainable' && (itemRarity === 'unobtainable' || itemRarity === 'untradeable')) {
+        if (lowerSel === 'untradeable' && (itemRarity === 'untradeable' || itemRarity === 'unobtainable')) {
           matchesRarity = true;
           break;
         } else if (itemRarity === lowerSel) {
