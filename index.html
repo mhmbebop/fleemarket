@@ -502,20 +502,20 @@
       box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.7);
     }
 
-    /* UNOBTAINABLE / UNTRADEABLE (Crimson Red) */
-    .card.rarity-unobtainable, .card.rarity-untradeable {
+    /* UNTRADEABLE (Crimson Red matching Pigtail, VIP, Warhammer) */
+    .card.rarity-untradeable, .card.rarity-unobtainable {
       border-color: rgba(239, 68, 68, 0.55);
       background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, var(--surface-1) 100%);
     }
-    .card.rarity-unobtainable:hover, .card.rarity-untradeable:hover {
+    .card.rarity-untradeable:hover, .card.rarity-unobtainable:hover {
       box-shadow: 0 12px 28px -10px rgba(239, 68, 68, 0.45);
       border-color: rgba(239, 68, 68, 0.85);
     }
-    .card.rarity-unobtainable .card-title, .card.rarity-untradeable .card-title {
+    .card.rarity-untradeable .card-title, .card.rarity-unobtainable .card-title {
       color: #ef4444;
       text-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
     }
-    .badge-rarity-unobtainable, .badge-rarity-untradeable {
+    .badge-rarity-untradeable, .badge-rarity-unobtainable {
       background: rgba(239, 68, 68, 0.18);
       color: #f87171;
       border: 1px solid rgba(239, 68, 68, 0.45);
@@ -871,7 +871,7 @@
         <div>
           <div class="drawer-section-title">Rarity Tier</div>
           <div class="drawer-checkbox-group">
-            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Unobtainable"> Unobtainable</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Untradeable"> Untradeable</label>
             <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Mythical"> Mythical</label>
             <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Legendary"> Legendary</label>
             <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Epic"> Epic</label>
