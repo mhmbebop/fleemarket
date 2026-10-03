@@ -1,1 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 Player Flee - Official Value List</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background-color: #0f111a;
+      color: #e6edf3;
+    }
+    h1 {
+      margin-bottom: 8px;
+      color: #9d7dfd;
+    }
+    p {
+      color: #8b949e;
+      margin-top: 0;
+    }
+    #status {
+      font-weight: bold;
+      color: #58a6ff;
+      margin-bottom: 16px;
+    }
+    .search-box {
+      width: 100%;
+      max-width: 400px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+      background: #161b22;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #f0f6fc;
+      margin: 0;
+    }
+    .badge {
+      display: inline-block;
+      align-self: flex-start;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #238636;
+      color: #fff;
+    }
+    .badge-gem {
+      background: #1f6feb;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #8b949e;
+    }
+    .value {
+      color: #f2cc60;
+      font-weight: bold;
+    }
+    .demand {
+      color: #ff7b72;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
 
+  <h1>10 Player Flee - Items & Values</h1>
+  <p>Live inventory synced with Google Sheets</p>
+
+  <input type="text" id="search" class="search-box" placeholder="Search hammer or gem..." />
+  <div id="status">Loading items from Google Sheets...</div>
+
+  <div class="grid" id="items-grid"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
