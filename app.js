@@ -61,7 +61,6 @@ function populateDropdowns(items) {
   const selectA = document.getElementById('select-a');
   const selectB = document.getElementById('select-b');
 
-  // Sort alphabetically by name
   const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name));
 
   sorted.forEach((item) => {
@@ -196,7 +195,22 @@ function renderTradeList(side, listElementId) {
   });
 }
 
-// Render catalog cards with thumbnails
+// Helper to push items into trade sides from either the dropdown or card buttons
+function addItemToTrade(itemId, sideTarget) {
+  const item = allItems.find((i) => i.id === itemId);
+  if (!item) return;
+
+  if (sideTarget === 'A') {
+    sideA.push(item);
+    renderTradeList(sideA, 'list-a');
+  } else if (sideTarget === 'B') {
+    sideB.push(item);
+    renderTradeList(sideB, 'list-b');
+  }
+  updateTradeVerdict();
+}
+
+// Render catalog cards with thumbnails and quick-add buttons
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   grid.innerHTML = '';
@@ -242,7 +256,20 @@ function renderItems(items) {
         <span>Status:</span>
         <span>${item.status}</span>
       </div>
+      <div class="card-actions">
+        <button class="card-add-btn side-a" data-id="${item.id}" data-side="A">+ Side A</button>
+        <button class="card-add-btn side-b" data-id="${item.id}" data-side="B">+ Side B</button>
+      </div>
     `;
+
+    // Attach click listeners to quick-add buttons on the card
+    card.querySelector('.card-add-btn.side-a').addEventListener('click', (e) => {
+      addItemToTrade(e.target.getAttribute('data-id'), 'A');
+    });
+    card.querySelector('.card-add-btn.side-b').addEventListener('click', (e) => {
+      addItemToTrade(e.target.getAttribute('data-id'), 'B');
+    });
+
     grid.appendChild(card);
   });
 }
@@ -284,27 +311,15 @@ async function loadData() {
   }
 }
 
-// Trade Calculator Event Listeners
+// Trade Calculator Dropdown Buttons
 document.getElementById('btn-add-a').addEventListener('click', () => {
   const id = document.getElementById('select-a').value;
-  if (!id) return;
-  const item = allItems.find((i) => i.id === id);
-  if (item) {
-    sideA.push(item);
-    renderTradeList(sideA, 'list-a');
-    updateTradeVerdict();
-  }
+  if (id) addItemToTrade(id, 'A');
 });
 
 document.getElementById('btn-add-b').addEventListener('click', () => {
   const id = document.getElementById('select-b').value;
-  if (!id) return;
-  const item = allItems.find((i) => i.id === id);
-  if (item) {
-    sideB.push(item);
-    renderTradeList(sideB, 'list-b');
-    updateTradeVerdict();
-  }
+  if (id) addItemToTrade(id, 'B');
 });
 
 document.getElementById('btn-reset').addEventListener('click', () => {
