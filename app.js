@@ -706,7 +706,7 @@ function renderItems(items) {
       </div>
     `;
 
-    // Mythical Sound Preview Trigger
+    // Mythical Audio Preview
     const audioBtn = card.querySelector('.card-audio-btn');
     if (audioBtn) {
       audioBtn.addEventListener('click', (e) => {
@@ -752,7 +752,7 @@ function renderItems(items) {
       });
     }
 
-    // Touch & Click In-place Shiny Toggle
+    // Touch & Click Shiny Toggle
     const starBtn = card.querySelector('.shiny-star-btn');
     if (starBtn) {
       starBtn.addEventListener('click', (e) => {
@@ -804,7 +804,7 @@ function renderItems(items) {
       });
     }
 
-    // Card Add & Remove Click Handlers
+    // Card Add & Remove Handlers
     const btnAddYour = card.querySelector('.card-btn-group.side-your .card-add-btn');
     const btnMinusYour = card.querySelector('.card-btn-group.side-your .card-minus-btn');
 
@@ -1005,7 +1005,7 @@ function setupEventListeners() {
     });
   }
 
-  // Live Catalog Search with Quick Clear Button
+  // Live Catalog Search
   const searchInput = document.getElementById('search');
   const btnClearSearch = document.getElementById('btn-clear-search');
 
@@ -1091,7 +1091,6 @@ function setupEventListeners() {
     });
   }
 
-  // Clear / Reset All Filters
   const btnClearFilters = document.getElementById('btn-clear-filters');
   if (btnClearFilters) {
     btnClearFilters.addEventListener('click', () => {
@@ -1112,7 +1111,7 @@ function setupEventListeners() {
   }
 }
 
-// Resilient Loader with CORS Fallback
+// Direct Data Loader
 async function loadData() {
   const statusEl = document.getElementById('status');
   let csvText = null;
@@ -1121,7 +1120,7 @@ async function loadData() {
     const res = await fetch(PRIMARY_CSV_URL);
     if (res.ok) csvText = await res.text();
   } catch (err) {
-    console.warn('Primary CSV link failed (likely CORS), attempting GVIZ fallback...', err);
+    console.warn('Primary CSV fetch failed, trying GVIZ fallback...', err);
   }
 
   if (!csvText) {
@@ -1129,7 +1128,7 @@ async function loadData() {
       const res = await fetch(GVIZ_CSV_URL);
       if (res.ok) csvText = await res.text();
     } catch (err) {
-      console.warn('GVIZ fallback also failed, attempting relative dataset...', err);
+      console.warn('GVIZ fallback fetch failed, trying local file...', err);
     }
   }
 
@@ -1138,7 +1137,7 @@ async function loadData() {
       const res = await fetch('10_Player_Flee_Items_Database_Complete.csv');
       if (res.ok) csvText = await res.text();
     } catch (err) {
-      console.error('All fetch strategies failed.', err);
+      console.error('All fetch sources failed.', err);
     }
   }
 
@@ -1152,15 +1151,13 @@ async function loadData() {
     applyFilters();
   } else {
     if (statusEl) {
-      statusEl.textContent = '⚠️ Could not reach Google Sheets. Please ensure the sheet is Published to Web (CSV).';
+      statusEl.textContent = '⚠️ Could not reach Google Sheets. Please verify permissions.';
       statusEl.style.color = 'var(--accent-rose)';
     }
   }
 }
 
-// Mount controls immediately
+// Immediate Boot
 initTabNavigation();
 setupEventListeners();
-
-// Fetch dataset
 loadData();
