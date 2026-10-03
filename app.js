@@ -1193,7 +1193,36 @@ function setupEventListeners() {
   if (btnFinalize) {
     btnFinalize.addEventListener('click', () => {
       const verdictText = document.getElementById('verdict-text')?.textContent || 'Completed Trade';
+      
+      // Save trade to history log
       saveCompletedTrade(verdictText);
+
+      // Reset offers and clear from localStorage
+      yourOffer = [];
+      theirOffer = [];
+      localStorage.removeItem(TRADE_KEY_YOUR);
+      localStorage.removeItem(TRADE_KEY_THEIR);
+
+      // Refresh calculator UI, lists, and verdict display
+      renderTradeList(yourOffer, 'list-your');
+      renderTradeList(theirOffer, 'list-their');
+      selectedItemYour = null;
+      selectedItemTheir = null;
+      updateSidePreview('your', null);
+      updateSidePreview('their', null);
+
+      const inYour = document.getElementById('calc-search-your');
+      const inTheir = document.getElementById('calc-search-their');
+      const clrYour = document.getElementById('btn-clear-calc-your');
+      const clrTheir = document.getElementById('btn-clear-calc-their');
+      if (inYour) inYour.value = '';
+      if (inTheir) inTheir.value = '';
+      if (clrYour) clrYour.style.display = 'none';
+      if (clrTheir) clrTheir.style.display = 'none';
+
+      document.getElementById('dock-items-drawer')?.classList.remove('open');
+      document.getElementById('floating-trade-dock')?.classList.remove('visible');
+      updateTradeVerdict();
     });
   }
 
