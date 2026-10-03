@@ -2,10 +2,10 @@ const PRIMARY_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2R
 const SPREADSHEET_ID = '1XKPloRF46l0GGQOCdH0ce6Krjriitvj1LAdGTl_kkLI';
 const GVIZ_CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
 
-// LocalStorage Cache Configuration
+// LocalStorage Cache Configuration (10 minutes)
 const CACHE_KEY_DATA = 'flee_items_cache_v1';
 const CACHE_KEY_TIME = 'flee_items_time_v1';
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes cache duration
+const CACHE_TTL_MS = 10 * 60 * 1000;
 
 let allItems = [];
 let yourOffer = [];
@@ -373,11 +373,15 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
         <div class="calc-match-item-meta">Val: ${valText} | Dem: ${item.demandLabel}</div>
       `;
 
+      // Automatically add item directly upon clicking dropdown suggestion
       row.addEventListener('click', () => {
-        selectItemForSide(item, side);
-        input.value = item.name;
-        if (clearBtn) clearBtn.style.display = 'flex';
+        const isShiny = document.getElementById(`shiny-${side}`)?.checked || false;
+        addItemToTrade(item, side, isShiny);
+
+        input.value = '';
+        if (clearBtn) clearBtn.style.display = 'none';
         panel.classList.remove('open');
+        selectItemForSide(null, side);
       });
 
       panel.appendChild(row);
@@ -925,7 +929,6 @@ window.forceSyncNow = async function(event) {
   const startTime = Date.now();
   await loadData(true);
 
-  // Keep feedback visible for at least 600ms
   const elapsed = Date.now() - startTime;
   if (elapsed < 600) {
     await new Promise((resolve) => setTimeout(resolve, 600 - elapsed));
@@ -939,20 +942,17 @@ function setupEventListeners() {
   setupPrefixSearch('calc-search-your', 'btn-clear-calc-your', 'matches-panel-your', 'your');
   setupPrefixSearch('calc-search-their', 'btn-clear-calc-their', 'matches-panel-their', 'their');
 
-  // Manual Force-Sync Button
   const btnForceSync = document.getElementById('btn-force-sync');
   if (btnForceSync) {
     btnForceSync.addEventListener('click', (e) => window.forceSyncNow(e));
   }
 
-  // Calculator Add Buttons with Auto-Fallback Selection
   const btnAddYour = document.getElementById('btn-add-your');
   if (btnAddYour) {
     btnAddYour.addEventListener('click', () => {
       const input = document.getElementById('calc-search-your');
       const query = (input ? input.value : '').toLowerCase().trim();
 
-      // If user typed without clicking dropdown item, pick the top match
       if (!selectedItemYour && query) {
         selectedItemYour = allItems.find((i) => 
           (i.name || '').toLowerCase().startsWith(query) || 
@@ -1024,7 +1024,6 @@ function setupEventListeners() {
     });
   }
 
-  // Floating Dock & Tray Listeners
   const btnDockOpen = document.getElementById('btn-dock-open');
   if (btnDockOpen) {
     btnDockOpen.addEventListener('click', () => {
@@ -1059,7 +1058,6 @@ function setupEventListeners() {
     });
   }
 
-  // Live Catalog Search
   const searchInput = document.getElementById('search');
   const btnClearSearch = document.getElementById('btn-clear-search');
 
@@ -1108,7 +1106,6 @@ function setupEventListeners() {
     });
   }
 
-  // Filter Checkbox Listeners
   document.querySelectorAll('.cb-rarity').forEach((cb) => {
     cb.addEventListener('change', (e) => {
       if (e.target.checked) activeRarities.add(e.target.value);
@@ -1145,7 +1142,6 @@ function setupEventListeners() {
     });
   }
 
-  // Clear / Reset All Filters
   const btnClearFilters = document.getElementById('btn-clear-filters');
   if (btnClearFilters) {
     btnClearFilters.addEventListener('click', () => {
@@ -1166,7 +1162,6 @@ function setupEventListeners() {
   }
 }
 
-// Network fetcher that tries Google endpoints then local fallback
 async function fetchFreshCSV() {
   const cacheBust = `&_t=${Date.now()}`;
 
@@ -1194,11 +1189,9 @@ async function fetchFreshCSV() {
   return null;
 }
 
-// Resilient Stale-While-Revalidate Caching Loader with Force Refresh
 async function loadData(forceRefresh = false) {
   const statusEl = document.getElementById('status');
 
-  // 1. Check LocalStorage cache first if not manually forcing refresh
   if (!forceRefresh) {
     try {
       const cachedCSV = localStorage.getItem(CACHE_KEY_DATA);
@@ -1215,7 +1208,6 @@ async function loadData(forceRefresh = false) {
           populateEventFilters(allItems);
           applyFilters();
 
-          // If cache is under 10 minutes old, don't ping network
           if (isFresh) return;
         }
       }
@@ -1229,7 +1221,6 @@ async function loadData(forceRefresh = false) {
     }
   }
 
-  // 2. Fetch fresh CSV from Google Sheets
   const freshCSV = await fetchFreshCSV();
   if (freshCSV) {
     const parsed = parseCSV(freshCSV);
