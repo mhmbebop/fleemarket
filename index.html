@@ -609,6 +609,14 @@
       border-color: var(--primary);
     }
 
+    .trade-action-btn:disabled, #btn-finalize-trade:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      filter: grayscale(0.6);
+      pointer-events: none;
+      box-shadow: none !important;
+    }
+
     /* Controls Bar & Filters */
     .catalog-header {
       display: flex;
@@ -1213,7 +1221,7 @@
       touch-action: manipulation;
     }
     .card-minus-btn:hover {
-      background: rgba(244, 63, 94, 0.15);
+      background: var(--accent-rose);
       color: #fff;
     }
     .card-btn-group.has-items .card-minus-btn {
@@ -1635,10 +1643,11 @@
         </div>
 
         <!-- CALCULATE BUTTON -->
-        <div style="margin-top: 16px; display: flex; justify-content: center;">
-          <button type="button" id="btn-finalize-trade" class="trade-action-btn" style="background: var(--primary); color: #0b0f17; font-weight: 800; font-family: 'Outfit', sans-serif; font-size: 14px; padding: 12px 28px; width: 100%; max-width: 320px; border-radius: var(--radius-md); box-shadow: 0 4px 16px rgba(157, 125, 253, 0.3); cursor: pointer;" aria-label="Calculate trade" title="Calculate and log this trade to history">
-            ⚖️️ Calculate Trade
+        <div style="margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+          <button type="button" id="btn-finalize-trade" class="trade-action-btn" style="background: var(--primary); color: #0b0f17; font-weight: 800; font-family: 'Outfit', sans-serif; font-size: 14px; padding: 12px 28px; width: 100%; max-width: 320px; border-radius: var(--radius-md); box-shadow: 0 4px 16px rgba(157, 125, 253, 0.3); cursor: pointer;" aria-label="Calculate trade" title="Add items to both sides to calculate" disabled>
+            ⚖️ Calculate Trade
           </button>
+          <span id="calculate-helper-text" style="font-size: 11px; color: var(--accent-rose); font-weight: 600;">⚠️ Add items to both sides to enable calculation</span>
         </div>
 
         <div class="verdict-box" id="verdict-box">
