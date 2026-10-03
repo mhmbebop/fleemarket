@@ -373,8 +373,8 @@ function updateCalculatorUI() {
   saveTradeState();
 }
 
-function renderTrayList(sideItems, listId, sideTarget) {
-  const ul = document.getElementById(listId);
+function renderTrayList(sideItems, listElementId, sideTarget) {
+  const ul = document.getElementById(listElementId);
   if (!ul) return;
   ul.innerHTML = '';
 
@@ -398,8 +398,8 @@ function renderTrayList(sideItems, listId, sideTarget) {
 
     li.querySelector('.remove-btn').addEventListener('click', () => {
       sideItems.splice(index, 1);
-      renderTradeList(yourOffer, 'list-your');
-      renderTradeList(theirOffer, 'list-their');
+      renderTradeList(yourOffer, 'list-your', 'your');
+      renderTradeList(theirOffer, 'list-their', 'their');
       updateTradeVerdict();
     });
 
@@ -688,8 +688,8 @@ function updateTradeVerdict() {
 }
 
 // Group duplicate items by quantity stacking with direct emoji fallback display
-function renderTradeList(sideItems, listElementId) {
-  const ul = document.getElementById(listId);
+function renderTradeList(sideItems, listElementId, sideTarget) {
+  const ul = document.getElementById(listElementId);
   if (!ul) return;
   ul.innerHTML = '';
 
@@ -738,7 +738,8 @@ function renderTradeList(sideItems, listElementId) {
       const idx = sideItems.findIndex((i) => i.id === group.id && !!i.isShiny === !!group.isShiny);
       if (idx !== -1) {
         sideItems.splice(idx, 1);
-        renderTradeList(sideItems, listElementId);
+        renderTradeList(yourOffer, 'list-your', 'your');
+        renderTradeList(theirOffer, 'list-their', 'their');
         updateTradeVerdict();
       }
     });
@@ -754,7 +755,7 @@ function renderTradeList(sideItems, listElementId) {
           targetArray.splice(i, 1);
         }
       }
-      renderTradeList(targetArray, listElementId);
+      renderTradeList(targetArray, listElementId, listElementId === 'list-your' ? 'your' : 'their');
       updateTradeVerdict();
     });
 
@@ -779,10 +780,10 @@ function addItemToTrade(item, sideTarget, isShiny = false) {
 
   if (sideTarget === 'your') {
     yourOffer.push(tradeItem);
-    renderTradeList(yourOffer, 'list-your');
+    renderTradeList(yourOffer, 'list-your', 'your');
   } else if (sideTarget === 'their') {
     theirOffer.push(tradeItem);
-    renderTradeList(theirOffer, 'list-their');
+    renderTradeList(theirOffer, 'list-their', 'their');
   }
   updateTradeVerdict();
 }
@@ -798,7 +799,7 @@ function removeItemFromTrade(itemId, sideTarget) {
     }
   }
 
-  renderTradeList(targetArray, listId);
+  renderTradeList(targetArray, listId, sideTarget);
   updateTradeVerdict();
 }
 
@@ -1272,8 +1273,8 @@ function setupEventListeners() {
       theirOffer = [];
       localStorage.removeItem(TRADE_KEY_YOUR);
       localStorage.removeItem(TRADE_KEY_THEIR);
-      renderTradeList(yourOffer, 'list-your');
-      renderTradeList(theirOffer, 'list-their');
+      renderTradeList(yourOffer, 'list-your', 'your');
+      renderTradeList(theirOffer, 'list-their', 'their');
       selectedItemYour = null;
       selectedItemTheir = null;
       updateSidePreview('your', null);
@@ -1320,8 +1321,8 @@ function setupEventListeners() {
       theirOffer = [];
       localStorage.removeItem(TRADE_KEY_YOUR);
       localStorage.removeItem(TRADE_KEY_THEIR);
-      renderTradeList(yourOffer, 'list-your');
-      renderTradeList(theirOffer, 'list-their');
+      renderTradeList(yourOffer, 'list-your', 'your');
+      renderTradeList(theirOffer, 'list-their', 'their');
       document.getElementById('dock-items-drawer')?.classList.remove('open');
       document.getElementById('floating-trade-dock')?.classList.remove('visible');
       updateTradeVerdict();
@@ -1503,8 +1504,8 @@ async function loadData(forceRefresh = false) {
 
           if (isFresh) {
             loadTradeState();
-            renderTradeList(yourOffer, 'list-your');
-            renderTradeList(theirOffer, 'list-their');
+            renderTradeList(yourOffer, 'list-your', 'your');
+            renderTradeList(theirOffer, 'list-their', 'their');
             updateTradeVerdict();
             renderTradeHistory();
             return;
@@ -1544,8 +1545,8 @@ async function loadData(forceRefresh = false) {
       populateEventFilters(allItems);
       applyFilters();
       loadTradeState();
-      renderTradeList(yourOffer, 'list-your');
-      renderTradeList(theirOffer, 'list-their');
+      renderTradeList(yourOffer, 'list-your', 'your');
+      renderTradeList(theirOffer, 'list-their', 'their');
       updateTradeVerdict();
       renderTradeHistory();
       return;
