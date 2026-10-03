@@ -808,7 +808,7 @@ function renderItems(items) {
       </div>
     `;
 
-    // Mythical Audio Preview
+    // Mythical Audio Preview with Safe Fallbacks
     const audioBtn = card.querySelector('.card-audio-btn');
     if (audioBtn) {
       audioBtn.addEventListener('click', (e) => {
@@ -833,24 +833,32 @@ function renderItems(items) {
           }
         }
 
-        const audioSrc = `audio/${item.id}.mp3`;
-        const audio = new Audio(audioSrc);
+        const audioPaths = [
+          `audio/${item.id}.mp3`,
+          `audio/${String(item.id).toLowerCase()}.mp3`
+        ];
 
-        audio.play().then(() => {
-          audioBtn.classList.add('is-playing');
-          audioBtn.textContent = '⏹';
-          currentPlayingAudio = audio;
-          currentPlayingBtn = audioBtn;
-        }).catch((err) => {
-          console.warn(`Audio track for ${item.name} not found at ${audioSrc}:`, err);
-        });
+        let audioLoaded = false;
+        for (const audioSrc of audioPaths) {
+          const audio = new Audio(audioSrc);
+          audio.play().then(() => {
+            audioBtn.classList.add('is-playing');
+            audioBtn.textContent = '⏹';
+            currentPlayingAudio = audio;
+            currentPlayingBtn = audioBtn;
+            audioLoaded = true;
+          }).catch(() => {});
 
-        audio.onended = () => {
-          audioBtn.classList.remove('is-playing');
-          audioBtn.textContent = '🔊';
-          currentPlayingAudio = null;
-          currentPlayingBtn = null;
-        };
+          if (audioLoaded) break;
+
+          audio.onended = () => {
+            audioBtn.classList.remove('is-playing');
+            audioBtn.textContent = '🔊';
+            currentPlayingAudio = null;
+            currentPlayingBtn = null;
+          };
+          break;
+        }
       });
     }
 
