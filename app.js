@@ -184,7 +184,7 @@ function getItemActiveDisplay(item, isShiny = false) {
   };
 }
 
-// Sequential Prefix Search & Autocomplete
+// Sequential Word-Prefix Search & Autocomplete
 function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
   const input = document.getElementById(inputId);
   const clearBtn = document.getElementById(clearBtnId);
@@ -203,6 +203,110 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
       panel.classList.remove('open');
       return;
     }
+
+    const queryWords = cleanQuery.split(/\s+/);
+
+    // Filter by sequential prefix: checks whole name AND each word inside the name
+    const matches = allItems.filter((item) => {
+      const name = (item.name || '').toLowerCase();
+      const words = name.split(/\s+/);
+
+      // 1. Direct prefix match for the full name
+      if (name.startsWith(cleanQuery)) return true;
+
+      // 2. Single-word search: check if ANY word in the name starts with the prefix
+      if (queryWords.length === 1) {
+        return words.some((w) => w.startsWith(cleanQuery));
+      }
+
+      // 3. Multi-word search (e.g. "coral tiki"): ensure every query word matches the prefix of a word
+      return queryWords.every((qw) => words.some((w) => w.startsWith(qw))) || name.includes(cleanQuery);
+    });
+
+    // Priority Rank: Items starting with the query appear first, then word-matches
+    matches.sort((a, b) => {
+      const aName = (a.name || '').toLowerCase();
+      const bName = (b.name || '').toLowerCase();
+      const aDirect = aName.startsWith(cleanQuery) ? 0 : 1;
+      const bDirect = bName.startsWith(cleanQuery) ? 0 : 1;
+
+      if (aDirect !== bDirect) return aDirect - bDirect;
+      return aName.localeCompare(bName);
+    });
+
+    if (matches.length === 0) {
+      panel.innerHTML = `<div class="calc-no-match-msg">⚠️ No items starting with "${query}"</div>`;
+      panel.classList.add('open');
+      return;
+    }
+
+    matches.forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'calc-match-item';
+      const valText = item.isNilValue ? 'Nil' : item.tradeValue;
+      const shinyTag = item.hasShiny ? '★' : '';
+
+      row.innerHTML = `
+        <div class="calc-match-item-name">
+          <span>${item.name}</span>
+          <span style="font-size: 10px; color: var(--accent-cyan);">(${item.type})</span>
+          ${shinyTag ? '<span style="color: var(--accent-gold); font-size: 10px;">★</span>' : ''}
+        </div>
+        <div class="calc-match-item-meta">Val: ${valText} | Dem: ${item.demandLabel}</div>
+      `;
+
+      row.addEventListener('click', () => {
+        selectItemForSide(item, side);
+        input.value = item.name;
+        if (clearBtn) clearBtn.style.display = 'flex';
+        panel.classList.remove('open');
+      });
+
+      panel.appendChild(row);
+    });
+
+    panel.classList.add('open');
+  }
+
+  input.addEventListener('input', (e) => {
+    renderMatches(e.target.value);
+  });
+
+  input.addEventListener('focus', () => {
+    if (input.value.trim().length > 0) {
+      renderMatches(input.value);
+    }
+  });
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      clearBtn.style.display = 'none';
+      panel.classList.remove('open');
+      selectItemForSide(null, side);
+      input.focus();
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !panel.contains(e.target)) {
+      panel.classList.remove('open');
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const firstMatch = panel.querySelector('.calc-match-item');
+      if (firstMatch) {
+        firstMatch.click();
+      } else {
+        const btnAdd = document.getElementById(side === 'your' ? 'btn-add-your' : 'btn-add-their');
+        if (btnAdd) btnAdd.click();
+      }
+    }
+  });
+}
 
     // Matches MUST start with the sequential characters typed
     const matches = allItems.filter((item) => {
