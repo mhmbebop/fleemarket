@@ -1,4 +1,4 @@
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT_zzYI0whphYA9-JZfWmplFZEs1a8tOwmSL04vXk3t77lFnwv6OCm7W3OyxbjUqBbzBghWcjWpFYk9/pub?output=csv';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2RfYHa6ffWiale6czVqih6e7BrrZ-ZmRdnT10WTsS5M1ZJF9-jKSvcpyyrv5imytQ9lZsvL8su/pub?gid=0&single=true&output=csv';
 
 let allItems = [];
 let sideA = [];
@@ -7,12 +7,12 @@ let currentFilter = 'all'; // 'all' | 'hammer' | 'gem'
 let currentSort = 'val-desc';
 const shinyState = {};
 
-// Multi-filter tracking states
+// Multi-filter states
 const activeRarities = new Set();
 const activeEvents = new Set();
 let filterHasShiny = false;
 
-// CSV Parser
+// Robust CSV Parser
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
@@ -66,13 +66,19 @@ function parseCSV(text) {
   });
 }
 
-// Builds the dynamic list of events/crates inside the filter drawer
+// Builds the dynamic list of events/crates inside the filter drawer, excluding "Unobtainable"
 function populateEventFilters(items) {
   const container = document.getElementById('events-checkbox-group');
   if (!container) return;
   container.innerHTML = '';
 
-  const uniqueEvents = [...new Set(items.map((i) => i.releaseEvent).filter(Boolean))].sort();
+  const uniqueEvents = [
+    ...new Set(
+      items
+        .map((i) => i.releaseEvent)
+        .filter((ev) => ev && ev.toLowerCase() !== 'unobtainable')
+    ),
+  ].sort();
 
   uniqueEvents.forEach((ev) => {
     const label = document.createElement('label');
@@ -310,7 +316,8 @@ function renderItems(items) {
   items.forEach((item) => {
     const card = document.createElement('div');
     const isShiny = item.hasShiny && !!shinyState[item.id];
-    const rarityClass = `rarity-${(item.rarity || 'rare').toLowerCase()}`;
+    const rarityClean = (item.rarity || 'rare').toLowerCase();
+    const rarityClass = `rarity-${rarityClean}`;
 
     card.className = `card ${rarityClass} ${isShiny ? 'is-shiny' : ''}`;
 
@@ -429,23 +436,34 @@ function renderItems(items) {
   });
 }
 
-// Multi-Criteria Filtering
+// Multi-Criteria Filtering Logic
 function applyFilters() {
   const searchInput = document.getElementById('search');
   const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
 
   let filtered = allItems.filter((item) => {
     const itemType = (item.type || '').toLowerCase().trim();
-    const itemRarity = (item.rarity || '').trim();
+    const itemRarity = (item.rarity || '').trim().toLowerCase();
     const itemEvent = (item.releaseEvent || '').trim();
 
     // 1. Hammer / Gem pill filter
     if (currentFilter === 'hammer' && itemType !== 'hammer') return false;
     if (currentFilter === 'gem' && itemType !== 'gem') return false;
 
-    // 2. Multi-select Rarity filter
-    if (activeRarities.size > 0 && !activeRarities.has(itemRarity)) {
-      return false;
+    // 2. Multi-select Rarity filter (Supports matching "Unobtainable" and "Untradeable")
+    if (activeRarities.size > 0) {
+      let matchesRarity = false;
+      for (const selRarity of activeRarities) {
+        const lowerSel = selRarity.toLowerCase();
+        if (lowerSel === 'unobtainable' && (itemRarity === 'unobtainable' || itemRarity === 'untradeable')) {
+          matchesRarity = true;
+          break;
+        } else if (itemRarity === lowerSel) {
+          matchesRarity = true;
+          break;
+        }
+      }
+      if (!matchesRarity) return false;
     }
 
     // 3. Has Shiny property filter
@@ -468,7 +486,6 @@ function applyFilters() {
     return matchesSearch;
   });
 
-  // Sort items
   filtered.sort((a, b) => {
     if (currentSort === 'val-desc') {
       return b.baseValue - a.baseValue;
@@ -486,7 +503,6 @@ function applyFilters() {
 }
 
 function setupEventListeners() {
-  // Trade Calculator Buttons
   const btnAddA = document.getElementById('btn-add-a');
   if (btnAddA) {
     btnAddA.addEventListener('click', () => {
@@ -514,11 +530,9 @@ function setupEventListeners() {
     });
   }
 
-  // Live Search
   const searchInput = document.getElementById('search');
   if (searchInput) searchInput.addEventListener('input', applyFilters);
 
-  // Sorting
   const sortSelect = document.getElementById('sort-select');
   if (sortSelect) {
     sortSelect.addEventListener('change', (e) => {
@@ -527,7 +541,6 @@ function setupEventListeners() {
     });
   }
 
-  // Item Type (All / Hammers / Gems)
   document.querySelectorAll('.filter-btn').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       const button = e.currentTarget;
@@ -538,7 +551,6 @@ function setupEventListeners() {
     });
   });
 
-  // Toggle Filters Drawer
   const btnToggleDrawer = document.getElementById('btn-toggle-filters');
   const filterDrawer = document.getElementById('filter-drawer');
   if (btnToggleDrawer && filterDrawer) {
@@ -548,7 +560,6 @@ function setupEventListeners() {
     });
   }
 
-  // Rarity Checkbox Listeners
   document.querySelectorAll('.cb-rarity').forEach((cb) => {
     cb.addEventListener('change', (e) => {
       if (e.target.checked) {
@@ -561,7 +572,6 @@ function setupEventListeners() {
     });
   });
 
-  // Has Shiny Checkbox
   const cbShiny = document.getElementById('cb-has-shiny');
   if (cbShiny) {
     cbShiny.addEventListener('change', (e) => {
@@ -571,7 +581,6 @@ function setupEventListeners() {
     });
   }
 
-  // Clear / Reset All Filters
   const btnClearFilters = document.getElementById('btn-clear-filters');
   if (btnClearFilters) {
     btnClearFilters.addEventListener('click', () => {
