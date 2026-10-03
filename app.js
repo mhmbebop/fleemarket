@@ -745,6 +745,7 @@ function removeItemFromTrade(itemId, sideTarget) {
   updateTradeVerdict();
 }
 
+// Optimized with DocumentFragment Batching for High Performance
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
@@ -754,6 +755,8 @@ function renderItems(items) {
     grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1 / -1; padding: 24px; text-align: center;">No matching items found with the active filters.</p>';
     return;
   }
+
+  const fragment = document.createDocumentFragment();
 
   items.forEach((item) => {
     const card = document.createElement('div');
@@ -972,8 +975,10 @@ function renderItems(items) {
       });
     }
 
-    grid.appendChild(card);
+    fragment.appendChild(card);
   });
+
+  grid.appendChild(fragment);
 }
 
 // Multi-Criteria Filtering Logic with Sanitized Query
@@ -1194,11 +1199,15 @@ function setupEventListeners() {
   const btnClearSearch = document.getElementById('btn-clear-search');
 
   if (searchInput) {
+    let searchTimeout = null;
     searchInput.addEventListener('input', () => {
       if (btnClearSearch) {
         btnClearSearch.style.display = searchInput.value.trim().length > 0 ? 'flex' : 'none';
       }
-      applyFilters();
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        applyFilters();
+      }, 100);
     });
   }
 
