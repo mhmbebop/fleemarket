@@ -3,27 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>10 Player Flee - Official Value List & Trade Hub</title>
+  <title>FLEEMARKET - 10 Player Flee Trade Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg-dark: #090b10;
-      --surface-1: #11141c;
-      --surface-2: #181c26;
-      --surface-glass: rgba(22, 27, 38, 0.88);
+      /* Flee the Facility Matte Charcoal Theme */
+      --bg-dark: #0d0f12;
+      --surface-1: #15181e;
+      --surface-2: #1c2028;
+      --surface-glass: rgba(21, 24, 30, 0.90);
       --border: rgba(255, 255, 255, 0.08);
-      --border-focus: rgba(157, 125, 253, 0.4);
+      --border-focus: rgba(157, 125, 253, 0.45);
       --primary: #9d7dfd;
       --primary-glow: rgba(157, 125, 253, 0.25);
       --accent-cyan: #38bdf8;
       --accent-green: #34d399;
       --accent-gold: #fbbf24;
       --accent-rose: #f43f5e;
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
       --radius-lg: 16px;
       --radius-md: 10px;
       --radius-sm: 6px;
@@ -38,11 +39,12 @@
     body {
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       margin: 0;
-      padding: clamp(14px, 3vw, 32px) clamp(10px, 3vw, 24px) 110px;
+      padding: clamp(14px, 3vw, 28px) clamp(10px, 3vw, 24px) 110px;
       background-color: var(--bg-dark);
       background-image: 
-        radial-gradient(circle at 15% 10%, rgba(157, 125, 253, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 85% 20%, rgba(56, 189, 248, 0.06) 0%, transparent 45%);
+        radial-gradient(circle at 50% 0%, rgba(244, 63, 94, 0.04) 0%, transparent 60%),
+        radial-gradient(circle at 10% 20%, rgba(157, 125, 253, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 90% 20%, rgba(56, 189, 248, 0.04) 0%, transparent 50%);
       color: var(--text-main);
       min-height: 100vh;
       overflow-x: hidden;
@@ -55,8 +57,26 @@
       width: 100%;
     }
 
+    /* FTF Logo Header Section */
     header {
       margin-bottom: clamp(16px, 3vw, 24px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .header-logo-wrap {
+      max-width: 320px;
+      width: 85%;
+      margin: 4px 0 10px;
+      display: flex;
+      justify-content: center;
+    }
+    .header-logo-img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.7));
     }
     .header-badge {
       display: inline-flex;
@@ -71,22 +91,11 @@
       font-weight: 700;
       letter-spacing: 0.5px;
       text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    h1 {
-      font-family: 'Outfit', sans-serif;
-      font-size: clamp(22px, 5vw, 36px);
-      font-weight: 800;
-      margin: 0 0 4px;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #ffffff 30%, #cbd5e1 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      line-height: 1.2;
+      margin-bottom: 6px;
     }
     .subtext {
       color: var(--text-muted);
-      font-size: clamp(12px, 2.5vw, 15px);
+      font-size: clamp(12px, 2.5vw, 14px);
       margin: 0;
     }
     #status {
@@ -105,7 +114,7 @@
       padding: 5px;
       border-radius: 12px;
       border: 1px solid var(--border);
-      margin-bottom: clamp(16px, 3vw, 24px);
+      margin: 0 auto clamp(16px, 3vw, 24px);
       width: 100%;
       max-width: 480px;
     }
@@ -1040,7 +1049,7 @@
       text-align: right;
     }
 
-    /* Card Action Button Groups (Add + Inline Quick Remove) */
+    /* Card Action Buttons with Counter and Minus */
     .card-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -1326,9 +1335,16 @@
 
   <div class="container">
     <header>
-      <div class="header-badge">● Live Synced Database</div>
-      <h1>10 Player Flee Value Hub</h1>
-      <p class="subtext">Official weapon inventory, item valuations, and trade fairness calculator.</p>
+      <div class="header-logo-wrap">
+        <img 
+          src="logo.png" 
+          alt="10 Player FLEEMARKET" 
+          class="header-logo-img"
+          onerror="this.src='images/logo.png'; this.onerror=function(){this.style.display='none'; document.getElementById('fallback-title').style.display='block';};"
+        />
+        <h1 id="fallback-title" style="display: none; font-size: 28px; font-weight: 800; margin: 0;">10 PLAYER FLEEMARKET</h1>
+      </div>
+      <p class="subtext">Official community weapons catalog & trade fairness calculator</p>
       <div id="status">Syncing with Google Sheets...</div>
     </header>
 
