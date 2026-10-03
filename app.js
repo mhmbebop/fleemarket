@@ -342,9 +342,9 @@ function updateCalculateButtonState() {
         if (yourOffer.length === 0 && theirOffer.length === 0) {
           helperText.textContent = '⚠️ Add items to both sides to enable calculation';
         } else if (yourOffer.length === 0) {
-          helperText.textContent = '⚠️️ Add items to "Your Offer" to calculate';
+          helperText.textContent = '⚠️ Add items to "Your Offer" to calculate';
         } else {
-          helperText.textContent = '⚠️️ Add items to "Their Offer" to calculate';
+          helperText.textContent = '⚠️ Add items to "Their Offer" to calculate';
         }
       }
     }
@@ -789,7 +789,7 @@ function removeItemFromTrade(itemId, sideTarget) {
   updateTradeVerdict();
 }
 
-// Render Catalog Grid with Direct Emoji Fallbacks
+// Render Catalog Grid with Image Loading & Direct Emoji Fallbacks
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
@@ -836,7 +836,13 @@ function renderItems(items) {
       ${audioButtonHtml}
       ${starButtonHtml}
       <div class="card-image-wrap">
-        <div class="card-img-fallback" style="display: flex; align-items: center; justify-content: center; font-size: 42px; width: 100%; height: 100%; background: #090b10;">${fallbackEmoji}</div>
+        <img 
+          src="images/${item.id}.png" 
+          alt="${safeName}" 
+          class="card-img" 
+          onerror="this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';}; this.src='images/${encodeURIComponent(item.name)}.png';"
+        />
+        <div class="card-img-fallback" style="display: none; align-items: center; justify-content: center; font-size: 42px; width: 100%; height: 100%; background: #090b10;">${fallbackEmoji}</div>
       </div>
       <div class="card-top-info">
         <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 3px;">
