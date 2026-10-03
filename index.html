@@ -241,6 +241,28 @@
     .side-your .side-title { color: var(--accent-cyan); }
     .side-their .side-title { color: var(--accent-green); }
 
+    /* Calculator Input Controls */
+    .calc-controls-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+    .calc-search-input {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--surface-2);
+      color: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+    .calc-search-input:focus {
+      border-color: var(--border-focus);
+    }
+
     .item-select-row {
       display: flex;
       gap: 8px;
@@ -273,6 +295,37 @@
       color: var(--text-main);
     }
 
+    /* Shiny Checkbox Toggle in Calculator */
+    .calc-shiny-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-gold);
+      background: rgba(251, 191, 36, 0.08);
+      border: 1px solid rgba(251, 191, 36, 0.25);
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      user-select: none;
+      flex-shrink: 0;
+      touch-action: manipulation;
+    }
+    .calc-shiny-toggle input[type="checkbox"] {
+      accent-color: var(--accent-gold);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      margin: 0;
+    }
+    .calc-shiny-toggle.disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      border-color: var(--border);
+      color: var(--text-muted);
+    }
+
     .add-btn {
       color: #0b0f17;
       border: none;
@@ -291,14 +344,20 @@
       transform: scale(0.97);
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 500px) {
       .item-select-row {
-        flex-direction: column;
-        align-items: stretch;
+        flex-wrap: wrap;
+      }
+      .select-dropdown {
+        flex: 1 1 100%;
+      }
+      .calc-shiny-toggle {
+        flex: 1 1 auto;
+        justify-content: center;
       }
       .add-btn {
-        width: 100%;
-        padding: 10px 0;
+        flex: 1 1 auto;
+        padding: 9px 0;
         text-align: center;
       }
     }
@@ -1077,12 +1136,26 @@
             <div class="side-header">
               <span class="side-title">Your Offer</span>
             </div>
-            <div class="item-select-row">
-              <select id="select-your" class="select-dropdown">
-                <option value="">Select item...</option>
-              </select>
-              <button class="add-btn" id="btn-add-your">+ Add</button>
+            
+            <div class="calc-controls-stack">
+              <!-- Live Filter Search for Your Offer -->
+              <input type="text" id="calc-search-your" class="calc-search-input" placeholder="Type hammer / gem name..." autocomplete="off" />
+
+              <div class="item-select-row">
+                <select id="select-your" class="select-dropdown">
+                  <option value="">Select item...</option>
+                </select>
+
+                <!-- Shiny Toggle Checkbox -->
+                <label class="calc-shiny-toggle" id="label-shiny-your" title="Add Shiny Variant">
+                  <input type="checkbox" id="shiny-your" />
+                  <span>★ Shiny</span>
+                </label>
+
+                <button class="add-btn" id="btn-add-your">+ Add</button>
+              </div>
             </div>
+
             <ul id="list-your" class="selected-list"></ul>
             <div class="side-summary">
               <span>Total: <b id="total-val-your" class="val">0</b></span>
@@ -1095,12 +1168,26 @@
             <div class="side-header">
               <span class="side-title">Their Offer</span>
             </div>
-            <div class="item-select-row">
-              <select id="select-their" class="select-dropdown">
-                <option value="">Select item...</option>
-              </select>
-              <button class="add-btn" id="btn-add-their">+ Add</button>
+
+            <div class="calc-controls-stack">
+              <!-- Live Filter Search for Their Offer -->
+              <input type="text" id="calc-search-their" class="calc-search-input" placeholder="Type hammer / gem name..." autocomplete="off" />
+
+              <div class="item-select-row">
+                <select id="select-their" class="select-dropdown">
+                  <option value="">Select item...</option>
+                </select>
+
+                <!-- Shiny Toggle Checkbox -->
+                <label class="calc-shiny-toggle" id="label-shiny-their" title="Add Shiny Variant">
+                  <input type="checkbox" id="shiny-their" />
+                  <span>★ Shiny</span>
+                </label>
+
+                <button class="add-btn" id="btn-add-their">+ Add</button>
+              </div>
             </div>
+
             <ul id="list-their" class="selected-list"></ul>
             <div class="side-summary">
               <span>Total: <b id="total-val-their" class="val">0</b></span>
