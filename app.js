@@ -668,7 +668,7 @@ function updateTradeVerdict() {
     verdictEl.classList.add('status-win');
     verdictString = 'Small Win';
   } else if (percentDiff >= -5) {
-    verdictEl.textContent = '⚖️ Fair Trade';
+    verdictEl.textContent = '⚖️️ Fair Trade';
     verdictEl.classList.add('status-fair');
     verdictString = 'Fair Trade';
   } else if (percentDiff >= -15) {
@@ -687,7 +687,7 @@ function updateTradeVerdict() {
   saveCompletedTrade(verdictString);
 }
 
-// Group duplicate items by quantity stacking (x2, x3) with clean fallback handling
+// Group duplicate items by quantity stacking with direct emoji fallback display
 function renderTradeList(sideItems, listElementId) {
   const ul = document.getElementById(listId);
   if (!ul) return;
@@ -713,20 +713,11 @@ function renderTradeList(sideItems, listElementId) {
     li.className = 'trade-item';
     const valText = group.isNilValue ? 'Nil' : group.tradeValue * group.quantity;
     const fallbackEmoji = (group.type || '').toLowerCase() === 'gem' ? '💎' : '🔨';
-    
-    const imagePath = group.isShiny ? `images/${group.id}_shiny.webp` : `images/${group.id}.webp`;
-    const fallbackPng = group.isShiny ? `images/${group.id}_shiny.png` : `images/${group.id}.png`;
     const safeName = sanitizeInput(group.name);
 
     li.innerHTML = `
       <div class="trade-item-left">
-        <img 
-          src="${imagePath}" 
-          alt="${safeName}" 
-          class="trade-thumb"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-        />
-        <div class="trade-thumb-fallback" style="display: none;">${fallbackEmoji}</div>
+        <div class="trade-thumb-fallback" style="display: flex; width: 38px; height: 38px; border-radius: var(--radius-sm); background: #090b10; border: 1px solid var(--border); align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">${fallbackEmoji}</div>
         <div style="min-width: 0; flex: 1;">
           <div class="trade-item-title">
             ${safeName}
@@ -811,7 +802,7 @@ function removeItemFromTrade(itemId, sideTarget) {
   updateTradeVerdict();
 }
 
-// Optimized with DocumentFragment Batching & Clean Emoji Fallbacks
+// Render Catalog Grid with Direct Emoji Fallbacks (No Missing Image Requests)
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
@@ -838,8 +829,6 @@ function renderItems(items) {
     const display = getItemActiveDisplay(item, isShiny);
     const fallbackEmoji = isGem ? '💎' : '🔨';
     
-    const imagePath = isShiny ? `images/${item.id}_shiny.webp` : `images/${item.id}.webp`;
-    const fallbackPng = isShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
     const safeName = sanitizeInput(item.name);
     const safeType = sanitizeInput(item.type);
     const safeSet = sanitizeInput(item.setName || item.releaseEvent);
@@ -860,13 +849,7 @@ function renderItems(items) {
       ${audioButtonHtml}
       ${starButtonHtml}
       <div class="card-image-wrap">
-        <img 
-          src="${imagePath}" 
-          alt="${safeName}" 
-          class="card-img"
-          loading="lazy"
-          onerror="this.parentElement.innerHTML = '<div class=\'card-img-fallback\'>${fallbackEmoji}</div>';"
-        />
+        <div class="card-img-fallback" style="display: flex; align-items: center; justify-content: center; font-size: 42px; width: 100%; height: 100%; background: #090b10;">${fallbackEmoji}</div>
       </div>
       <div class="card-top-info">
         <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 3px;">
