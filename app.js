@@ -607,7 +607,7 @@ function updateTradeVerdict() {
     verdictEl.textContent = '✅ Small Win';
     verdictEl.classList.add('status-win');
   } else if (percentDiff >= -5) {
-    verdictEl.textContent = '⚖️ Fair Trade';
+    verdictEl.textContent = '⚖️️ Fair Trade';
     verdictEl.classList.add('status-fair');
   } else if (percentDiff >= -15) {
     verdictEl.textContent = '🔻 Small Loss';
@@ -745,7 +745,7 @@ function removeItemFromTrade(itemId, sideTarget) {
   updateTradeVerdict();
 }
 
-// Optimized with DocumentFragment Batching for High Performance
+// Optimized with DocumentFragment Batching & Event Delegation Architecture
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
@@ -766,6 +766,7 @@ function renderItems(items) {
     const isMythical = (item.rarity || '').toLowerCase() === 'mythical';
 
     card.className = `card ${rarityClass} ${isShiny ? 'is-shiny' : ''}`;
+    card.setAttribute('data-id', item.id);
 
     const isGem = (item.type || '').toLowerCase() === 'gem';
     const display = getItemActiveDisplay(item, isShiny);
@@ -782,11 +783,11 @@ function renderItems(items) {
     const countTheir = theirOffer.filter((i) => i.id === item.id).length;
 
     const starButtonHtml = item.hasShiny
-      ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-id="${item.id}" title="Toggle Shiny Version">★</div>`
+      ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-action="toggle-shiny" data-id="${item.id}" title="Toggle Shiny Version">★</div>`
       : '';
 
     const audioButtonHtml = isMythical
-      ? `<button type="button" class="card-audio-btn" data-id="${item.id}" title="Play Sound Effect">🔊</button>`
+      ? `<button type="button" class="card-audio-btn" data-action="play-audio" data-id="${item.id}" title="Play Sound Effect">🔊</button>`
       : '';
 
     card.innerHTML = `
@@ -827,158 +828,69 @@ function renderItems(items) {
       </div>
       <div class="card-actions">
         <div class="card-btn-group side-your ${countYour > 0 ? 'has-items' : ''}">
-          <button class="card-add-btn" data-id="${item.id}">${countYour > 0 ? `+ You (${countYour})` : '+ Your Offer'}</button>
-          <button class="card-minus-btn" data-id="${item.id}" title="Remove one from Your Offer">−</button>
+          <button class="card-add-btn" data-action="add-your" data-id="${item.id}">${countYour > 0 ? `+ You (${countYour})` : '+ Your Offer'}</button>
+          <button class="card-minus-btn" data-action="minus-your" data-id="${item.id}" title="Remove one from Your Offer">−</button>
         </div>
         <div class="card-btn-group side-their ${countTheir > 0 ? 'has-items' : ''}">
-          <button class="card-add-btn" data-id="${item.id}">${countTheir > 0 ? `+ Them (${countTheir})` : '+ Their Offer'}</button>
-          <button class="card-minus-btn" data-id="${item.id}" title="Remove one from Their Offer">−</button>
+          <button class="card-add-btn" data-action="add-their" data-id="${item.id}">${countTheir > 0 ? `+ Them (${countTheir})` : '+ Their Offer'}</button>
+          <button class="card-minus-btn" data-action="minus-their" data-id="${item.id}" title="Remove one from Their Offer">−</button>
         </div>
       </div>
     `;
-
-    // Mythical Audio Preview
-    const audioBtn = card.querySelector('.card-audio-btn');
-    if (audioBtn) {
-      audioBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-
-        if (currentPlayingAudio && currentPlayingBtn === audioBtn) {
-          currentPlayingAudio.pause();
-          currentPlayingAudio.currentTime = 0;
-          audioBtn.classList.remove('is-playing');
-          audioBtn.textContent = '🔊';
-          currentPlayingAudio = null;
-          currentPlayingBtn = null;
-          return;
-        }
-
-        if (currentPlayingAudio) {
-          currentPlayingAudio.pause();
-          currentPlayingAudio.currentTime = 0;
-          if (currentPlayingBtn) {
-            currentPlayingBtn.classList.remove('is-playing');
-            currentPlayingBtn.textContent = '🔊';
-          }
-        }
-
-        const audioPaths = [
-          `audio/${item.id}.mp3`,
-          `audio/${String(item.id).toLowerCase()}.mp3`
-        ];
-
-        let audioLoaded = false;
-        for (const audioSrc of audioPaths) {
-          const audio = new Audio(audioSrc);
-          audio.play().then(() => {
-            audioBtn.classList.add('is-playing');
-            audioBtn.textContent = '⏹';
-            currentPlayingAudio = audio;
-            currentPlayingBtn = audioBtn;
-            audioLoaded = true;
-          }).catch(() => {});
-
-          if (audioLoaded) break;
-
-          audio.onended = () => {
-            audioBtn.classList.remove('is-playing');
-            audioBtn.textContent = '🔊';
-            currentPlayingAudio = null;
-            currentPlayingBtn = null;
-          };
-          break;
-        }
-      });
-    }
-
-    // Touch & Click Shiny Toggle
-    const starBtn = card.querySelector('.shiny-star-btn');
-    if (starBtn) {
-      starBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        shinyState[item.id] = !shinyState[item.id];
-        const isNowShiny = !!shinyState[item.id];
-        const updatedDisplay = getItemActiveDisplay(item, isNowShiny);
-        const updatedWebP = isNowShiny ? `images/${item.id}_shiny.webp` : `images/${item.id}.webp`;
-        const updatedPng = isNowShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
-
-        card.classList.toggle('is-shiny', isNowShiny);
-        starBtn.classList.toggle('active', isNowShiny);
-
-        const valEl = card.querySelector('.val');
-        if (valEl) valEl.textContent = updatedDisplay.value;
-
-        const demEl = card.querySelector('.demand');
-        if (demEl) demEl.textContent = sanitizeInput(updatedDisplay.demandLabel);
-
-        const statEl = card.querySelector('.status-tag');
-        if (statEl) {
-          statEl.textContent = sanitizeInput(updatedDisplay.status);
-          statEl.title = sanitizeInput(updatedDisplay.status);
-        }
-
-        const imgEl = card.querySelector('.card-img');
-        if (imgEl) {
-          imgEl.src = updatedWebP;
-          imgEl.onerror = function () {
-            this.src = updatedPng;
-            this.onerror = function () {
-              this.style.display = 'none';
-              this.nextElementSibling.style.display = 'flex';
-            };
-          };
-        }
-
-        const badgeGroup = card.querySelector('.card-top-info div');
-        if (badgeGroup) {
-          const existingShinyBadge = badgeGroup.querySelector('.badge-shiny');
-          if (isNowShiny && !existingShinyBadge) {
-            const shinySpan = document.createElement('span');
-            shinySpan.className = 'badge badge-shiny';
-            shinySpan.textContent = '★ SHINY';
-            badgeGroup.appendChild(shinySpan);
-          } else if (!isNowShiny && existingShinyBadge) {
-            existingShinyBadge.remove();
-          }
-        }
-      });
-    }
-
-    // Card Add & Remove Handlers
-    const btnAddYour = card.querySelector('.card-btn-group.side-your .card-add-btn');
-    const btnMinusYour = card.querySelector('.card-btn-group.side-your .card-minus-btn');
-
-    if (btnAddYour) {
-      btnAddYour.addEventListener('click', () => {
-        const itemObj = allItems.find((i) => i.id === item.id);
-        addItemToTrade(itemObj, 'your', item.hasShiny && !!shinyState[item.id]);
-      });
-    }
-    if (btnMinusYour) {
-      btnMinusYour.addEventListener('click', () => {
-        removeItemFromTrade(item.id, 'your');
-      });
-    }
-
-    const btnAddTheir = card.querySelector('.card-btn-group.side-their .card-add-btn');
-    const btnMinusTheir = card.querySelector('.card-btn-group.side-their .card-minus-btn');
-
-    if (btnAddTheir) {
-      btnAddTheir.addEventListener('click', () => {
-        const itemObj = allItems.find((i) => i.id === item.id);
-        addItemToTrade(itemObj, 'their', item.hasShiny && !!shinyState[item.id]);
-      });
-    }
-    if (btnMinusTheir) {
-      btnMinusTheir.addEventListener('click', () => {
-        removeItemFromTrade(item.id, 'their');
-      });
-    }
 
     fragment.appendChild(card);
   });
 
   grid.appendChild(fragment);
+}
+
+// Mythical Audio Controller Helper
+function playMythicalAudio(item, audioBtn) {
+  if (currentPlayingAudio && currentPlayingBtn === audioBtn) {
+    currentPlayingAudio.pause();
+    currentPlayingAudio.currentTime = 0;
+    audioBtn.classList.remove('is-playing');
+    audioBtn.textContent = '🔊';
+    currentPlayingAudio = null;
+    currentPlayingBtn = null;
+    return;
+  }
+
+  if (currentPlayingAudio) {
+    currentPlayingAudio.pause();
+    currentPlayingAudio.currentTime = 0;
+    if (currentPlayingBtn) {
+      currentPlayingBtn.classList.remove('is-playing');
+      currentPlayingBtn.textContent = '🔊';
+    }
+  }
+
+  const audioPaths = [
+    `audio/${item.id}.mp3`,
+    `audio/${String(item.id).toLowerCase()}.mp3`
+  ];
+
+  let audioLoaded = false;
+  for (const audioSrc of audioPaths) {
+    const audio = new Audio(audioSrc);
+    audio.play().then(() => {
+      audioBtn.classList.add('is-playing');
+      audioBtn.textContent = '⏹';
+      currentPlayingAudio = audio;
+      currentPlayingBtn = audioBtn;
+      audioLoaded = true;
+    }).catch(() => {});
+
+    if (audioLoaded) break;
+
+    audio.onended = () => {
+      audioBtn.classList.remove('is-playing');
+      audioBtn.textContent = '🔊';
+      currentPlayingAudio = null;
+      currentPlayingBtn = null;
+    };
+    break;
+  }
 }
 
 // Multi-Criteria Filtering Logic with Sanitized Query
@@ -1078,6 +990,37 @@ function setupEventListeners() {
   const btnForceSync = document.getElementById('btn-force-sync');
   if (btnForceSync) {
     btnForceSync.addEventListener('click', (e) => window.forceSyncNow(e));
+  }
+
+  // Event Delegation for Catalog Grid (Zero memory leaks, single listener)
+  const itemsGrid = document.getElementById('items-grid');
+  if (itemsGrid) {
+    itemsGrid.addEventListener('click', (e) => {
+      const actionEl = e.target.closest('[data-action]');
+      if (!actionEl) return;
+
+      const action = actionEl.getAttribute('data-action');
+      const itemId = actionEl.getAttribute('data-id');
+      const itemObj = allItems.find((i) => i.id === itemId);
+      if (!itemObj) return;
+
+      if (action === 'toggle-shiny') {
+        e.stopPropagation();
+        shinyState[itemObj.id] = !shinyState[itemObj.id];
+        applyFilters();
+      } else if (action === 'play-audio') {
+        e.stopPropagation();
+        playMythicalAudio(itemObj, actionEl);
+      } else if (action === 'add-your') {
+        addItemToTrade(itemObj, 'your', itemObj.hasShiny && !!shinyState[itemObj.id]);
+      } else if (action === 'minus-your') {
+        removeItemFromTrade(itemObj.id, 'your');
+      } else if (action === 'add-their') {
+        addItemToTrade(itemObj, 'their', itemObj.hasShiny && !!shinyState[itemObj.id]);
+      } else if (action === 'minus-their') {
+        removeItemFromTrade(itemObj.id, 'their');
+      }
+    });
   }
 
   const btnAddYour = document.getElementById('btn-add-your');
