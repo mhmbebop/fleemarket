@@ -506,7 +506,7 @@
     }
     .drawer-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 16px;
     }
     .drawer-section-title {
@@ -534,15 +534,15 @@
       color: var(--text-muted);
       cursor: pointer;
       user-select: none;
-      padding: 4px 0;
+      padding: 3px 0;
     }
     .drawer-label:hover {
       color: #fff;
     }
     .drawer-label input[type="checkbox"] {
       accent-color: var(--primary);
-      width: 18px;
-      height: 18px;
+      width: 17px;
+      height: 17px;
       cursor: pointer;
     }
     .drawer-footer {
@@ -1003,9 +1003,23 @@
           </div>
         </div>
 
+        <!-- STATUS OPTIONS -->
+        <div>
+          <div class="drawer-section-title">Item Status</div>
+          <div class="drawer-checkbox-group">
+            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Exceptional"> Exceptional</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Overpaid For"> Overpaid For</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Doing Well"> Doing Well</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Stable"> Stable</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Fluctuating"> Fluctuating</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Subpar"> Subpar</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-status" value="Untradeable"> Untradeable</label>
+          </div>
+        </div>
+
         <!-- SPECIAL PROPERTIES -->
         <div>
-          <div class="drawer-section-title">Item Properties</div>
+          <div class="drawer-section-title">Properties</div>
           <div class="drawer-checkbox-group">
             <label class="drawer-label"><input type="checkbox" id="cb-has-shiny"> Has Shiny Variant</label>
           </div>
