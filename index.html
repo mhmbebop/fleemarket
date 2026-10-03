@@ -233,6 +233,35 @@
 </head>
 <body>
 
+  /* Thumbnail preview in trade list */
+.trade-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trade-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: #21262d;
+  object-fit: contain;
+  border: 1px solid #30363d;
+  flex-shrink: 0;
+}
+
+.trade-thumb-fallback {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: #21262d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border: 1px solid #30363d;
+  flex-shrink: 0;
+}
   <h1>10 Player Flee - Value Hub</h1>
   <p>Live inventory and trade fairness calculator synced with Google Sheets</p>
   <div id="status">Loading items from Google Sheets...</div>
