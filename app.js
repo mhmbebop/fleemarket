@@ -9,6 +9,10 @@ let currentFilter = 'all'; // 'all' | 'hammer' | 'gem'
 let currentSort = 'val-desc';
 const shinyState = {};
 
+// Audio controller
+let currentPlayingAudio = null;
+let currentPlayingBtn = null;
+
 // Active selections in calculator
 let selectedItemYour = null;
 let selectedItemTheir = null;
@@ -224,7 +228,6 @@ function updateCalculatorUI() {
     }
   }
 
-  // Sync floating tray lists
   renderTrayList(yourOffer, 'tray-list-your', 'your');
   renderTrayList(theirOffer, 'tray-list-their', 'their');
   const trayCountYour = document.getElementById('tray-count-your');
@@ -232,7 +235,6 @@ function updateCalculatorUI() {
   if (trayCountYour) trayCountYour.textContent = yourOffer.length;
   if (trayCountTheir) trayCountTheir.textContent = theirOffer.length;
 
-  // Refresh card button states on catalog without losing scroll
   refreshCardButtonBadges();
 }
 
@@ -349,7 +351,7 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
     matches.forEach((item) => {
       const row = document.createElement('div');
       row.className = 'calc-match-item';
-      const valText = item.isNilValue ? 'Nil' : item.baseValue;
+      const valText = item.isNilValue ? 'Nil' : item.tradeValue;
       const shinyTag = item.hasShiny ? '★' : '';
 
       row.innerHTML = `
@@ -631,6 +633,7 @@ function renderItems(items) {
     const isShiny = item.hasShiny && !!shinyState[item.id];
     const displayRarity = item.rarity === 'Unobtainable' ? 'Untradeable' : item.rarity;
     const rarityClass = `rarity-${displayRarity.toLowerCase()}`;
+    const isMythical = (item.rarity || '').toLowerCase() === 'mythical';
 
     card.className = `card ${rarityClass} ${isShiny ? 'is-shiny' : ''}`;
 
@@ -646,7 +649,12 @@ function renderItems(items) {
       ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-id="${item.id}" title="Toggle Shiny Version">★</div>`
       : '';
 
+    const audioButtonHtml = isMythical
+      ? `<button type="button" class="card-audio-btn" data-id="${item.id}" title="Play Sound Effect">🔊</button>`
+      : '';
+
     card.innerHTML = `
+      ${audioButtonHtml}
       ${starButtonHtml}
       <div class="card-image-wrap">
         <img 
@@ -692,6 +700,52 @@ function renderItems(items) {
         </div>
       </div>
     `;
+
+    // Mythical Sound Preview Trigger
+    const audioBtn = card.querySelector('.card-audio-btn');
+    if (audioBtn) {
+      audioBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+
+        if (currentPlayingAudio && currentPlayingBtn === audioBtn) {
+          currentPlayingAudio.pause();
+          currentPlayingAudio.currentTime = 0;
+          audioBtn.classList.remove('is-playing');
+          audioBtn.textContent = '🔊';
+          currentPlayingAudio = null;
+          currentPlayingBtn = null;
+          return;
+        }
+
+        if (currentPlayingAudio) {
+          currentPlayingAudio.pause();
+          currentPlayingAudio.currentTime = 0;
+          if (currentPlayingBtn) {
+            currentPlayingBtn.classList.remove('is-playing');
+            currentPlayingBtn.textContent = '🔊';
+          }
+        }
+
+        const audioSrc = `audio/${item.id}.mp3`;
+        const audio = new Audio(audioSrc);
+
+        audio.play().then(() => {
+          audioBtn.classList.add('is-playing');
+          audioBtn.textContent = '⏹';
+          currentPlayingAudio = audio;
+          currentPlayingBtn = audioBtn;
+        }).catch((err) => {
+          console.warn(`Audio track for ${item.name} not found at ${audioSrc}:`, err);
+        });
+
+        audio.onended = () => {
+          audioBtn.classList.remove('is-playing');
+          audioBtn.textContent = '🔊';
+          currentPlayingAudio = null;
+          currentPlayingBtn = null;
+        };
+      });
+    }
 
     // Touch & Click In-place Shiny Toggle
     const starBtn = card.querySelector('.shiny-star-btn');
