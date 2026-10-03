@@ -376,7 +376,6 @@ function renderItems(items) {
       </div>
     `;
 
-    // Touch & Click In-place Shiny Toggle
     const starBtn = card.querySelector('.shiny-star-btn');
     if (starBtn) {
       starBtn.addEventListener('click', (e) => {
@@ -496,6 +495,7 @@ function applyFilters() {
     return matchesSearch;
   });
 
+  // Sorting
   filtered.sort((a, b) => {
     if (currentSort === 'val-desc') {
       return b.baseValue - a.baseValue;
@@ -503,8 +503,12 @@ function applyFilters() {
       return a.baseValue - b.baseValue;
     } else if (currentSort === 'dem-desc') {
       return b.demandTier - a.demandTier;
+    } else if (currentSort === 'dem-asc') {
+      return a.demandTier - b.demandTier;
     } else if (currentSort === 'name-asc') {
       return a.name.localeCompare(b.name);
+    } else if (currentSort === 'name-desc') {
+      return b.name.localeCompare(a.name);
     }
     return 0;
   });
