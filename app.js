@@ -4,9 +4,9 @@ let allItems = [];
 let sideA = [];
 let sideB = [];
 let currentFilter = 'all'; // 'all' | 'hammer' | 'gem'
-let currentSort = 'val-desc'; // default sort
+let currentSort = 'val-desc';
 
-// CSV Parser
+// Robust CSV Parser
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
@@ -61,6 +61,7 @@ function parseCSV(text) {
 function populateDropdowns(items) {
   const selectA = document.getElementById('select-a');
   const selectB = document.getElementById('select-b');
+  if (!selectA || !selectB) return;
 
   const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -104,19 +105,19 @@ function updateTradeVerdict() {
   const dataA = calculateSide(sideA);
   const dataB = calculateSide(sideB);
 
-  document.getElementById('total-val-a').textContent = dataA.hasNil
-    ? `${dataA.totalValue} + Nil`
-    : dataA.totalValue;
-  document.getElementById('avg-dem-a').textContent = dataA.avgDemand;
-
-  document.getElementById('total-val-b').textContent = dataB.hasNil
-    ? `${dataB.totalValue} + Nil`
-    : dataB.totalValue;
-  document.getElementById('avg-dem-b').textContent = dataB.avgDemand;
-
+  const valA = document.getElementById('total-val-a');
+  const demA = document.getElementById('avg-dem-a');
+  const valB = document.getElementById('total-val-b');
+  const demB = document.getElementById('avg-dem-b');
   const verdictEl = document.getElementById('verdict-text');
   const detailsEl = document.getElementById('verdict-details');
 
+  if (valA) valA.textContent = dataA.hasNil ? `${dataA.totalValue} + Nil` : dataA.totalValue;
+  if (demA) demA.textContent = dataA.avgDemand;
+  if (valB) valB.textContent = dataB.hasNil ? `${dataB.totalValue} + Nil` : dataB.totalValue;
+  if (demB) demB.textContent = dataB.avgDemand;
+
+  if (!verdictEl || !detailsEl) return;
   verdictEl.className = 'verdict-text';
 
   if (sideA.length === 0 && sideB.length === 0) {
@@ -126,7 +127,7 @@ function updateTradeVerdict() {
   }
 
   if (dataA.hasNil || dataB.hasNil) {
-    verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
+    verdictEl.textContent = '⚠️️ Contains Indefinite / Nil Item(s)';
     detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
     verdictEl.classList.add('status-fair');
     return;
@@ -160,13 +161,14 @@ function updateTradeVerdict() {
 // Render selected items list with icon previews
 function renderTradeList(side, listElementId) {
   const ul = document.getElementById(listElementId);
+  if (!ul) return;
   ul.innerHTML = '';
 
   side.forEach((item, index) => {
     const li = document.createElement('li');
     li.className = 'trade-item';
     const valText = item.isNilValue ? 'Nil' : item.baseValue;
-    const fallbackEmoji = item.type.toLowerCase() === 'gem' ? '💎' : '🔨';
+    const fallbackEmoji = (item.type || '').toLowerCase() === 'gem' ? '💎' : '🔨';
     const imagePath = `images/${item.id}.png`;
 
     li.innerHTML = `
@@ -196,7 +198,7 @@ function renderTradeList(side, listElementId) {
   });
 }
 
-// Helper to push items into trade sides from either the dropdown or card buttons
+// Helper to push items into trade sides from either dropdown or card buttons
 function addItemToTrade(itemId, sideTarget) {
   const item = allItems.find((i) => i.id === itemId);
   if (!item) return;
@@ -214,6 +216,7 @@ function addItemToTrade(itemId, sideTarget) {
 // Render catalog cards with thumbnails and quick-add buttons
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
+  if (!grid) return;
   grid.innerHTML = '';
 
   if (items.length === 0) {
@@ -225,7 +228,7 @@ function renderItems(items) {
     const card = document.createElement('div');
     card.className = 'card';
 
-    const isGem = item.type.toLowerCase() === 'gem';
+    const isGem = (item.type || '').toLowerCase() === 'gem';
     const displayValue = item.isNilValue ? 'Indefinite' : item.baseValue;
     const fallbackEmoji = isGem ? '💎' : '🔨';
     const imagePath = `images/${item.id}.png`;
@@ -258,28 +261,26 @@ function renderItems(items) {
         <span>${item.status}</span>
       </div>
       <div class="card-actions">
-        <button class="card-add-btn side-a" data-id="${item.id}" data-side="A">+ Side A</button>
-        <button class="card-add-btn side-b" data-id="${item.id}" data-side="B">+ Side B</button>
+        <button class="card-add-btn side-a" data-id="${item.id}">+ Side A</button>
+        <button class="card-add-btn side-b" data-id="${item.id}">+ Side B</button>
       </div>
     `;
 
-    // Attach click listeners to quick-add buttons on the card
     card.querySelector('.card-add-btn.side-a').addEventListener('click', (e) => {
-      addItemToTrade(e.target.getAttribute('data-id'), 'A');
+      addItemToTrade(e.currentTarget.getAttribute('data-id'), 'A');
     });
     card.querySelector('.card-add-btn.side-b').addEventListener('click', (e) => {
-      addItemToTrade(e.target.getAttribute('data-id'), 'B');
+      addItemToTrade(e.currentTarget.getAttribute('data-id'), 'B');
     });
 
     grid.appendChild(card);
   });
 }
 
-// Filter items based on search input and active type button
-// Filter items based on search input and active type button
-// Filter and Sort items
+// Filter and Sort items safely
 function applyFilters() {
-  const query = (document.getElementById('search').value || '').toLowerCase().trim();
+  const searchInput = document.getElementById('search');
+  const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
 
   // 1. Filter by Type and Search Query
   let filtered = allItems.filter((item) => {
@@ -295,7 +296,7 @@ function applyFilters() {
     return matchesType && matchesSearch;
   });
 
-  // 2. Sort the filtered items
+  // 2. Sort items
   filtered.sort((a, b) => {
     if (currentSort === 'val-desc') {
       return b.baseValue - a.baseValue;
@@ -312,23 +313,82 @@ function applyFilters() {
   renderItems(filtered);
 }
 
-// Search input listener
-document.getElementById('search').addEventListener('input', applyFilters);
+// Setup Event Listeners safely
+function setupEventListeners() {
+  const btnAddA = document.getElementById('btn-add-a');
+  if (btnAddA) {
+    btnAddA.addEventListener('click', () => {
+      const selectA = document.getElementById('select-a');
+      if (selectA && selectA.value) addItemToTrade(selectA.value, 'A');
+    });
+  }
 
-// Sort dropdown listener
-document.getElementById('sort-select').addEventListener('change', (e) => {
-  currentSort = e.target.value;
-  applyFilters();
-});
+  const btnAddB = document.getElementById('btn-add-b');
+  if (btnAddB) {
+    btnAddB.addEventListener('click', () => {
+      const selectB = document.getElementById('select-b');
+      if (selectB && selectB.value) addItemToTrade(selectB.value, 'B');
+    });
+  }
 
-// Filter button click listeners
-document.querySelectorAll('.filter-btn').forEach((btn) => {
-  btn.addEventListener('click', (e) => {
-    const button = e.currentTarget;
-    document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
-    button.classList.add('active');
+  const btnReset = document.getElementById('btn-reset');
+  if (btnReset) {
+    btnReset.addEventListener('click', () => {
+      sideA = [];
+      sideB = [];
+      renderTradeList(sideA, 'list-a');
+      renderTradeList(sideB, 'list-b');
+      updateTradeVerdict();
+    });
+  }
 
-    currentFilter = button.getAttribute('data-filter').toLowerCase().trim();
-    applyFilters();
+  const searchInput = document.getElementById('search');
+  if (searchInput) {
+    searchInput.addEventListener('input', applyFilters);
+  }
+
+  const sortSelect = document.getElementById('sort-select');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', (e) => {
+      currentSort = e.target.value;
+      applyFilters();
+    });
+  }
+
+  document.querySelectorAll('.filter-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const button = e.currentTarget;
+      document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
+      button.classList.add('active');
+      currentFilter = button.getAttribute('data-filter').toLowerCase().trim();
+      applyFilters();
+    });
   });
-});
+}
+
+// Fetch spreadsheet data
+async function loadData() {
+  const statusEl = document.getElementById('status');
+  try {
+    const response = await fetch(CSV_URL);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: Could not load CSV`);
+
+    const csvText = await response.text();
+    allItems = parseCSV(csvText);
+
+    if (statusEl) {
+      statusEl.textContent = `Loaded ${allItems.length} items successfully.`;
+    }
+    populateDropdowns(allItems);
+    setupEventListeners();
+    applyFilters();
+  } catch (error) {
+    if (statusEl) {
+      statusEl.textContent = `Error: ${error.message}. Please refresh or check sheet permissions.`;
+    }
+    console.error(error);
+  }
+}
+
+// Start loading
+loadData();
