@@ -168,7 +168,7 @@
       padding: clamp(14px, 3vw, 26px);
       box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
       width: 100%;
-      overflow: hidden;
+      overflow: visible;
     }
     .calculator-title {
       font-family: 'Outfit', sans-serif;
@@ -220,7 +220,7 @@
       gap: 10px;
       min-width: 0;
       width: 100%;
-      overflow: hidden;
+      position: relative;
     }
     .trade-side.side-your { border-top: 3px solid var(--accent-cyan); }
     .trade-side.side-their { border-top: 3px solid var(--accent-green); }
@@ -241,16 +241,23 @@
     .side-your .side-title { color: var(--accent-cyan); }
     .side-their .side-title { color: var(--accent-green); }
 
-    /* Calculator Input Controls */
+    /* Calculator Input Controls Stack */
     .calc-controls-stack {
       display: flex;
       flex-direction: column;
       gap: 6px;
       width: 100%;
+      position: relative;
+    }
+
+    /* Search Box Container */
+    .calc-search-box-wrap {
+      position: relative;
+      width: 100%;
     }
     .calc-search-input {
       width: 100%;
-      padding: 9px 12px;
+      padding: 10px 12px;
       background: var(--surface-2);
       color: #fff;
       border: 1px solid var(--border);
@@ -261,67 +268,108 @@
     }
     .calc-search-input:focus {
       border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(157, 125, 253, 0.2);
     }
 
-    .calc-feedback {
-      font-size: 11px;
-      font-weight: 600;
-      min-height: 15px;
-      color: var(--text-muted);
-      padding: 0 2px;
+    /* Matching Results Box - Same Width as Search Bar */
+    .calc-matches-panel {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      width: 100%;
+      max-height: 220px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-focus);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.8);
+      overflow-y: auto;
+      z-index: 50;
+      display: none;
+    }
+    .calc-matches-panel.open {
+      display: block;
+      animation: tabFadeIn 0.15s ease-out;
+    }
+
+    .calc-match-item {
+      padding: 9px 12px;
+      font-size: 13px;
+      color: var(--text-main);
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      user-select: none;
     }
-    .calc-feedback.has-error {
+    .calc-match-item:last-child {
+      border-bottom: none;
+    }
+    .calc-match-item:hover, .calc-match-item.highlighted {
+      background: rgba(157, 125, 253, 0.15);
+      color: #fff;
+    }
+    .calc-match-item-name {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .calc-match-item-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .calc-no-match-msg {
+      padding: 12px;
+      font-size: 12px;
       color: var(--accent-rose);
-    }
-    .calc-feedback.has-match {
-      color: var(--accent-cyan);
+      text-align: center;
+      font-weight: 600;
     }
 
-    .item-select-row {
+    /* Selected Item Preview Bar */
+    .calc-selected-preview {
       display: flex;
-      gap: 8px;
-      width: 100%;
-      min-width: 0;
+      justify-content: space-between;
       align-items: center;
-    }
-    .select-dropdown {
-      flex: 1 1 auto;
-      min-width: 0;
-      max-width: 100%;
-      padding: 9px 10px;
-      background: var(--surface-2);
-      color: var(--text-main);
-      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.35);
+      padding: 8px 12px;
       border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      min-height: 38px;
+    }
+    .calc-selected-name {
       font-size: 13px;
-      font-family: inherit;
-      outline: none;
-      cursor: pointer;
-      text-overflow: ellipsis;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
       white-space: nowrap;
       overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .select-dropdown:focus {
-      border-color: var(--border-focus);
-    }
-    .select-dropdown option {
-      background: var(--surface-2);
-      color: var(--text-main);
+
+    /* Actions Row */
+    .calc-actions-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 2px;
     }
 
     /* Shiny Checkbox Toggle in Calculator */
     .calc-shiny-toggle {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       font-size: 12px;
       font-weight: 700;
       color: var(--accent-gold);
       background: rgba(251, 191, 36, 0.08);
       border: 1px solid rgba(251, 191, 36, 0.25);
-      padding: 7px 10px;
+      padding: 8px 12px;
       border-radius: var(--radius-sm);
       cursor: pointer;
       user-select: none;
@@ -343,6 +391,7 @@
     }
 
     .add-btn {
+      flex: 1;
       color: #0b0f17;
       border: none;
       padding: 9px 16px;
@@ -350,32 +399,13 @@
       cursor: pointer;
       font-weight: 700;
       font-size: 13px;
-      flex-shrink: 0;
-      white-space: nowrap;
+      text-align: center;
       touch-action: manipulation;
     }
     .side-your .add-btn { background: var(--accent-cyan); }
     .side-their .add-btn { background: var(--accent-green); }
     .add-btn:active {
       transform: scale(0.97);
-    }
-
-    @media (max-width: 500px) {
-      .item-select-row {
-        flex-wrap: wrap;
-      }
-      .select-dropdown {
-        flex: 1 1 100%;
-      }
-      .calc-shiny-toggle {
-        flex: 1 1 auto;
-        justify-content: center;
-      }
-      .add-btn {
-        flex: 1 1 auto;
-        padding: 9px 0;
-        text-align: center;
-      }
     }
 
     .selected-list {
@@ -617,6 +647,14 @@
     .sort-dropdown {
       flex: 1 1 150px;
       max-width: 210px;
+      padding: 9px 10px;
+      background: var(--surface-2);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
     }
 
     /* --- Multi-Filter Accordion Drawer --- */
@@ -1037,7 +1075,7 @@
         <span>📦 Item Catalog</span>
       </button>
       <button class="tab-btn" data-tab="calculator">
-        <span>⚖️️ Trade Calculator</span>
+        <span>⚖ Trade Calculator</span>
         <span class="tab-badge" id="trade-count-badge" style="display: none;">0</span>
       </button>
     </div>
@@ -1061,7 +1099,7 @@
             <span>⚙ Filters</span>
             <span class="filter-badge-count" id="filter-count" style="display: none;">0</span>
           </button>
-          <select id="sort-select" class="select-dropdown sort-dropdown">
+          <select id="sort-select" class="sort-dropdown">
             <option value="val-desc">Value: High to Low</option>
             <option value="val-asc">Value: Low to High</option>
             <option value="dem-desc">Demand: High to Low</option>
@@ -1142,7 +1180,7 @@
     <div class="tab-panel" id="tab-calculator">
       <div class="calculator-container" id="calculator">
         <div class="calculator-title">
-          <span>⚖️ Trade Fairness Calculator</span>
+          <span>⚖ Trade Fairness Calculator</span>
           <button class="reset-btn" id="btn-reset">Reset Trade</button>
         </div>
 
@@ -1154,22 +1192,25 @@
             </div>
             
             <div class="calc-controls-stack">
-              <!-- Live Filter Search for Your Offer -->
-              <input type="text" id="calc-search-your" class="calc-search-input" placeholder="Type hammer / gem name..." autocomplete="off" />
-              <div class="calc-feedback" id="feedback-your"></div>
+              <!-- Live Prefix Search -->
+              <div class="calc-search-box-wrap">
+                <input type="text" id="calc-search-your" class="calc-search-input" placeholder="Type weapon name (e.g. Amber...)" autocomplete="off" />
+                <div class="calc-matches-panel" id="matches-panel-your"></div>
+              </div>
 
-              <div class="item-select-row">
-                <select id="select-your" class="select-dropdown">
-                  <option value="">Select item...</option>
-                </select>
+              <!-- Selected Item Bar -->
+              <div class="calc-selected-preview" id="preview-your">
+                <span class="calc-selected-name" id="preview-name-your">Type above to select an item</span>
+                <span style="font-size: 11px; color: var(--text-muted);" id="preview-meta-your">-</span>
+              </div>
 
-                <!-- Shiny Toggle Checkbox -->
-                <label class="calc-shiny-toggle" id="label-shiny-your" title="Add Shiny Variant">
-                  <input type="checkbox" id="shiny-your" />
+              <!-- Actions: Shiny Checkbox + Add -->
+              <div class="calc-actions-row">
+                <label class="calc-shiny-toggle disabled" id="label-shiny-your" title="Select an item with shiny">
+                  <input type="checkbox" id="shiny-your" disabled />
                   <span>★ Shiny</span>
                 </label>
-
-                <button class="add-btn" id="btn-add-your">+ Add</button>
+                <button class="add-btn" id="btn-add-your">+ Add Item</button>
               </div>
             </div>
 
@@ -1187,22 +1228,25 @@
             </div>
 
             <div class="calc-controls-stack">
-              <!-- Live Filter Search for Their Offer -->
-              <input type="text" id="calc-search-their" class="calc-search-input" placeholder="Type hammer / gem name..." autocomplete="off" />
-              <div class="calc-feedback" id="feedback-their"></div>
+              <!-- Live Prefix Search -->
+              <div class="calc-search-box-wrap">
+                <input type="text" id="calc-search-their" class="calc-search-input" placeholder="Type weapon name (e.g. Fried...)" autocomplete="off" />
+                <div class="calc-matches-panel" id="matches-panel-their"></div>
+              </div>
 
-              <div class="item-select-row">
-                <select id="select-their" class="select-dropdown">
-                  <option value="">Select item...</option>
-                </select>
+              <!-- Selected Item Bar -->
+              <div class="calc-selected-preview" id="preview-their">
+                <span class="calc-selected-name" id="preview-name-their">Type above to select an item</span>
+                <span style="font-size: 11px; color: var(--text-muted);" id="preview-meta-their">-</span>
+              </div>
 
-                <!-- Shiny Toggle Checkbox -->
-                <label class="calc-shiny-toggle" id="label-shiny-their" title="Add Shiny Variant">
-                  <input type="checkbox" id="shiny-their" />
+              <!-- Actions: Shiny Checkbox + Add -->
+              <div class="calc-actions-row">
+                <label class="calc-shiny-toggle disabled" id="label-shiny-their" title="Select an item with shiny">
+                  <input type="checkbox" id="shiny-their" disabled />
                   <span>★ Shiny</span>
                 </label>
-
-                <button class="add-btn" id="btn-add-their">+ Add</button>
+                <button class="add-btn" id="btn-add-their">+ Add Item</button>
               </div>
             </div>
 
