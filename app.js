@@ -14,7 +14,7 @@ const activeStatuses = new Set();
 const activeEvents = new Set();
 let filterHasShiny = false;
 
-// Immediate Tab Switching (Instant DOM responsiveness)
+// Immediate Tab Switching
 function switchTab(targetTab) {
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.getAttribute('data-tab') === targetTab);
@@ -180,25 +180,60 @@ function getItemActiveDisplay(item, isShiny = false) {
   };
 }
 
-// Populates and filters specific dropdown with item list
-function renderDropdownOptions(selectElement, items, searchQuery = '') {
+// Populates and filters specific dropdown with items and provides live feedback
+function renderDropdownOptions(selectElement, feedbackElement, items, searchQuery = '') {
   if (!selectElement) return;
 
   const currentSelection = selectElement.value;
-  selectElement.innerHTML = '<option value="">Select item...</option>';
+  selectElement.innerHTML = '';
 
   const query = (searchQuery || '').toLowerCase().trim();
   const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name));
 
   let matchedItems = sorted;
   if (query) {
-    matchedItems = sorted.filter(
-      (item) =>
-        item.name.toLowerCase().includes(query) ||
-        item.setName.toLowerCase().includes(query) ||
-        item.releaseEvent.toLowerCase().includes(query)
-    );
+    matchedItems = sorted.filter((item) => {
+      const name = (item.name || '').toLowerCase();
+      const set = (item.setName || '').toLowerCase();
+      const event = (item.releaseEvent || '').toLowerCase();
+      const type = (item.type || '').toLowerCase();
+      return name.includes(query) || set.includes(query) || event.includes(query) || type.includes(query);
+    });
   }
+
+  // Handle feedback text & zero-match states
+  if (feedbackElement) {
+    if (!query) {
+      feedbackElement.textContent = '';
+      feedbackElement.className = 'calc-feedback';
+    } else if (matchedItems.length === 0) {
+      feedbackElement.textContent = `⚠️ No item found matching "${searchQuery}"`;
+      feedbackElement.className = 'calc-feedback has-error';
+    } else if (matchedItems.length === 1) {
+      feedbackElement.textContent = `✓ 1 match found (auto-selected)`;
+      feedbackElement.className = 'calc-feedback has-match';
+    } else {
+      feedbackElement.textContent = `✓ ${matchedItems.length} matches found`;
+      feedbackElement.className = 'calc-feedback has-match';
+    }
+  }
+
+  if (matchedItems.length === 0) {
+    const emptyOpt = document.createElement('option');
+    emptyOpt.value = '';
+    emptyOpt.textContent = `No matches found`;
+    selectElement.appendChild(emptyOpt);
+    selectElement.value = '';
+    return;
+  }
+
+  // Add default placeholder option if multiple items match
+  const placeholderOpt = document.createElement('option');
+  placeholderOpt.value = '';
+  placeholderOpt.textContent = query
+    ? `-- ${matchedItems.length} matches (Select or click + Add) --`
+    : 'Select item...';
+  selectElement.appendChild(placeholderOpt);
 
   matchedItems.forEach((item) => {
     const valText = item.isNilValue ? 'Nil' : item.baseValue;
@@ -211,19 +246,28 @@ function renderDropdownOptions(selectElement, items, searchQuery = '') {
     selectElement.appendChild(opt);
   });
 
+  // Auto-selection priority:
+  // 1. Maintain existing selection if still valid
+  // 2. If user searched and exactly 1 item matches, select it automatically
+  // 3. If user searched and multiple match, pre-select the top match so clicking + Add adds it
   if (currentSelection && matchedItems.some((i) => i.id === currentSelection)) {
     selectElement.value = currentSelection;
+  } else if (query && matchedItems.length > 0) {
+    selectElement.value = matchedItems[0].id;
   }
 }
 
 function populateDropdowns(items) {
   const selectYour = document.getElementById('select-your');
+  const feedbackYour = document.getElementById('feedback-your');
   const selectTheir = document.getElementById('select-their');
-  renderDropdownOptions(selectYour, items);
-  renderDropdownOptions(selectTheir, items);
+  const feedbackTheir = document.getElementById('feedback-their');
+
+  renderDropdownOptions(selectYour, feedbackYour, items, '');
+  renderDropdownOptions(selectTheir, feedbackTheir, items, '');
 }
 
-// Updates shiny checkbox disabled state based on whether selected item has a shiny version
+// Updates shiny checkbox state based on whether selected item has a shiny version
 function handleDropdownItemSelection(selectId, shinyCheckboxId, labelId) {
   const select = document.getElementById(selectId);
   const cb = document.getElementById(shinyCheckboxId);
@@ -617,45 +661,74 @@ function applyFilters() {
 }
 
 function setupEventListeners() {
-  // Calculator Dropdown Item Selection Listeners (Enables/Disables Shiny Checkbox)
   const selectYour = document.getElementById('select-your');
+  const feedbackYour = document.getElementById('feedback-your');
+  const calcSearchYour = document.getElementById('calc-search-your');
+
+  const selectTheir = document.getElementById('select-their');
+  const feedbackTheir = document.getElementById('feedback-their');
+  const calcSearchTheir = document.getElementById('calc-search-their');
+
+  // Calculator Dropdown Selection Listeners
   if (selectYour) {
     selectYour.addEventListener('change', () => {
       handleDropdownItemSelection('select-your', 'shiny-your', 'label-shiny-your');
     });
   }
 
-  const selectTheir = document.getElementById('select-their');
   if (selectTheir) {
     selectTheir.addEventListener('change', () => {
       handleDropdownItemSelection('select-their', 'shiny-their', 'label-shiny-their');
     });
   }
 
-  // Live Search within Calculator Dropdowns
-  const calcSearchYour = document.getElementById('calc-search-your');
+  // Live Search for Your Offer with auto-select
   if (calcSearchYour && selectYour) {
     calcSearchYour.addEventListener('input', (e) => {
-      renderDropdownOptions(selectYour, allItems, e.target.value);
+      renderDropdownOptions(selectYour, feedbackYour, allItems, e.target.value);
       handleDropdownItemSelection('select-your', 'shiny-your', 'label-shiny-your');
     });
-  }
 
-  const calcSearchTheir = document.getElementById('calc-search-their');
-  if (calcSearchTheir && selectTheir) {
-    calcSearchTheir.addEventListener('input', (e) => {
-      renderDropdownOptions(selectTheir, allItems, e.target.value);
-      handleDropdownItemSelection('select-their', 'shiny-their', 'label-shiny-their');
+    calcSearchYour.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const btnAdd = document.getElementById('btn-add-your');
+        if (btnAdd) btnAdd.click();
+      }
     });
   }
 
-  // Calculator Add Buttons with Shiny Checkbox Value
+  // Live Search for Their Offer with auto-select
+  if (calcSearchTheir && selectTheir) {
+    calcSearchTheir.addEventListener('input', (e) => {
+      renderDropdownOptions(selectTheir, feedbackTheir, allItems, e.target.value);
+      handleDropdownItemSelection('select-their', 'shiny-their', 'label-shiny-their');
+    });
+
+    calcSearchTheir.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const btnAdd = document.getElementById('btn-add-their');
+        if (btnAdd) btnAdd.click();
+      }
+    });
+  }
+
+  // Calculator Add Buttons
   const btnAddYour = document.getElementById('btn-add-your');
   if (btnAddYour) {
     btnAddYour.addEventListener('click', () => {
       if (selectYour && selectYour.value) {
         const isShiny = document.getElementById('shiny-your')?.checked || false;
         addItemToTrade(selectYour.value, 'your', isShiny);
+        if (calcSearchYour) {
+          calcSearchYour.value = '';
+          renderDropdownOptions(selectYour, feedbackYour, allItems, '');
+          handleDropdownItemSelection('select-your', 'shiny-your', 'label-shiny-your');
+        }
+      } else if (feedbackYour) {
+        feedbackYour.textContent = '⚠️ Select an item or type to search';
+        feedbackYour.className = 'calc-feedback has-error';
       }
     });
   }
@@ -666,6 +739,14 @@ function setupEventListeners() {
       if (selectTheir && selectTheir.value) {
         const isShiny = document.getElementById('shiny-their')?.checked || false;
         addItemToTrade(selectTheir.value, 'their', isShiny);
+        if (calcSearchTheir) {
+          calcSearchTheir.value = '';
+          renderDropdownOptions(selectTheir, feedbackTheir, allItems, '');
+          handleDropdownItemSelection('select-their', 'shiny-their', 'label-shiny-their');
+        }
+      } else if (feedbackTheir) {
+        feedbackTheir.textContent = '⚠️ Select an item or type to search';
+        feedbackTheir.className = 'calc-feedback has-error';
       }
     });
   }
@@ -730,46 +811,34 @@ function setupEventListeners() {
     });
   }
 
-  // Rarity Checkboxes
+  // Filter Checkbox Listeners
   document.querySelectorAll('.cb-rarity').forEach((cb) => {
     cb.addEventListener('change', (e) => {
-      if (e.target.checked) {
-        activeRarities.add(e.target.value);
-      } else {
-        activeRarities.delete(e.target.value);
-      }
+      if (e.target.checked) activeRarities.add(e.target.value);
+      else activeRarities.delete(e.target.value);
       updateFilterBadge();
       applyFilters();
     });
   });
 
-  // Demand Checkboxes
   document.querySelectorAll('.cb-demand').forEach((cb) => {
     cb.addEventListener('change', (e) => {
-      if (e.target.checked) {
-        activeDemands.add(e.target.value);
-      } else {
-        activeDemands.delete(e.target.value);
-      }
+      if (e.target.checked) activeDemands.add(e.target.value);
+      else activeDemands.delete(e.target.value);
       updateFilterBadge();
       applyFilters();
     });
   });
 
-  // Status Checkboxes
   document.querySelectorAll('.cb-status').forEach((cb) => {
     cb.addEventListener('change', (e) => {
-      if (e.target.checked) {
-        activeStatuses.add(e.target.value);
-      } else {
-        activeStatuses.delete(e.target.value);
-      }
+      if (e.target.checked) activeStatuses.add(e.target.value);
+      else activeStatuses.delete(e.target.value);
       updateFilterBadge();
       applyFilters();
     });
   });
 
-  // Has Shiny Checkbox
   const cbShiny = document.getElementById('cb-has-shiny');
   if (cbShiny) {
     cbShiny.addEventListener('change', (e) => {
@@ -825,9 +894,9 @@ async function loadData() {
   }
 }
 
-// 1. Mount Navigation and UI Controls
+// Mount Navigation & Listeners
 initTabNavigation();
 setupEventListeners();
 
-// 2. Fetch dataset
+// Fetch Google Sheet dataset
 loadData();
