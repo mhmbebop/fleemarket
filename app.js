@@ -1,6 +1,7 @@
 const PRIMARY_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2RfYHa6ffWiale6czVqih6e7BrrZ-ZmRdnT10WTsS5M1ZJF9-jKSvcpyyrv5imytQ9lZsvL8su/pub?gid=0&single=true&output=csv';
 const SPREADSHEET_ID = '1XKPloRF46l0GGQOCdH0ce6Krjriitvj1LAdGTl_kkLI';
 const GVIZ_CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
+const LOCAL_CSV_PATH = '10_Player_Flee_Items_Database_Complete.csv';
 
 // LocalStorage Cache Configuration (10 minutes)
 const CACHE_KEY_DATA = 'flee_items_cache_v1';
@@ -607,7 +608,7 @@ function updateTradeVerdict() {
     verdictEl.textContent = '✅ Small Win';
     verdictEl.classList.add('status-win');
   } else if (percentDiff >= -5) {
-    verdictEl.textContent = '⚖️️ Fair Trade';
+    verdictEl.textContent = '⚖️ Fair Trade';
     verdictEl.classList.add('status-fair');
   } else if (percentDiff >= -15) {
     verdictEl.textContent = '🔻 Small Loss';
@@ -962,7 +963,7 @@ function applyFilters() {
   renderItems(filtered);
 }
 
-// Global Force Sync Handler
+// Global Force Sync Handler with Multi-Source Fallback Cascade
 window.forceSyncNow = async function(event) {
   if (event) event.preventDefault();
   const btn = document.getElementById('btn-force-sync');
@@ -992,7 +993,6 @@ function setupEventListeners() {
     btnForceSync.addEventListener('click', (e) => window.forceSyncNow(e));
   }
 
-  // Event Delegation for Catalog Grid (Zero memory leaks, single listener)
   const itemsGrid = document.getElementById('items-grid');
   if (itemsGrid) {
     itemsGrid.addEventListener('click', (e) => {
@@ -1246,28 +1246,49 @@ function setupEventListeners() {
   }
 }
 
+// Multi-Source CSV Fallback Cascade (GVIZ -> Publish Web -> Local CSV -> LocalStorage Cache)
 async function fetchFreshCSV() {
   const cacheBust = `&_t=${Date.now()}`;
 
-  try {
-    const res = await fetch(PRIMARY_CSV_URL + cacheBust);
-    if (res.ok) return await res.text();
-  } catch (err) {
-    console.warn('Primary CSV fetch failed, trying GVIZ fallback...', err);
-  }
-
+  // 1. Try GVIZ export URL
   try {
     const res = await fetch(GVIZ_CSV_URL + cacheBust);
-    if (res.ok) return await res.text();
+    if (res.ok) {
+      const text = await res.text();
+      if (text && text.length > 50) return text;
+    }
   } catch (err) {
-    console.warn('GVIZ fallback fetch failed, trying local file...', err);
+    console.warn('GVIZ CSV fetch failed, trying Publish-to-Web CSV...', err);
   }
 
+  // 2. Try Publish-to-Web CSV URL
   try {
-    const res = await fetch('10_Player_Flee_Items_Database_Complete.csv');
-    if (res.ok) return await res.text();
+    const res = await fetch(PRIMARY_CSV_URL + cacheBust);
+    if (res.ok) {
+      const text = await res.text();
+      if (text && text.length > 50) return text;
+    }
   } catch (err) {
-    console.error('All fetch sources failed.', err);
+    console.warn('Publish-to-Web CSV fetch failed, trying local repository CSV...', err);
+  }
+
+  // 3. Try Local Committed CSV File in Repository
+  try {
+    const res = await fetch(LOCAL_CSV_PATH + `?_t=${Date.now()}`);
+    if (res.ok) {
+      const text = await res.text();
+      if (text && text.length > 50) return text;
+    }
+  } catch (err) {
+    console.warn('Local CSV fetch failed, falling back to LocalStorage cache...', err);
+  }
+
+  // 4. Fall back to LocalStorage Cache
+  try {
+    const cachedCSV = localStorage.getItem(CACHE_KEY_DATA);
+    if (cachedCSV) return cachedCSV;
+  } catch (err) {
+    console.warn('LocalStorage cache retrieval failed.', err);
   }
 
   return null;
@@ -1345,6 +1366,15 @@ async function loadData(forceRefresh = false) {
     statusEl.textContent = '⚠️ Could not reach Google Sheets. Please verify permissions.';
     statusEl.style.color = 'var(--accent-rose)';
   }
+}
+
+// Register PWA Service Worker for Offline Mode
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch((err) => {
+      console.warn('Service Worker registration failed:', err);
+    });
+  });
 }
 
 // Immediate Boot
