@@ -58,6 +58,38 @@ function parseCSV(text) {
   });
 }
 
+// Determines accurate game rarity (including Eternaswan, Pan, Sapphira as Mythical)
+function getItemRarity(item) {
+  const name = (item.name || '').toLowerCase();
+  const cat = (item.category || '').toLowerCase();
+
+  // Known Mythicals from screenshot and official list
+  if (
+    name.includes('eternaswan') ||
+    name.includes('pan') ||
+    name.includes('sapphira') ||
+    name.includes('mythical') ||
+    cat.includes('mythical')
+  ) {
+    return 'Mythical';
+  }
+
+  if (name.includes('common')) return 'Common';
+  if (name.includes('rare')) return 'Rare';
+
+  // High tier / bundle sets
+  if (item.baseValue >= 70 || item.isNilValue || cat.includes('special') || cat.includes('bundle')) {
+    return 'Legendary';
+  }
+
+  // Mid tier event weapons
+  if (item.baseValue >= 20) {
+    return 'Epic';
+  }
+
+  return 'Rare';
+}
+
 function getShinyMultiplier(item) {
   const name = (item.name || '').toLowerCase();
   if (name.includes('rare') || name.includes('common')) return 4;
@@ -204,7 +236,7 @@ function updateTradeVerdict() {
   }
 
   if (dataA.hasNil || dataB.hasNil) {
-    verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
+    verdictEl.textContent = '⚠ Contains Indefinite / Nil Item(s)';
     detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
     verdictEl.classList.add('status-fair');
     return;
@@ -316,7 +348,10 @@ function renderItems(items) {
   items.forEach((item) => {
     const card = document.createElement('div');
     const isShiny = !!shinyState[item.id];
-    card.className = `card ${isShiny ? 'is-shiny' : ''}`;
+    const rarity = getItemRarity(item);
+    const rarityClass = `rarity-${rarity.toLowerCase()}`;
+
+    card.className = `card ${rarityClass} ${isShiny ? 'is-shiny' : ''}`;
 
     const isGem = (item.type || '').toLowerCase() === 'gem';
     const display = getItemActiveDisplay(item, isShiny);
@@ -339,8 +374,9 @@ function renderItems(items) {
         <div class="card-img-fallback" style="display: none;">${fallbackEmoji}</div>
       </div>
       <div class="card-top-info">
-        <div>
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
           <span class="badge ${isGem ? 'badge-gem' : ''}">${item.type}</span>
+          <span class="badge-rarity badge-${rarityClass}">${rarity}</span>
           ${isShiny ? '<span class="badge badge-shiny">★ SHINY</span>' : ''}
         </div>
         <span class="set-tag" title="${item.setName || item.releaseEvent}">${item.setName || item.releaseEvent}</span>
@@ -366,7 +402,7 @@ function renderItems(items) {
       </div>
     `;
 
-    // In-place Shiny Toggle (Never moves or reshuffles the card in the list)
+    // In-place Shiny Toggle
     const starBtn = card.querySelector('.shiny-star-btn');
     if (starBtn) {
       starBtn.addEventListener('click', (e) => {
@@ -426,7 +462,6 @@ function renderItems(items) {
   });
 }
 
-// Filter and Sort items based on intrinsic base attributes
 function applyFilters() {
   const searchInput = document.getElementById('search');
   const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
