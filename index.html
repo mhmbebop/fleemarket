@@ -549,8 +549,8 @@
       touch-action: manipulation;
     }
     .remove-btn:hover {
-      background: var(--accent-rose);
-      color: #fff;
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--accent-rose);
     }
 
     .side-summary {
@@ -1390,27 +1390,21 @@
       border: 1px solid var(--border);
     }
 
-    @media (max-width: 500px) {
+    @media (max-width: 768px) {
+      body {
+        padding-bottom: 120px;
+      }
+      input[type="text"], select {
+        font-size: 16px !important;
+      }
       .floating-trade-dock {
-        bottom: 10px;
-        padding: 8px 10px;
-      }
-      .dock-stats {
-        gap: 6px;
-      }
-      .dock-stat-pill {
-        padding: 2px 4px;
-      }
-      .dock-tray-toggle-btn {
-        padding: 7px 9px;
-        font-size: 11px;
-      }
-      .dock-open-btn {
-        padding: 8px 12px;
-        font-size: 12px;
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        width: calc(100% - 16px);
+        padding: 10px 12px;
       }
       .dock-items-drawer {
-        bottom: 74px;
+        bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+        width: calc(100% - 16px);
       }
     }
   </style>
@@ -1662,7 +1656,7 @@
       <button type="button" class="dock-tray-toggle-btn" id="btn-dock-tray-toggle">Items ▾</button>
       <button type="button" class="dock-open-btn" id="btn-dock-open">
         <span>Calculate</span>
-        <span>⚖️</span>
+        <span>⚖️️</span>
       </button>
     </div>
   </div>
