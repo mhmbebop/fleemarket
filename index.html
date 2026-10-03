@@ -10,7 +10,7 @@
 
   <style>
     :root {
-      /* Flee the Facility Matte Charcoal Palette */
+      /* Flee the Facility Matte Charcoal Theme */
       --bg-dark: #0d0f12;
       --surface-1: #15181e;
       --surface-2: #1c2028;
@@ -57,7 +57,7 @@
       width: 100%;
     }
 
-    /* FTF Logo Header */
+    /* FTF Logo Header Section */
     header {
       margin-bottom: clamp(16px, 3vw, 24px);
       display: flex;
@@ -78,15 +78,55 @@
       object-fit: contain;
       filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.7));
     }
+
+    /* Sync Status Row & Button */
+    .sync-status-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
     #status {
       font-size: 12px;
       font-weight: 600;
       color: var(--accent-cyan);
-      margin-top: 4px;
+    }
+    .sync-now-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      touch-action: manipulation;
+    }
+    .sync-now-btn:hover {
+      background: rgba(157, 125, 253, 0.15);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .sync-now-btn.is-syncing {
+      opacity: 0.6;
+      cursor: wait;
+      pointer-events: none;
+    }
+    .sync-now-btn.is-syncing .sync-icon {
       display: inline-block;
+      animation: spin-sync 0.8s linear infinite;
+    }
+    @keyframes spin-sync {
+      100% { transform: rotate(360deg); }
     }
 
-    /* Primary Navigation Tabs */
+    /* Navigation Tabs */
     .nav-tabs {
       display: flex;
       gap: 8px;
@@ -147,7 +187,7 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Trade Calculator Container */
+    /* Calculator View */
     .calculator-container {
       background: var(--surface-glass);
       backdrop-filter: blur(16px);
@@ -1359,7 +1399,14 @@
         />
         <h1 id="fallback-title" style="display: none; font-size: 28px; font-weight: 800; margin: 0;">10 PLAYER FLEEMARKET</h1>
       </div>
-      <div id="status">Syncing with Google Sheets...</div>
+      
+      <div class="sync-status-row">
+        <div id="status">Syncing with Google Sheets...</div>
+        <button type="button" id="btn-force-sync" class="sync-now-btn" title="Force refresh data directly from Google Sheets">
+          <span class="sync-icon">↻</span>
+          <span>Sync Now</span>
+        </button>
+      </div>
     </header>
 
     <!-- NAVIGATION TABS -->
@@ -1403,7 +1450,7 @@
         </div>
       </div>
 
-      <!-- MULTI-FILTER ACCORDION DRAWER -->
+      <!-- MULTI-FILTER DRAWER -->
       <div class="filter-drawer" id="filter-drawer">
         <div class="drawer-grid">
           <div>
