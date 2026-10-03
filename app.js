@@ -689,7 +689,7 @@ function updateTradeVerdict() {
 
 // Group duplicate items by quantity stacking (x2, x3) with clean fallback handling
 function renderTradeList(sideItems, listElementId) {
-  const ul = document.getElementById(listElementId);
+  const ul = document.getElementById(listId);
   if (!ul) return;
   ul.innerHTML = '';
 
@@ -865,9 +865,8 @@ function renderItems(items) {
           alt="${safeName}" 
           class="card-img"
           loading="lazy"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+          onerror="this.parentElement.innerHTML = '<div class=\'card-img-fallback\'>${fallbackEmoji}</div>';"
         />
-        <div class="card-img-fallback" style="display: none;">${fallbackEmoji}</div>
       </div>
       <div class="card-top-info">
         <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 3px;">
