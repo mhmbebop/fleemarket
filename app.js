@@ -362,8 +362,8 @@ function updateCalculatorUI() {
     if (valTheir) valTheir.textContent = dataTheir.hasNil ? `${dataTheir.totalValue} + Nil` : dataTheir.totalValue;
   }
 
-  renderTrayList(yourOffer, 'tray-list-your', 'your');
-  renderTrayList(theirOffer, 'tray-list-their', 'their');
+  renderTradeList(yourOffer, 'list-your');
+  renderTradeList(theirOffer, 'list-their');
   const trayCountYour = document.getElementById('tray-count-your');
   const trayCountTheir = document.getElementById('tray-count-their');
   if (trayCountYour) trayCountYour.textContent = yourOffer.length;
@@ -373,8 +373,8 @@ function updateCalculatorUI() {
   saveTradeState();
 }
 
-function renderTrayList(sideItems, listElementId, sideTarget) {
-  const ul = document.getElementById(listElementId);
+function renderTrayList(sideItems, listId, sideTarget) {
+  const ul = document.getElementById(listId);
   if (!ul) return;
   ul.innerHTML = '';
 
@@ -398,8 +398,8 @@ function renderTrayList(sideItems, listElementId, sideTarget) {
 
     li.querySelector('.remove-btn').addEventListener('click', () => {
       sideItems.splice(index, 1);
-      renderTradeList(yourOffer, 'list-your', 'your');
-      renderTradeList(theirOffer, 'list-their', 'their');
+      renderTradeList(yourOffer, 'list-your');
+      renderTradeList(theirOffer, 'list-their');
       updateTradeVerdict();
     });
 
@@ -647,10 +647,9 @@ function updateTradeVerdict() {
   }
 
   if (dataYour.hasNil || dataTheir.hasNil) {
-    verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
+    verdictEl.textContent = '⚠️️ Contains Indefinite / Nil Item(s)';
     detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
     verdictEl.classList.add('status-fair');
-    saveCompletedTrade('Contains Nil');
     return;
   }
 
@@ -683,12 +682,10 @@ function updateTradeVerdict() {
 
   const sign = diff > 0 ? '+' : '';
   detailsEl.textContent = `Their Offer has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
-
-  saveCompletedTrade(verdictString);
 }
 
-// Group duplicate items by quantity stacking with direct emoji fallback display
-function renderTradeList(sideItems, listElementId, sideTarget) {
+// Group duplicate items by quantity stacking with corrected listElementId parameter
+function renderTradeList(sideItems, listElementId) {
   const ul = document.getElementById(listElementId);
   if (!ul) return;
   ul.innerHTML = '';
@@ -738,8 +735,7 @@ function renderTradeList(sideItems, listElementId, sideTarget) {
       const idx = sideItems.findIndex((i) => i.id === group.id && !!i.isShiny === !!group.isShiny);
       if (idx !== -1) {
         sideItems.splice(idx, 1);
-        renderTradeList(yourOffer, 'list-your', 'your');
-        renderTradeList(theirOffer, 'list-their', 'their');
+        renderTradeList(sideItems, listElementId);
         updateTradeVerdict();
       }
     });
@@ -755,7 +751,7 @@ function renderTradeList(sideItems, listElementId, sideTarget) {
           targetArray.splice(i, 1);
         }
       }
-      renderTradeList(targetArray, listElementId, listElementId === 'list-your' ? 'your' : 'their');
+      renderTradeList(targetArray, listElementId);
       updateTradeVerdict();
     });
 
@@ -780,10 +776,10 @@ function addItemToTrade(item, sideTarget, isShiny = false) {
 
   if (sideTarget === 'your') {
     yourOffer.push(tradeItem);
-    renderTradeList(yourOffer, 'list-your', 'your');
+    renderTradeList(yourOffer, 'list-your');
   } else if (sideTarget === 'their') {
     theirOffer.push(tradeItem);
-    renderTradeList(theirOffer, 'list-their', 'their');
+    renderTradeList(theirOffer, 'list-their');
   }
   updateTradeVerdict();
 }
@@ -799,7 +795,7 @@ function removeItemFromTrade(itemId, sideTarget) {
     }
   }
 
-  renderTradeList(targetArray, listId, sideTarget);
+  renderTradeList(targetArray, listId);
   updateTradeVerdict();
 }
 
@@ -1097,7 +1093,18 @@ function copyShareableLink() {
   });
 }
 
-// Trade History Log Management
+// Summarize items helper for history logs
+const formatTradeSummary = (items) => {
+  if (!items || items.length === 0) return 'None';
+  const map = new Map();
+  items.forEach((i) => {
+    const key = `${i.name}${i.isShiny ? ' (★)' : ''}`;
+    map.set(key, (map.get(key) || 0) + 1);
+  });
+  return Array.from(map.entries()).map(([name, count]) => count > 1 ? `${name} x${count}` : name).join(', ');
+};
+
+// Trade History Log Management with Full Item Breakdown
 function saveCompletedTrade(verdict = 'Completed Trade') {
   if (yourOffer.length === 0 && theirOffer.length === 0) return;
   try {
@@ -1113,8 +1120,8 @@ function saveCompletedTrade(verdict = 'Completed Trade') {
       yourVal: dataYour.totalValue,
       theirVal: dataTheir.totalValue,
       verdict: verdict,
-      yourCount: yourOffer.length,
-      theirCount: theirOffer.length
+      yourSummary: formatTradeSummary(yourOffer),
+      theirSummary: formatTradeSummary(theirOffer)
     };
 
     history.unshift(entry);
@@ -1145,10 +1152,18 @@ function renderTradeHistory() {
 
     history.forEach((h) => {
       const li = document.createElement('li');
-      li.style.cssText = 'font-size: 11px; color: var(--text-main); background: var(--surface-2); padding: 5px 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;';
+      li.style.cssText = 'font-size: 11px; color: var(--text-main); background: var(--surface-2); padding: 8px 10px; border-radius: 6px; display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--border);';
       li.innerHTML = `
-        <span><b>${h.date}</b>: You (${h.yourVal}) vs Them (${h.theirVal})</span>
-        <span style="color: var(--accent-cyan); font-weight: 700;">${h.verdict}</span>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-muted); font-size: 10px;">${h.date}</span>
+          <span style="color: var(--accent-cyan); font-weight: 700;">${h.verdict}</span>
+        </div>
+        <div style="font-size: 11px;">
+          <span style="color: var(--accent-cyan);">You (${h.yourVal}):</span> ${sanitizeInput(h.yourSummary)}
+        </div>
+        <div style="font-size: 11px;">
+          <span style="color: var(--accent-green);">Them (${h.theirVal}):</span> ${sanitizeInput(h.theirSummary)}
+        </div>
       `;
       ul.appendChild(li);
     });
@@ -1174,6 +1189,14 @@ function setupEventListeners() {
   const btnShareLink = document.getElementById('btn-share-link');
   if (btnShareLink) {
     btnShareLink.addEventListener('click', copyShareableLink);
+  }
+
+  const btnFinalize = document.getElementById('btn-finalize-trade');
+  if (btnFinalize) {
+    btnFinalize.addEventListener('click', () => {
+      const verdictText = document.getElementById('verdict-text')?.textContent || 'Completed Trade';
+      saveCompletedTrade(verdictText);
+    });
   }
 
   const btnClearHistory = document.getElementById('btn-clear-history');
@@ -1273,8 +1296,8 @@ function setupEventListeners() {
       theirOffer = [];
       localStorage.removeItem(TRADE_KEY_YOUR);
       localStorage.removeItem(TRADE_KEY_THEIR);
-      renderTradeList(yourOffer, 'list-your', 'your');
-      renderTradeList(theirOffer, 'list-their', 'their');
+      renderTradeList(yourOffer, 'list-your');
+      renderTradeList(theirOffer, 'list-their');
       selectedItemYour = null;
       selectedItemTheir = null;
       updateSidePreview('your', null);
@@ -1321,8 +1344,8 @@ function setupEventListeners() {
       theirOffer = [];
       localStorage.removeItem(TRADE_KEY_YOUR);
       localStorage.removeItem(TRADE_KEY_THEIR);
-      renderTradeList(yourOffer, 'list-your', 'your');
-      renderTradeList(theirOffer, 'list-their', 'their');
+      renderTradeList(yourOffer, 'list-your');
+      renderTradeList(theirOffer, 'list-their');
       document.getElementById('dock-items-drawer')?.classList.remove('open');
       document.getElementById('floating-trade-dock')?.classList.remove('visible');
       updateTradeVerdict();
@@ -1504,8 +1527,8 @@ async function loadData(forceRefresh = false) {
 
           if (isFresh) {
             loadTradeState();
-            renderTradeList(yourOffer, 'list-your', 'your');
-            renderTradeList(theirOffer, 'list-their', 'their');
+            renderTradeList(yourOffer, 'list-your');
+            renderTradeList(theirOffer, 'list-their');
             updateTradeVerdict();
             renderTradeHistory();
             return;
@@ -1545,8 +1568,8 @@ async function loadData(forceRefresh = false) {
       populateEventFilters(allItems);
       applyFilters();
       loadTradeState();
-      renderTradeList(yourOffer, 'list-your', 'your');
-      renderTradeList(theirOffer, 'list-their', 'their');
+      renderTradeList(yourOffer, 'list-your');
+      renderTradeList(theirOffer, 'list-their');
       updateTradeVerdict();
       renderTradeHistory();
       return;
