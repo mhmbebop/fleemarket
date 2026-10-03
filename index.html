@@ -772,9 +772,10 @@
 
     /* Compact List View Styles */
     .compact-container {
+      grid-column: 1 / -1;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
       width: 100%;
     }
     .compact-section {
@@ -1576,7 +1577,7 @@
             <option value="name-desc">Name: Z to A</option>
           </select>
 
-          <!-- VIEW MODE TOGGLE (GRID / COMPACT) -->
+          <!-- VIEW MODE TOGGLE -->
           <div class="filter-btn-group" id="view-mode-group">
             <button class="filter-btn active" data-view="grid" aria-label="Grid view mode">Grid</button>
             <button class="filter-btn" data-view="compact" aria-label="Compact list view mode">Compact</button>
