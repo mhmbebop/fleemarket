@@ -1,11 +1,11 @@
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2RfYHa6ffWiale6czVqih6e7BrrZ-ZmRdnT10WTsS5M1ZJF9-jKSvcpyyrv5imytQ9lZsvL8su/pub?gid=0&single=true&output=csv';
 
-let allItems = [];      // Clean list of unique base items only
+let allItems = [];
 let sideA = [];
 let sideB = [];
-let currentFilter = 'all'; // 'all' | 'hammer' | 'gem'
+let currentFilter = 'all';
 let currentSort = 'val-desc';
-const shinyState = {};  // Tracks active toggle per item ID (true/false)
+const shinyState = {};
 
 // CSV Parser
 function parseCSV(text) {
@@ -58,26 +58,20 @@ function parseCSV(text) {
   });
 }
 
-// Determines the shiny multiplier based on item tier/event
 function getShinyMultiplier(item) {
   const name = (item.name || '').toLowerCase();
-  if (name.includes('rare') || name.includes('common')) {
-    return 4;
-  }
+  if (name.includes('rare') || name.includes('common')) return 4;
   return 10;
 }
 
-// Merges separate "Shiny ..." rows into their base items so no duplicate cards exist
 function processAndDeduplicateItems(rawItems) {
   const baseMap = new Map();
   const explicitShinies = [];
 
-  // 1. Separate base items from items with "Shiny" in their title
   rawItems.forEach((item) => {
     if (item.name.toLowerCase().startsWith('shiny ')) {
       explicitShinies.push(item);
     } else {
-      // Create a lookup key combining normalized name and type (Hammer vs Gem)
       const key = `${item.name.toLowerCase()}_${item.type.toLowerCase()}`;
       item.hasShiny = false;
       item.shinyData = null;
@@ -85,7 +79,6 @@ function processAndDeduplicateItems(rawItems) {
     }
   });
 
-  // 2. Attach explicit shiny rows directly to their corresponding base item
   explicitShinies.forEach((shinyItem) => {
     const baseName = shinyItem.name.replace(/^shiny\s+/i, '').trim().toLowerCase();
     const key = `${baseName}_${shinyItem.type.toLowerCase()}`;
@@ -103,8 +96,6 @@ function processAndDeduplicateItems(rawItems) {
     }
   });
 
-  // 3. For any items that don't have explicit sheet rows but are eligible via multiplier rules
-  // (e.g. Crate items, Event items that can be shiny)
   baseMap.forEach((item) => {
     if (!item.hasShiny && !item.name.toLowerCase().includes('permanent') && !item.category.toLowerCase().includes('permanent')) {
       const mult = getShinyMultiplier(item);
@@ -122,7 +113,6 @@ function processAndDeduplicateItems(rawItems) {
   return Array.from(baseMap.values());
 }
 
-// Get the current display values depending on whether shiny mode is toggled on
 function getItemActiveDisplay(item, isShiny = false) {
   if (isShiny && item.hasShiny && item.shinyData) {
     return {
@@ -144,14 +134,13 @@ function getItemActiveDisplay(item, isShiny = false) {
   };
 }
 
-// Populate dropdown selectors for trade calculator
 function populateDropdowns(items) {
   const selectA = document.getElementById('select-a');
   const selectB = document.getElementById('select-b');
   if (!selectA || !selectB) return;
 
-  selectA.innerHTML = '<option value="">Select an item to add...</option>';
-  selectB.innerHTML = '<option value="">Select an item to add...</option>';
+  selectA.innerHTML = '<option value="">Select item...</option>';
+  selectB.innerHTML = '<option value="">Select item...</option>';
 
   const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -171,7 +160,6 @@ function populateDropdowns(items) {
   });
 }
 
-// Calculate total value and average demand tier for a trade side
 function calculateSide(items) {
   let totalValue = 0;
   let totalDemandTier = 0;
@@ -190,7 +178,6 @@ function calculateSide(items) {
   return { totalValue, hasNil, avgDemand };
 }
 
-// Trade comparison verdict logic
 function updateTradeVerdict() {
   const dataA = calculateSide(sideA);
   const dataB = calculateSide(sideB);
@@ -217,7 +204,7 @@ function updateTradeVerdict() {
   }
 
   if (dataA.hasNil || dataB.hasNil) {
-    verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
+    verdictEl.textContent = '⚠ Contains Indefinite / Nil Item(s)';
     detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
     verdictEl.classList.add('status-fair');
     return;
@@ -248,7 +235,6 @@ function updateTradeVerdict() {
   detailsEl.textContent = `Side B has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
 }
 
-// Render selected items list with icon previews
 function renderTradeList(side, listElementId) {
   const ul = document.getElementById(listElementId);
   if (!ul) return;
@@ -271,11 +257,11 @@ function renderTradeList(side, listElementId) {
         />
         <div class="trade-thumb-fallback" style="display: none;">${fallbackEmoji}</div>
         <div>
-          <div>
-            <strong>${item.name}</strong>
-            ${item.isShiny ? '<span style="color: #ffd700; font-size: 11px; margin-left: 4px;">★ SHINY</span>' : ''}
+          <div style="font-weight: 700; font-size: 13px;">
+            ${item.name}
+            ${item.isShiny ? '<span style="color: #fbbf24; font-size: 11px; margin-left: 4px;">★ SHINY</span>' : ''}
           </div>
-          <span style="font-size: 12px; color: #8b949e;">Val: <b style="color: #f2cc60;">${valText}</b> | Dem: ${item.demandLabel}</span>
+          <span style="font-size: 11px; color: var(--text-muted);">Val: <b style="color: var(--accent-gold);">${valText}</b> • Dem: ${item.demandLabel}</span>
         </div>
       </div>
       <button class="remove-btn" data-index="${index}">✕</button>
@@ -291,7 +277,6 @@ function renderTradeList(side, listElementId) {
   });
 }
 
-// Helper to push items into trade sides
 function addItemToTrade(itemId, sideTarget, isShiny = false) {
   const item = allItems.find((i) => i.id === itemId);
   if (!item) return;
@@ -318,14 +303,13 @@ function addItemToTrade(itemId, sideTarget, isShiny = false) {
   updateTradeVerdict();
 }
 
-// Render catalog cards
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
   grid.innerHTML = '';
 
   if (items.length === 0) {
-    grid.innerHTML = '<p>No items found.</p>';
+    grid.innerHTML = '<p style="color: var(--text-muted);">No matching items found.</p>';
     return;
   }
 
@@ -339,7 +323,6 @@ function renderItems(items) {
     const fallbackEmoji = isGem ? '💎' : '🔨';
     const imagePath = isShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
 
-    // Only render the star button if the item actually has a shiny version
     const starButtonHtml = item.hasShiny
       ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-id="${item.id}" title="Toggle Shiny Version">★</div>`
       : '';
@@ -355,25 +338,27 @@ function renderItems(items) {
         />
         <div class="card-img-fallback" style="display: none;">${fallbackEmoji}</div>
       </div>
-      <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div class="card-top-info">
         <div>
           <span class="badge ${isGem ? 'badge-gem' : ''}">${item.type}</span>
-          ${isShiny ? '<span class="badge badge-shiny">SHINY</span>' : ''}
+          ${isShiny ? '<span class="badge badge-shiny">★ SHINY</span>' : ''}
         </div>
-        <span style="font-size: 12px; color: #8b949e;">${item.setName || item.releaseEvent}</span>
+        <span class="set-tag" title="${item.setName || item.releaseEvent}">${item.setName || item.releaseEvent}</span>
       </div>
       <h3 class="card-title">${item.name}</h3>
-      <div class="row">
-        <span>Value:</span>
-        <span class="val">${display.value}</span>
-      </div>
-      <div class="row">
-        <span>Demand:</span>
-        <span class="demand">${display.demandLabel}</span>
-      </div>
-      <div class="row">
-        <span>Status:</span>
-        <span>${display.status}</span>
+      <div class="meta-rows">
+        <div class="row">
+          <span>Value</span>
+          <span class="val">${display.value}</span>
+        </div>
+        <div class="row">
+          <span>Demand</span>
+          <span class="demand">${display.demandLabel}</span>
+        </div>
+        <div class="row">
+          <span>Status</span>
+          <span class="status-tag">${display.status}</span>
+        </div>
       </div>
       <div class="card-actions">
         <button class="card-add-btn side-a" data-id="${item.id}">+ Side A</button>
@@ -381,7 +366,6 @@ function renderItems(items) {
       </div>
     `;
 
-    // Attach click listener to star button if it exists on this card
     const starBtn = card.querySelector('.shiny-star-btn');
     if (starBtn) {
       starBtn.addEventListener('click', (e) => {
@@ -391,7 +375,6 @@ function renderItems(items) {
       });
     }
 
-    // Quick Add Buttons
     card.querySelector('.card-add-btn.side-a').addEventListener('click', (e) => {
       addItemToTrade(e.currentTarget.getAttribute('data-id'), 'A', !!shinyState[item.id]);
     });
@@ -403,12 +386,10 @@ function renderItems(items) {
   });
 }
 
-// Filter and Sort items
 function applyFilters() {
   const searchInput = document.getElementById('search');
   const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
 
-  // 1. Filter by Type and Search Query
   let filtered = allItems.filter((item) => {
     const itemType = (item.type || '').toLowerCase().trim();
     const matchesType = (currentFilter === 'all') || (itemType === currentFilter);
@@ -422,7 +403,6 @@ function applyFilters() {
     return matchesType && matchesSearch;
   });
 
-  // 2. Sort items
   filtered.sort((a, b) => {
     const isShinyA = !!shinyState[a.id];
     const isShinyB = !!shinyState[b.id];
@@ -444,7 +424,6 @@ function applyFilters() {
   renderItems(filtered);
 }
 
-// Setup Event Listeners
 function setupEventListeners() {
   const btnAddA = document.getElementById('btn-add-a');
   if (btnAddA) {
@@ -474,9 +453,7 @@ function setupEventListeners() {
   }
 
   const searchInput = document.getElementById('search');
-  if (searchInput) {
-    searchInput.addEventListener('input', applyFilters);
-  }
+  if (searchInput) searchInput.addEventListener('input', applyFilters);
 
   const sortSelect = document.getElementById('sort-select');
   if (sortSelect) {
@@ -497,7 +474,6 @@ function setupEventListeners() {
   });
 }
 
-// Fetch spreadsheet data
 async function loadData() {
   const statusEl = document.getElementById('status');
   try {
@@ -507,11 +483,11 @@ async function loadData() {
     const csvText = await response.text();
     const rawItems = parseCSV(csvText);
 
-    // Filter duplicates and attach shiny properties to the base items
     allItems = processAndDeduplicateItems(rawItems);
 
     if (statusEl) {
-      statusEl.textContent = `Loaded ${allItems.length} unique items successfully.`;
+      statusEl.textContent = `✓ Synced ${allItems.length} items from Google Sheets`;
+      statusEl.style.color = 'var(--accent-green)';
     }
     populateDropdowns(allItems);
     setupEventListeners();
@@ -519,10 +495,10 @@ async function loadData() {
   } catch (error) {
     if (statusEl) {
       statusEl.textContent = `Error: ${error.message}. Please refresh or check sheet permissions.`;
+      statusEl.style.color = 'var(--accent-rose)';
     }
     console.error(error);
   }
 }
 
-// Start loading
 loadData();
