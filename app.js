@@ -209,7 +209,7 @@ function updateCalculatorUI() {
   const dataYour = calculateSide(yourOffer);
   const dataTheir = calculateSide(theirOffer);
 
-  // Automatically dismiss dock and preview drawer when 0 items remain
+  // Dismiss dock and preview drawer when 0 items remain
   if (totalItems === 0) {
     if (dock) dock.classList.remove('visible');
     if (drawer) drawer.classList.remove('open');
@@ -494,7 +494,7 @@ function updateTradeVerdict() {
 
   if (valYour) valYour.textContent = dataYour.hasNil ? `${dataYour.totalValue} + Nil` : dataYour.totalValue;
   if (demYour) demYour.textContent = dataYour.avgDemand;
-  if (valTheir) valTheir.textContent = dataTheir.hasNil ? `${dataTheir.totalValue} + Nil` : dataDailyDemandText(dataTheir.avgDemand);
+  if (valTheir) valTheir.textContent = dataTheir.hasNil ? `${dataTheir.totalValue} + Nil` : dataTheir.totalValue;
   if (demTheir) demTheir.textContent = dataTheir.avgDemand;
 
   updateCalculatorUI();
@@ -538,10 +538,6 @@ function updateTradeVerdict() {
 
   const sign = diff > 0 ? '+' : '';
   detailsEl.textContent = `Their Offer has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
-}
-
-function dataDailyDemandText(val) {
-  return val;
 }
 
 function renderTradeList(sideItems, listElementId) {
@@ -912,6 +908,28 @@ function applyFilters() {
   renderItems(filtered);
 }
 
+// Global Force Sync Handler
+window.forceSyncNow = async function(event) {
+  if (event) event.preventDefault();
+  const btn = document.getElementById('btn-force-sync');
+  const icon = btn?.querySelector('.sync-icon');
+  
+  if (btn) btn.classList.add('is-syncing');
+  if (icon) icon.textContent = '⏳';
+
+  const startTime = Date.now();
+  await loadData(true);
+
+  // Keep feedback visible for at least 500ms
+  const elapsed = Date.now() - startTime;
+  if (elapsed < 500) {
+    await new Promise((resolve) => setTimeout(resolve, 500 - elapsed));
+  }
+
+  if (btn) btn.classList.remove('is-syncing');
+  if (icon) icon.textContent = '↻';
+};
+
 function setupEventListeners() {
   setupPrefixSearch('calc-search-your', 'btn-clear-calc-your', 'matches-panel-your', 'your');
   setupPrefixSearch('calc-search-their', 'btn-clear-calc-their', 'matches-panel-their', 'their');
@@ -919,26 +937,33 @@ function setupEventListeners() {
   // Manual Force-Sync Button
   const btnForceSync = document.getElementById('btn-force-sync');
   if (btnForceSync) {
-    btnForceSync.addEventListener('click', async () => {
-      btnForceSync.classList.add('is-syncing');
-      await loadData(true);
-      btnForceSync.classList.remove('is-syncing');
-    });
+    btnForceSync.addEventListener('click', (e) => window.forceSyncNow(e));
   }
 
-  // Calculator Add Buttons
+  // Calculator Add Buttons with Auto-Fallback Selection
   const btnAddYour = document.getElementById('btn-add-your');
   if (btnAddYour) {
     btnAddYour.addEventListener('click', () => {
+      const input = document.getElementById('calc-search-your');
+      const query = (input ? input.value : '').toLowerCase().trim();
+
+      // If user typed without clicking dropdown item, pick the top match
+      if (!selectedItemYour && query) {
+        selectedItemYour = allItems.find((i) => 
+          (i.name || '').toLowerCase().startsWith(query) || 
+          (i.name || '').toLowerCase().includes(query)
+        ) || null;
+      }
+
       if (selectedItemYour) {
         const isShiny = document.getElementById('shiny-your')?.checked || false;
         addItemToTrade(selectedItemYour, 'your', isShiny);
         selectedItemYour = null;
         updateSidePreview('your', null);
-        const input = document.getElementById('calc-search-your');
         const clearBtn = document.getElementById('btn-clear-calc-your');
         if (input) input.value = '';
         if (clearBtn) clearBtn.style.display = 'none';
+        document.getElementById('matches-panel-your')?.classList.remove('open');
       }
     });
   }
@@ -946,15 +971,25 @@ function setupEventListeners() {
   const btnAddTheir = document.getElementById('btn-add-their');
   if (btnAddTheir) {
     btnAddTheir.addEventListener('click', () => {
+      const input = document.getElementById('calc-search-their');
+      const query = (input ? input.value : '').toLowerCase().trim();
+
+      if (!selectedItemTheir && query) {
+        selectedItemTheir = allItems.find((i) => 
+          (i.name || '').toLowerCase().startsWith(query) || 
+          (i.name || '').toLowerCase().includes(query)
+        ) || null;
+      }
+
       if (selectedItemTheir) {
         const isShiny = document.getElementById('shiny-their')?.checked || false;
         addItemToTrade(selectedItemTheir, 'their', isShiny);
         selectedItemTheir = null;
         updateSidePreview('their', null);
-        const input = document.getElementById('calc-search-their');
         const clearBtn = document.getElementById('btn-clear-calc-their');
         if (input) input.value = '';
         if (clearBtn) clearBtn.style.display = 'none';
+        document.getElementById('matches-panel-their')?.classList.remove('open');
       }
     });
   }
@@ -1131,7 +1166,6 @@ async function loadData(forceRefresh = false) {
   const statusEl = document.getElementById('status');
   let csvText = null;
 
-  // Append a cache-buster parameter if forceRefresh is requested
   const cacheBust = forceRefresh ? `&_t=${Date.now()}` : '';
 
   if (forceRefresh && statusEl) {
