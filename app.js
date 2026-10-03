@@ -209,7 +209,7 @@ function updateTradeVerdict() {
   }
 
   if (dataA.hasNil || dataB.hasNil) {
-    verdictEl.textContent = '⚠️️ Contains Indefinite / Nil Item(s)';
+    verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
     detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
     verdictEl.classList.add('status-fair');
     return;
@@ -261,12 +261,12 @@ function renderTradeList(side, listElementId) {
           onerror="this.src='images/${item.id}.png'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';};"
         />
         <div class="trade-thumb-fallback" style="display: none;">${fallbackEmoji}</div>
-        <div>
-          <div style="font-weight: 700; font-size: 13px;">
+        <div style="min-width: 0; flex: 1;">
+          <div class="trade-item-title">
             ${item.name}
-            ${item.isShiny ? '<span style="color: #fbbf24; font-size: 11px; margin-left: 4px;">★ SHINY</span>' : ''}
+            ${item.isShiny ? '<span style="color: #fbbf24; font-size: 10px; margin-left: 2px;">★</span>' : ''}
           </div>
-          <span style="font-size: 11px; color: var(--text-muted);">Val: <b style="color: var(--accent-gold);">${valText}</b> • Dem: ${item.demandLabel}</span>
+          <span style="font-size: 10px; color: var(--text-muted);">Val: <b style="color: var(--accent-gold);">${valText}</b> • Dem: ${item.demandLabel}</span>
         </div>
       </div>
       <button class="remove-btn" data-index="${index}">✕</button>
@@ -342,19 +342,20 @@ function renderItems(items) {
           src="${imagePath}" 
           alt="${item.name}" 
           class="card-img"
+          loading="lazy"
           onerror="this.src='images/${item.id}.png'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';};"
         />
         <div class="card-img-fallback" style="display: none;">${fallbackEmoji}</div>
       </div>
       <div class="card-top-info">
-        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 3px;">
           <span class="badge ${isGem ? 'badge-gem' : ''}">${item.type}</span>
           <span class="badge-rarity badge-${rarityClass}">${displayRarity}</span>
           ${isShiny ? '<span class="badge badge-shiny">★ SHINY</span>' : ''}
         </div>
         <span class="set-tag" title="${item.setName || item.releaseEvent}">${item.setName || item.releaseEvent}</span>
       </div>
-      <h3 class="card-title">${item.name}</h3>
+      <h3 class="card-title" title="${item.name}">${item.name}</h3>
       <div class="meta-rows">
         <div class="row">
           <span>Value</span>
@@ -366,7 +367,7 @@ function renderItems(items) {
         </div>
         <div class="row">
           <span>Status</span>
-          <span class="status-tag">${display.status}</span>
+          <span class="status-tag" title="${display.status}">${display.status}</span>
         </div>
       </div>
       <div class="card-actions">
@@ -375,6 +376,7 @@ function renderItems(items) {
       </div>
     `;
 
+    // Touch & Click In-place Shiny Toggle
     const starBtn = card.querySelector('.shiny-star-btn');
     if (starBtn) {
       starBtn.addEventListener('click', (e) => {
@@ -394,7 +396,10 @@ function renderItems(items) {
         if (demEl) demEl.textContent = updatedDisplay.demandLabel;
 
         const statEl = card.querySelector('.status-tag');
-        if (statEl) statEl.textContent = updatedDisplay.status;
+        if (statEl) {
+          statEl.textContent = updatedDisplay.status;
+          statEl.title = updatedDisplay.status;
+        }
 
         const imgEl = card.querySelector('.card-img');
         if (imgEl) {
@@ -455,7 +460,7 @@ function applyFilters() {
     if (currentFilter === 'hammer' && itemType !== 'hammer') return false;
     if (currentFilter === 'gem' && itemType !== 'gem') return false;
 
-    // 2. Multi-select Rarity filter (Matches Untradeable accurately)
+    // 2. Multi-select Rarity filter
     if (activeRarities.size > 0) {
       let matchesRarity = false;
       for (const selRarity of activeRarities) {
