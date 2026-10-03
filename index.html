@@ -377,7 +377,6 @@
       }
     }
 
-    /* Relative search wrapper containing input & inside clear 'X' button */
     .search-wrap {
       position: relative;
       flex: 1 1 180px;
@@ -697,7 +696,6 @@
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
     }
 
-    /* Touch-Optimized Star Button */
     .shiny-star-btn {
       position: absolute;
       top: 7px;
@@ -852,7 +850,6 @@
       text-align: right;
     }
 
-    /* Quick Action Buttons */
     .card-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -952,7 +949,6 @@
     <div class="catalog-header">
       <h2 class="catalog-title">Item Catalog</h2>
       <div class="controls-row">
-        <!-- Search Input with Inside 'X' Clear Button -->
         <div class="search-wrap">
           <input type="text" id="search" class="search-box" placeholder="Search weapons, crates..." autocomplete="off" />
           <button type="button" id="btn-clear-search" class="clear-search-btn" title="Clear search">✕</button>
@@ -991,6 +987,19 @@
             <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Epic"> Epic</label>
             <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Rare"> Rare</label>
             <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Common"> Common</label>
+          </div>
+        </div>
+
+        <!-- DEMAND TIER OPTIONS -->
+        <div>
+          <div class="drawer-section-title">Demand Tier</div>
+          <div class="drawer-checkbox-group">
+            <label class="drawer-label"><input type="checkbox" class="cb-demand" value="6"> ★ (Star / Highest)</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-demand" value="5"> 5 (High)</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-demand" value="4"> 4 (Good)</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-demand" value="3"> 3 (Average)</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-demand" value="2"> 2 (Below Average)</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-demand" value="1"> 1 (Low)</label>
           </div>
         </div>
 
