@@ -770,6 +770,72 @@
       cursor: pointer;
     }
 
+    /* Compact List View Styles */
+    .compact-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+    }
+    .compact-section {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .compact-section-header {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 10px 14px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .compact-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      gap: 12px;
+      font-size: 13px;
+    }
+    .compact-row:last-child {
+      border-bottom: none;
+    }
+    .compact-row:hover {
+      background: rgba(157, 125, 253, 0.08);
+    }
+    .compact-name {
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 2;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .compact-meta {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex: 3;
+      justify-content: flex-end;
+      font-size: 12px;
+    }
+    @media (max-width: 680px) {
+      .compact-meta {
+        gap: 12px;
+      }
+    }
+
     .filter-drawer {
       display: none;
       background: var(--surface-glass);
@@ -1509,6 +1575,12 @@
             <option value="name-asc">Name: A to Z</option>
             <option value="name-desc">Name: Z to A</option>
           </select>
+
+          <!-- VIEW MODE TOGGLE (GRID / COMPACT) -->
+          <div class="filter-btn-group" id="view-mode-group">
+            <button class="filter-btn active" data-view="grid" aria-label="Grid view mode">Grid</button>
+            <button class="filter-btn" data-view="compact" aria-label="Compact list view mode">Compact</button>
+          </div>
         </div>
       </div>
 
