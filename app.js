@@ -460,13 +460,13 @@ function refreshCardButtonBadges() {
 
     if (groupYour) {
       const btnAdd = groupYour.querySelector('.card-add-btn');
-      if (btnAdd) btnAdd.textContent = countYour > 0 ? `+ You (${countYour})` : '+ Your Offer';
+      if (btnAdd) btnAdd.textContent = countYour > 0 ? `You (${countYour})` : '+ You';
       groupYour.classList.toggle('has-items', countYour > 0);
     }
 
     if (groupTheir) {
       const btnAdd = groupTheir.querySelector('.card-add-btn');
-      if (btnAdd) btnAdd.textContent = countTheir > 0 ? `+ Them (${countTheir})` : '+ Their Offer';
+      if (btnAdd) btnAdd.textContent = countTheir > 0 ? `Them (${countTheir})` : '+ Them';
       groupTheir.classList.toggle('has-items', countTheir > 0);
     }
   });
@@ -848,14 +848,14 @@ function renderItems(items) {
         row.innerHTML = `
           <div class="compact-name">
             <span class="badge badge-rarity badge-${rarityClass}" style="font-size: 8px; padding: 1px 4px;">${sanitizeInput(displayRarity)}</span>
-            <span>${safeName}</span>
+            <span style="font-weight: 700; color: #fff;">${safeName}</span>
             ${isShiny ? '<span style="color: var(--accent-gold);">★</span>' : ''}
           </div>
           <div class="compact-meta">
-            <span style="font-size: 11px; color: var(--text-muted); font-weight: 700;">${safeType}</span>
-            <span class="val" style="font-size: 13px; min-width: 32px; text-align: right;">${display.value}</span>
-            <span class="demand" style="min-width: 16px; text-align: center;">${sanitizeInput(display.demandLabel)}</span>
-            <span style="font-size: 11px; color: var(--text-muted); min-width: 80px; text-align: right;">${sanitizeInput(display.status)}</span>
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 700; width: 60px;">${safeType}</span>
+            <span class="val" style="font-size: 13px; width: 45px; text-align: right;">${display.value}</span>
+            <span class="demand" style="width: 30px; text-align: center;">${sanitizeInput(display.demandLabel)}</span>
+            <span style="font-size: 11px; color: var(--text-muted); width: 90px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sanitizeInput(display.status)}</span>
             
             <div style="display: flex; gap: 4px;">
               <div class="card-btn-group side-your ${countYour > 0 ? 'has-items' : ''}" style="height: 26px;">
