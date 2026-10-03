@@ -567,7 +567,8 @@ function renderTradeList(sideItems, listElementId) {
 
     li.querySelector('.remove-btn').addEventListener('click', () => {
       sideItems.splice(index, 1);
-      renderTradeList(sideItems, listElementId);
+      renderTradeList(yourOffer, 'list-your');
+      renderTradeList(theirOffer, 'list-their');
       updateTradeVerdict();
     });
 
@@ -604,7 +605,6 @@ function removeItemFromTrade(itemId, sideTarget) {
   const targetArray = sideTarget === 'your' ? yourOffer : theirOffer;
   const listId = sideTarget === 'your' ? 'list-your' : 'list-their';
 
-  // Find last added instance of this item
   for (let i = targetArray.length - 1; i >= 0; i--) {
     if (targetArray[i].id === itemId) {
       targetArray.splice(i, 1);
