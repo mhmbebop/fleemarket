@@ -3,11 +3,11 @@ const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2RfYHa6ffW
 let allItems = [];
 let sideA = [];
 let sideB = [];
-let currentFilter = 'all';
+let currentFilter = 'all'; // 'all' | 'hammer' | 'gem' | 'shiny'
 let currentSort = 'val-desc';
 const shinyState = {};
 
-// CSV Parser
+// Robust CSV Parser
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
@@ -44,16 +44,16 @@ function parseCSV(text) {
     });
     return {
       id: row.id,
-      name: row.name.trim(),
-      type: row.type.trim(),
-      category: row.category.trim(),
-      releaseEvent: row.release_event.trim(),
+      name: (row.name || '').trim(),
+      type: (row.type || '').trim(),
+      category: (row.category || '').trim(),
+      releaseEvent: (row.release_event || '').trim(),
       baseValue: Number(row.base_value) || 0,
-      isNilValue: row.is_nil_value?.toUpperCase() === 'TRUE',
+      isNilValue: (row.is_nil_value || '').toUpperCase() === 'TRUE',
       demandTier: Number(row.demand_tier) || 1,
-      demandLabel: row.demand_label.trim(),
-      status: row.status.trim(),
-      setName: row.set_name.trim(),
+      demandLabel: (row.demand_label || '1').trim(),
+      status: (row.status || 'Stable').trim(),
+      setName: (row.set_name || '').trim(),
     };
   });
 }
@@ -87,24 +87,27 @@ function getItemRarity(item) {
   return 'Rare';
 }
 
-// Determines if an item naturally has an in-game shiny variant
+// Multiplier calculation for shinies
+function getShinyMultiplier(item) {
+  const name = (item.name || '').toLowerCase();
+  if (name.includes('rare') || name.includes('common')) return 4;
+  return 10;
+}
+
+// Checks if weapon has an official in-game shiny variant
 function itemHasShinyVariant(item) {
   const cat = (item.category || '').toLowerCase();
   const name = (item.name || '').toLowerCase();
 
-  // Special tournament prizes or unique items that cannot be shiny
   if (cat.includes('tournament') || name.includes('tournament')) {
     return false;
   }
 
-  // 1. All crate weapons (Event Crates, Mini Crates, Series Crates) can be Shiny
   if (cat.includes('crate')) {
     return true;
   }
 
-  // 2. Event shop and seasonal bundles with shiny counterparts
   if (cat.includes('event shop') || cat.includes('bundle')) {
-    // Permanent non-crate items without shiny editions
     if (cat.includes('permanent') && !name.includes('pan') && !name.includes('midaflame') && !name.includes('cash')) {
       return false;
     }
@@ -114,12 +117,11 @@ function itemHasShinyVariant(item) {
   return false;
 }
 
-// Merges explicit shiny rows and enables shiny toggle for items with confirmed variants
+// Deduplicates and builds shiny records cleanly
 function processAndDeduplicateItems(rawItems) {
   const baseMap = new Map();
   const explicitShinies = [];
 
-  // 1. Separate base items from explicit "Shiny " rows
   rawItems.forEach((item) => {
     if (item.name.toLowerCase().startsWith('shiny ')) {
       explicitShinies.push(item);
@@ -131,7 +133,6 @@ function processAndDeduplicateItems(rawItems) {
     }
   });
 
-  // 2. Attach explicit spreadsheet shiny rows to their base item (e.g., Shiny Ouroboros)
   explicitShinies.forEach((shinyItem) => {
     const baseName = shinyItem.name.replace(/^shiny\s+/i, '').trim().toLowerCase();
     const key = `${baseName}_${shinyItem.type.toLowerCase()}`;
@@ -149,7 +150,6 @@ function processAndDeduplicateItems(rawItems) {
     }
   });
 
-  // 3. For all crate items & event weapons with in-game shiny variants, calculate official shiny rules
   baseMap.forEach((item) => {
     if (!item.hasShiny && itemHasShinyVariant(item)) {
       const mult = getShinyMultiplier(item);
@@ -160,28 +160,6 @@ function processAndDeduplicateItems(rawItems) {
         demandTier: item.demandTier,
         demandLabel: item.demandLabel,
         status: item.status,
-      };
-    }
-  });
-
-  return Array.from(baseMap.values());
-}
-  });
-
-  // 2. ONLY enable shiny if an explicit matching shiny entry was found in the sheet
-  explicitShinies.forEach((shinyItem) => {
-    const baseName = shinyItem.name.replace(/^shiny\s+/i, '').trim().toLowerCase();
-    const key = `${baseName}_${shinyItem.type.toLowerCase()}`;
-
-    if (baseMap.has(key)) {
-      const baseItem = baseMap.get(key);
-      baseItem.hasShiny = true;
-      baseItem.shinyData = {
-        value: shinyItem.baseValue,
-        isNilValue: shinyItem.isNilValue,
-        demandTier: shinyItem.demandTier,
-        demandLabel: shinyItem.demandLabel,
-        status: shinyItem.status,
       };
     }
   });
@@ -385,7 +363,7 @@ function renderItems(items) {
   grid.innerHTML = '';
 
   if (items.length === 0) {
-    grid.innerHTML = '<p style="color: var(--text-muted);">No matching items found.</p>';
+    grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1 / -1;">No matching items found.</p>';
     return;
   }
 
@@ -402,7 +380,6 @@ function renderItems(items) {
     const fallbackEmoji = isGem ? '💎' : '🔨';
     const imagePath = isShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
 
-    // The yellow star button ONLY renders if matching shiny data was actually synced
     const starButtonHtml = item.hasShiny
       ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-id="${item.id}" title="Toggle Shiny Version">★</div>`
       : '';
@@ -496,12 +473,19 @@ function renderItems(items) {
       });
     }
 
-    card.querySelector('.card-add-btn.side-a').addEventListener('click', (e) => {
-      addItemToTrade(e.currentTarget.getAttribute('data-id'), 'A', item.hasShiny && !!shinyState[item.id]);
-    });
-    card.querySelector('.card-add-btn.side-b').addEventListener('click', (e) => {
-      addItemToTrade(e.currentTarget.getAttribute('data-id'), 'B', item.hasShiny && !!shinyState[item.id]);
-    });
+    const btnA = card.querySelector('.card-add-btn.side-a');
+    if (btnA) {
+      btnA.addEventListener('click', (e) => {
+        addItemToTrade(e.currentTarget.getAttribute('data-id'), 'A', item.hasShiny && !!shinyState[item.id]);
+      });
+    }
+
+    const btnB = card.querySelector('.card-add-btn.side-b');
+    if (btnB) {
+      btnB.addEventListener('click', (e) => {
+        addItemToTrade(e.currentTarget.getAttribute('data-id'), 'B', item.hasShiny && !!shinyState[item.id]);
+      });
+    }
 
     grid.appendChild(card);
   });
@@ -513,7 +497,15 @@ function applyFilters() {
 
   let filtered = allItems.filter((item) => {
     const itemType = (item.type || '').toLowerCase().trim();
-    const matchesType = (currentFilter === 'all') || (itemType === currentFilter);
+
+    let matchesFilter = true;
+    if (currentFilter === 'hammer') {
+      matchesFilter = itemType === 'hammer';
+    } else if (currentFilter === 'gem') {
+      matchesFilter = itemType === 'gem';
+    } else if (currentFilter === 'shiny') {
+      matchesFilter = item.hasShiny === true;
+    }
 
     const matchesSearch =
       !query ||
@@ -521,7 +513,7 @@ function applyFilters() {
       (item.setName && item.setName.toLowerCase().includes(query)) ||
       (item.releaseEvent && item.releaseEvent.toLowerCase().includes(query));
 
-    return matchesType && matchesSearch;
+    return matchesFilter && matchesSearch;
   });
 
   filtered.sort((a, b) => {
@@ -594,7 +586,7 @@ async function loadData() {
   const statusEl = document.getElementById('status');
   try {
     const response = await fetch(CSV_URL);
-    if (!response.ok) throw new Error(`HTTP ${response.status}: Could not load CSV`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to load CSV`);
 
     const csvText = await response.text();
     const rawItems = parseCSV(csvText);
@@ -613,7 +605,7 @@ async function loadData() {
       statusEl.textContent = `Error: ${error.message}. Please refresh or check sheet permissions.`;
       statusEl.style.color = 'var(--accent-rose)';
     }
-    console.error(error);
+    console.error('Data sync failed:', error);
   }
 }
 
