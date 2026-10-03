@@ -1,12 +1,11 @@
-const CACHE_NAME = 'fleemarket-cache-v2';
+const CACHE_NAME = 'fleemarket-cache-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './app.js',
-  './10_Player_Flee_Items_Database_Complete.csv'
+  './app.js'
 ];
 
-// Install Event: Safely cache essential files individually without crashing on missing assets
+// Install Event: Safely cache core app files individually
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -44,7 +43,6 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Return cached asset and update cache in background
         fetch(event.request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
