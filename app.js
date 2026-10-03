@@ -842,7 +842,7 @@ function renderItems(items) {
           alt="" 
           class="card-img" 
           style="position: relative; z-index: 2; width: 100%; height: 100%; object-fit: contain;" 
-          onerror="this.style.display='none';"
+          onerror="this.remove();"
         />
       </div>
       <div class="card-top-info">
