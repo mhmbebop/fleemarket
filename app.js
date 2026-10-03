@@ -14,6 +14,28 @@ const activeStatuses = new Set();
 const activeEvents = new Set();
 let filterHasShiny = false;
 
+// Immediate Tab Switching (Runs as soon as DOM loads, no network waiting)
+function switchTab(targetTab) {
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-tab') === targetTab);
+  });
+  document.querySelectorAll('.tab-panel').forEach((panel) => {
+    panel.classList.toggle('active', panel.id === `tab-${targetTab}`);
+  });
+}
+
+function initTabNavigation() {
+  const tabsContainer = document.querySelector('.nav-tabs');
+  if (!tabsContainer) return;
+
+  tabsContainer.addEventListener('click', (e) => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    const targetTab = btn.getAttribute('data-tab');
+    if (targetTab) switchTab(targetTab);
+  });
+}
+
 // Robust CSV Parser
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
@@ -72,7 +94,7 @@ function parseCSV(text) {
   });
 }
 
-// Builds the dynamic list of events/crates inside the filter drawer
+// Builds the dynamic list of events/crates inside the filter drawer, excluding "Unobtainable"
 function populateEventFilters(items) {
   const container = document.getElementById('events-checkbox-group');
   if (!container) return;
@@ -558,21 +580,7 @@ function applyFilters() {
 }
 
 function setupEventListeners() {
-  // Navigation Tabs Switcher
-  document.querySelectorAll('.tab-btn').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const targetTab = e.currentTarget.getAttribute('data-tab');
-
-      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.remove('active'));
-
-      e.currentTarget.classList.add('active');
-      const activePanel = document.getElementById(`tab-${targetTab}`);
-      if (activePanel) activePanel.classList.add('active');
-    });
-  });
-
-  // Calculator Buttons
+  // Calculator Dropdown Add Buttons
   const btnAddYour = document.getElementById('btn-add-your');
   if (btnAddYour) {
     btnAddYour.addEventListener('click', () => {
@@ -734,7 +742,6 @@ async function loadData() {
     }
     populateDropdowns(allItems);
     populateEventFilters(allItems);
-    setupEventListeners();
     applyFilters();
   } catch (error) {
     if (statusEl) {
@@ -745,4 +752,9 @@ async function loadData() {
   }
 }
 
+// 1. Immediately mount tab navigation and UI controls
+initTabNavigation();
+setupEventListeners();
+
+// 2. Fetch dataset
 loadData();
