@@ -7,6 +7,10 @@ let currentFilter = 'all'; // 'all' | 'hammer' | 'gem'
 let currentSort = 'val-desc';
 const shinyState = {};
 
+// Active selections in calculator
+let selectedItemYour = null;
+let selectedItemTheir = null;
+
 // Multi-filter states
 const activeRarities = new Set();
 const activeDemands = new Set();
@@ -180,110 +184,131 @@ function getItemActiveDisplay(item, isShiny = false) {
   };
 }
 
-// Populates and filters specific dropdown with items and provides live feedback
-function renderDropdownOptions(selectElement, feedbackElement, items, searchQuery = '') {
-  if (!selectElement) return;
+// Sequential Prefix Search & Autocomplete
+function setupPrefixSearch(inputId, panelId, side) {
+  const input = document.getElementById(inputId);
+  const panel = document.getElementById(panelId);
+  if (!input || !panel) return;
 
-  const currentSelection = selectElement.value;
-  selectElement.innerHTML = '';
+  function renderMatches(query) {
+    const cleanQuery = query.toLowerCase().trim();
+    panel.innerHTML = '';
 
-  const query = (searchQuery || '').toLowerCase().trim();
-  const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name));
-
-  let matchedItems = sorted;
-  if (query) {
-    matchedItems = sorted.filter((item) => {
-      const name = (item.name || '').toLowerCase();
-      const set = (item.setName || '').toLowerCase();
-      const event = (item.releaseEvent || '').toLowerCase();
-      const type = (item.type || '').toLowerCase();
-      return name.includes(query) || set.includes(query) || event.includes(query) || type.includes(query);
-    });
-  }
-
-  // Handle feedback text & zero-match states
-  if (feedbackElement) {
-    if (!query) {
-      feedbackElement.textContent = '';
-      feedbackElement.className = 'calc-feedback';
-    } else if (matchedItems.length === 0) {
-      feedbackElement.textContent = `⚠️ No item found matching "${searchQuery}"`;
-      feedbackElement.className = 'calc-feedback has-error';
-    } else if (matchedItems.length === 1) {
-      feedbackElement.textContent = `✓ 1 match found (auto-selected)`;
-      feedbackElement.className = 'calc-feedback has-match';
-    } else {
-      feedbackElement.textContent = `✓ ${matchedItems.length} matches found`;
-      feedbackElement.className = 'calc-feedback has-match';
+    if (!cleanQuery) {
+      panel.classList.remove('open');
+      return;
     }
+
+    // Matches MUST start with the sequential characters typed
+    const matches = allItems.filter((item) => {
+      const name = (item.name || '').toLowerCase();
+      return name.startsWith(cleanQuery);
+    }).sort((a, b) => a.name.localeCompare(b.name));
+
+    if (matches.length === 0) {
+      panel.innerHTML = `<div class="calc-no-match-msg">⚠️ No items starting with "${query}"</div>`;
+      panel.classList.add('open');
+      return;
+    }
+
+    matches.forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'calc-match-item';
+      const valText = item.isNilValue ? 'Nil' : item.baseValue;
+      const shinyTag = item.hasShiny ? '★' : '';
+
+      row.innerHTML = `
+        <div class="calc-match-item-name">
+          <span>${item.name}</span>
+          <span style="font-size: 10px; color: var(--accent-cyan);">(${item.type})</span>
+          ${shinyTag ? '<span style="color: var(--accent-gold); font-size: 10px;">★</span>' : ''}
+        </div>
+        <div class="calc-match-item-meta">Val: ${valText} | Dem: ${item.demandLabel}</div>
+      `;
+
+      row.addEventListener('click', () => {
+        selectItemForSide(item, side);
+        input.value = item.name;
+        panel.classList.remove('open');
+      });
+
+      panel.appendChild(row);
+    });
+
+    panel.classList.add('open');
   }
 
-  if (matchedItems.length === 0) {
-    const emptyOpt = document.createElement('option');
-    emptyOpt.value = '';
-    emptyOpt.textContent = `No matches found`;
-    selectElement.appendChild(emptyOpt);
-    selectElement.value = '';
+  input.addEventListener('input', (e) => {
+    renderMatches(e.target.value);
+  });
+
+  input.addEventListener('focus', () => {
+    if (input.value.trim().length > 0) {
+      renderMatches(input.value);
+    }
+  });
+
+  // Close panel on outside click
+  document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !panel.contains(e.target)) {
+      panel.classList.remove('open');
+    }
+  });
+
+  // Enter selects top match
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const firstMatch = panel.querySelector('.calc-match-item');
+      if (firstMatch) {
+        firstMatch.click();
+      } else {
+        const btnAdd = document.getElementById(side === 'your' ? 'btn-add-your' : 'btn-add-their');
+        if (btnAdd) btnAdd.click();
+      }
+    }
+  });
+}
+
+function selectItemForSide(item, side) {
+  if (side === 'your') {
+    selectedItemYour = item;
+    updateSidePreview('your', item);
+  } else {
+    selectedItemTheir = item;
+    updateSidePreview('their', item);
+  }
+}
+
+function updateSidePreview(side, item) {
+  const nameEl = document.getElementById(`preview-name-${side}`);
+  const metaEl = document.getElementById(`preview-meta-${side}`);
+  const cb = document.getElementById(`shiny-${side}`);
+  const label = document.getElementById(`label-shiny-${side}`);
+
+  if (!item) {
+    if (nameEl) nameEl.textContent = 'Type above to select an item';
+    if (metaEl) metaEl.textContent = '-';
+    if (cb) { cb.checked = false; cb.disabled = true; }
+    if (label) { label.classList.add('disabled'); label.title = 'Select an item with shiny'; }
     return;
   }
 
-  // Add default placeholder option if multiple items match
-  const placeholderOpt = document.createElement('option');
-  placeholderOpt.value = '';
-  placeholderOpt.textContent = query
-    ? `-- ${matchedItems.length} matches (Select or click + Add) --`
-    : 'Select item...';
-  selectElement.appendChild(placeholderOpt);
+  const valText = item.isNilValue ? 'Nil' : item.baseValue;
+  if (nameEl) nameEl.innerHTML = `${item.name} <span style="font-size: 11px; color: var(--accent-cyan);">(${item.type})</span>`;
+  if (metaEl) metaEl.textContent = `Val: ${valText} • Dem: ${item.demandLabel}`;
 
-  matchedItems.forEach((item) => {
-    const valText = item.isNilValue ? 'Nil' : item.baseValue;
-    const shinyTag = item.hasShiny ? '★' : '';
-    const optionText = `${item.name} (${item.type}) [Val: ${valText} | Dem: ${item.demandLabel}] ${shinyTag}`.trim();
-
-    const opt = document.createElement('option');
-    opt.value = item.id;
-    opt.textContent = optionText;
-    selectElement.appendChild(opt);
-  });
-
-  // Auto-selection priority:
-  // 1. Maintain existing selection if still valid
-  // 2. If user searched and exactly 1 item matches, select it automatically
-  // 3. If user searched and multiple match, pre-select the top match so clicking + Add adds it
-  if (currentSelection && matchedItems.some((i) => i.id === currentSelection)) {
-    selectElement.value = currentSelection;
-  } else if (query && matchedItems.length > 0) {
-    selectElement.value = matchedItems[0].id;
-  }
-}
-
-function populateDropdowns(items) {
-  const selectYour = document.getElementById('select-your');
-  const feedbackYour = document.getElementById('feedback-your');
-  const selectTheir = document.getElementById('select-their');
-  const feedbackTheir = document.getElementById('feedback-their');
-
-  renderDropdownOptions(selectYour, feedbackYour, items, '');
-  renderDropdownOptions(selectTheir, feedbackTheir, items, '');
-}
-
-// Updates shiny checkbox state based on whether selected item has a shiny version
-function handleDropdownItemSelection(selectId, shinyCheckboxId, labelId) {
-  const select = document.getElementById(selectId);
-  const cb = document.getElementById(shinyCheckboxId);
-  const label = document.getElementById(labelId);
-  if (!select || !cb || !label) return;
-
-  const selectedItem = allItems.find((i) => i.id === select.value);
-  if (!selectedItem || !selectedItem.hasShiny) {
-    cb.checked = false;
-    cb.disabled = true;
-    label.classList.add('disabled');
-    label.title = selectedItem ? 'This item does not have a shiny variant' : 'Select an item with shiny';
-  } else {
-    cb.disabled = false;
-    label.classList.remove('disabled');
-    label.title = `Add Shiny ${selectedItem.name} (Val: ${selectedItem.shinyValue})`;
+  if (cb && label) {
+    if (item.hasShiny) {
+      cb.disabled = false;
+      label.classList.remove('disabled');
+      label.title = `Add Shiny ${item.name} (Val: ${item.shinyValue})`;
+    } else {
+      cb.checked = false;
+      cb.disabled = true;
+      label.classList.add('disabled');
+      label.title = 'This item does not have a shiny variant';
+    }
   }
 }
 
@@ -406,8 +431,7 @@ function renderTradeList(sideItems, listElementId) {
   });
 }
 
-function addItemToTrade(itemId, sideTarget, isShiny = false) {
-  const item = allItems.find((i) => i.id === itemId);
+function addItemToTrade(item, sideTarget, isShiny = false) {
   if (!item) return;
 
   const display = getItemActiveDisplay(item, isShiny);
@@ -554,15 +578,17 @@ function renderItems(items) {
 
     const btnYour = card.querySelector('.card-add-btn.side-your');
     if (btnYour) {
-      btnYour.addEventListener('click', (e) => {
-        addItemToTrade(e.currentTarget.getAttribute('data-id'), 'your', item.hasShiny && !!shinyState[item.id]);
+      btnYour.addEventListener('click', () => {
+        const itemObj = allItems.find((i) => i.id === item.id);
+        addItemToTrade(itemObj, 'your', item.hasShiny && !!shinyState[item.id]);
       });
     }
 
     const btnTheir = card.querySelector('.card-add-btn.side-their');
     if (btnTheir) {
-      btnTheir.addEventListener('click', (e) => {
-        addItemToTrade(e.currentTarget.getAttribute('data-id'), 'their', item.hasShiny && !!shinyState[item.id]);
+      btnTheir.addEventListener('click', () => {
+        const itemObj = allItems.find((i) => i.id === item.id);
+        addItemToTrade(itemObj, 'their', item.hasShiny && !!shinyState[item.id]);
       });
     }
 
@@ -661,74 +687,21 @@ function applyFilters() {
 }
 
 function setupEventListeners() {
-  const selectYour = document.getElementById('select-your');
-  const feedbackYour = document.getElementById('feedback-your');
-  const calcSearchYour = document.getElementById('calc-search-your');
-
-  const selectTheir = document.getElementById('select-their');
-  const feedbackTheir = document.getElementById('feedback-their');
-  const calcSearchTheir = document.getElementById('calc-search-their');
-
-  // Calculator Dropdown Selection Listeners
-  if (selectYour) {
-    selectYour.addEventListener('change', () => {
-      handleDropdownItemSelection('select-your', 'shiny-your', 'label-shiny-your');
-    });
-  }
-
-  if (selectTheir) {
-    selectTheir.addEventListener('change', () => {
-      handleDropdownItemSelection('select-their', 'shiny-their', 'label-shiny-their');
-    });
-  }
-
-  // Live Search for Your Offer with auto-select
-  if (calcSearchYour && selectYour) {
-    calcSearchYour.addEventListener('input', (e) => {
-      renderDropdownOptions(selectYour, feedbackYour, allItems, e.target.value);
-      handleDropdownItemSelection('select-your', 'shiny-your', 'label-shiny-your');
-    });
-
-    calcSearchYour.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const btnAdd = document.getElementById('btn-add-your');
-        if (btnAdd) btnAdd.click();
-      }
-    });
-  }
-
-  // Live Search for Their Offer with auto-select
-  if (calcSearchTheir && selectTheir) {
-    calcSearchTheir.addEventListener('input', (e) => {
-      renderDropdownOptions(selectTheir, feedbackTheir, allItems, e.target.value);
-      handleDropdownItemSelection('select-their', 'shiny-their', 'label-shiny-their');
-    });
-
-    calcSearchTheir.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const btnAdd = document.getElementById('btn-add-their');
-        if (btnAdd) btnAdd.click();
-      }
-    });
-  }
+  // Mount Live Sequential Prefix Search on Calculator Inputs
+  setupPrefixSearch('calc-search-your', 'matches-panel-your', 'your');
+  setupPrefixSearch('calc-search-their', 'matches-panel-their', 'their');
 
   // Calculator Add Buttons
   const btnAddYour = document.getElementById('btn-add-your');
   if (btnAddYour) {
     btnAddYour.addEventListener('click', () => {
-      if (selectYour && selectYour.value) {
+      if (selectedItemYour) {
         const isShiny = document.getElementById('shiny-your')?.checked || false;
-        addItemToTrade(selectYour.value, 'your', isShiny);
-        if (calcSearchYour) {
-          calcSearchYour.value = '';
-          renderDropdownOptions(selectYour, feedbackYour, allItems, '');
-          handleDropdownItemSelection('select-your', 'shiny-your', 'label-shiny-your');
-        }
-      } else if (feedbackYour) {
-        feedbackYour.textContent = '⚠️ Select an item or type to search';
-        feedbackYour.className = 'calc-feedback has-error';
+        addItemToTrade(selectedItemYour, 'your', isShiny);
+        selectedItemYour = null;
+        updateSidePreview('your', null);
+        const input = document.getElementById('calc-search-your');
+        if (input) input.value = '';
       }
     });
   }
@@ -736,17 +709,13 @@ function setupEventListeners() {
   const btnAddTheir = document.getElementById('btn-add-their');
   if (btnAddTheir) {
     btnAddTheir.addEventListener('click', () => {
-      if (selectTheir && selectTheir.value) {
+      if (selectedItemTheir) {
         const isShiny = document.getElementById('shiny-their')?.checked || false;
-        addItemToTrade(selectTheir.value, 'their', isShiny);
-        if (calcSearchTheir) {
-          calcSearchTheir.value = '';
-          renderDropdownOptions(selectTheir, feedbackTheir, allItems, '');
-          handleDropdownItemSelection('select-their', 'shiny-their', 'label-shiny-their');
-        }
-      } else if (feedbackTheir) {
-        feedbackTheir.textContent = '⚠️ Select an item or type to search';
-        feedbackTheir.className = 'calc-feedback has-error';
+        addItemToTrade(selectedItemTheir, 'their', isShiny);
+        selectedItemTheir = null;
+        updateSidePreview('their', null);
+        const input = document.getElementById('calc-search-their');
+        if (input) input.value = '';
       }
     });
   }
@@ -758,6 +727,14 @@ function setupEventListeners() {
       theirOffer = [];
       renderTradeList(yourOffer, 'list-your');
       renderTradeList(theirOffer, 'list-their');
+      selectedItemYour = null;
+      selectedItemTheir = null;
+      updateSidePreview('your', null);
+      updateSidePreview('their', null);
+      const inYour = document.getElementById('calc-search-your');
+      const inTheir = document.getElementById('calc-search-their');
+      if (inYour) inYour.value = '';
+      if (inTheir) inTheir.value = '';
       updateTradeVerdict();
     });
   }
@@ -882,7 +859,6 @@ async function loadData() {
       statusEl.textContent = `✓ Synced ${allItems.length} items from Google Sheets`;
       statusEl.style.color = 'var(--accent-green)';
     }
-    populateDropdowns(allItems);
     populateEventFilters(allItems);
     applyFilters();
   } catch (error) {
@@ -894,9 +870,9 @@ async function loadData() {
   }
 }
 
-// Mount Navigation & Listeners
+// Initialize Navigation & UI Controls
 initTabNavigation();
 setupEventListeners();
 
-// Fetch Google Sheet dataset
+// Fetch dataset
 loadData();
