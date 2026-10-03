@@ -838,7 +838,7 @@ function renderItems(items) {
       <div class="card-image-wrap">
         <img 
           src="images/${item.id}.png" 
-          alt="${safeName}" 
+          alt="" 
           class="card-img" 
           onload="this.style.display='block'; this.nextElementSibling.style.display='none';"
           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
