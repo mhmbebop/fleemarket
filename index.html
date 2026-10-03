@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://docs.google.com https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; media-src 'self' https:;">
   
-  <!-- 1. Resource Preloading -->
+  <!-- Resource Preloading -->
   <link rel="preload" href="app.js" as="script">
-  <link rel="preload" href="logo.png" as="image">
+  <link rel="preload" href="images/logo.png" as="image">
 
   <title>FLEEMARKET - 10 Player Flee Trade Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1436,17 +1436,16 @@
     <header>
       <div class="header-logo-wrap">
         <img 
-          src="logo.png" 
+          src="images/logo.png" 
           alt="10 Player FLEEMARKET" 
           class="header-logo-img"
-          onerror="this.src='images/logo.png'; this.onerror=function(){this.style.display='none'; document.getElementById('fallback-title').style.display='block';};"
+          onerror="this.onerror=function(){this.style.display='none'; document.getElementById('fallback-title').style.display='block';}; this.src='images/logo.webp';"
         />
         <h1 id="fallback-title" style="display: none; font-size: 28px; font-weight: 800; margin: 0;">10 PLAYER FLEEMARKET</h1>
       </div>
       
       <div class="sync-status-row">
         <div id="status">Syncing with Google Sheets...</div>
-        <!-- 3. Accessibility: aria-label -->
         <button type="button" id="btn-force-sync" class="sync-now-btn" aria-label="Force Sync Data Now" title="Force refresh data directly from Google Sheets" onclick="window.forceSyncNow && window.forceSyncNow(event)">
           <span class="sync-icon">↻</span>
           <span>Sync Now</span>
@@ -1471,7 +1470,6 @@
         <h2 class="catalog-title">Item Inventory</h2>
         <div class="controls-row">
           <div class="search-wrap">
-            <!-- 3. Accessibility: aria-label -->
             <input type="text" id="search" class="search-box" placeholder="Search weapons, crates..." autocomplete="off" aria-label="Search item inventory" />
             <button type="button" id="btn-clear-search" class="clear-search-btn" aria-label="Clear search input" title="Clear search">✕</button>
           </div>
@@ -1481,7 +1479,6 @@
             <button class="filter-btn" data-filter="hammer" aria-label="Filter hammers only">🔨 Hammers</button>
             <button class="filter-btn" data-filter="gem" aria-label="Filter gems only">💎 Gems</button>
           </div>
-          <!-- 3. Accessibility: aria-label -->
           <button class="filter-drawer-btn" id="btn-toggle-filters" aria-label="Open filter options drawer">
             <span>⚙ Filters</span>
             <span class="filter-badge-count" id="filter-count" style="display: none;">0</span>
@@ -1575,7 +1572,6 @@
             
             <div class="calc-controls-stack">
               <div class="calc-search-box-wrap">
-                <!-- 3. Accessibility: aria-label -->
                 <input type="text" id="calc-search-your" class="calc-search-input" placeholder="Type weapon name (e.g. Amber...)" autocomplete="off" aria-label="Search your offer items" />
                 <button type="button" id="btn-clear-calc-your" class="clear-calc-search-btn" aria-label="Clear your offer search" title="Clear search">✕</button>
                 <div class="calc-matches-panel" id="matches-panel-your"></div>
@@ -1610,7 +1606,6 @@
 
             <div class="calc-controls-stack">
               <div class="calc-search-box-wrap">
-                <!-- 3. Accessibility: aria-label -->
                 <input type="text" id="calc-search-their" class="calc-search-input" placeholder="Type weapon name (e.g. Fried...)" autocomplete="off" aria-label="Search their offer items" />
                 <button type="button" id="btn-clear-calc-their" class="clear-calc-search-btn" aria-label="Clear their offer search" title="Clear search">✕</button>
                 <div class="calc-matches-panel" id="matches-panel-their"></div>
