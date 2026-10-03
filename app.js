@@ -204,7 +204,7 @@ function updateTradeVerdict() {
   }
 
   if (dataA.hasNil || dataB.hasNil) {
-    verdictEl.textContent = '⚠ Contains Indefinite / Nil Item(s)';
+    verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
     detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
     verdictEl.classList.add('status-fair');
     return;
@@ -366,12 +366,52 @@ function renderItems(items) {
       </div>
     `;
 
+    // In-place Shiny Toggle (Never moves or reshuffles the card in the list)
     const starBtn = card.querySelector('.shiny-star-btn');
     if (starBtn) {
       starBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         shinyState[item.id] = !shinyState[item.id];
-        applyFilters();
+        const isNowShiny = !!shinyState[item.id];
+        const updatedDisplay = getItemActiveDisplay(item, isNowShiny);
+        const updatedImagePath = isNowShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
+
+        card.classList.toggle('is-shiny', isNowShiny);
+        starBtn.classList.toggle('active', isNowShiny);
+
+        const valEl = card.querySelector('.val');
+        if (valEl) valEl.textContent = updatedDisplay.value;
+
+        const demEl = card.querySelector('.demand');
+        if (demEl) demEl.textContent = updatedDisplay.demandLabel;
+
+        const statEl = card.querySelector('.status-tag');
+        if (statEl) statEl.textContent = updatedDisplay.status;
+
+        const imgEl = card.querySelector('.card-img');
+        if (imgEl) {
+          imgEl.src = updatedImagePath;
+          imgEl.onerror = function () {
+            this.src = `images/${item.id}.png`;
+            this.onerror = function () {
+              this.style.display = 'none';
+              this.nextElementSibling.style.display = 'flex';
+            };
+          };
+        }
+
+        const badgeGroup = card.querySelector('.card-top-info div');
+        if (badgeGroup) {
+          const existingShinyBadge = badgeGroup.querySelector('.badge-shiny');
+          if (isNowShiny && !existingShinyBadge) {
+            const shinySpan = document.createElement('span');
+            shinySpan.className = 'badge badge-shiny';
+            shinySpan.textContent = '★ SHINY';
+            badgeGroup.appendChild(shinySpan);
+          } else if (!isNowShiny && existingShinyBadge) {
+            existingShinyBadge.remove();
+          }
+        }
       });
     }
 
@@ -386,6 +426,7 @@ function renderItems(items) {
   });
 }
 
+// Filter and Sort items based on intrinsic base attributes
 function applyFilters() {
   const searchInput = document.getElementById('search');
   const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
@@ -404,17 +445,12 @@ function applyFilters() {
   });
 
   filtered.sort((a, b) => {
-    const isShinyA = !!shinyState[a.id];
-    const isShinyB = !!shinyState[b.id];
-    const dispA = getItemActiveDisplay(a, isShinyA);
-    const dispB = getItemActiveDisplay(b, isShinyB);
-
     if (currentSort === 'val-desc') {
-      return dispB.numValue - dispA.numValue;
+      return b.baseValue - a.baseValue;
     } else if (currentSort === 'val-asc') {
-      return dispA.numValue - dispB.numValue;
+      return a.baseValue - b.baseValue;
     } else if (currentSort === 'dem-desc') {
-      return dispB.demandTier - dispA.demandTier;
+      return b.demandTier - a.demandTier;
     } else if (currentSort === 'name-asc') {
       return a.name.localeCompare(b.name);
     }
