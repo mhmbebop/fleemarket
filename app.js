@@ -3,6 +3,7 @@ const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2RfYHa6ffW
 let allItems = [];
 let sideA = [];
 let sideB = [];
+let currentFilter = 'all'; // 'all' | 'hammer' | 'gem'
 
 // CSV Parser
 function parseCSV(text) {
@@ -98,7 +99,7 @@ function calculateSide(items) {
   return { totalValue, hasNil, avgDemand };
 }
 
-// Trade comparison logic
+// Trade comparison verdict logic
 function updateTradeVerdict() {
   const dataA = calculateSide(sideA);
   const dataB = calculateSide(sideB);
@@ -131,7 +132,6 @@ function updateTradeVerdict() {
     return;
   }
 
-  // Value difference from perspective of Side A (giving A, getting B)
   const diff = dataB.totalValue - dataA.totalValue;
   const maxVal = Math.max(dataA.totalValue, dataB.totalValue, 1);
   const percentDiff = (diff / maxVal) * 100;
@@ -166,11 +166,7 @@ function renderTradeList(side, listElementId) {
     const li = document.createElement('li');
     li.className = 'trade-item';
     const valText = item.isNilValue ? 'Nil' : item.baseValue;
-    
-    // Default fallback icon depending on type
     const fallbackEmoji = item.type.toLowerCase() === 'gem' ? '💎' : '🔨';
-    
-    // Expected image path based on item id
     const imagePath = `images/${item.id}.png`;
 
     li.innerHTML = `
@@ -200,7 +196,7 @@ function renderTradeList(side, listElementId) {
   });
 }
 
-// Catalog Grid Render
+// Render catalog cards with thumbnails
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   grid.innerHTML = '';
@@ -216,14 +212,24 @@ function renderItems(items) {
 
     const isGem = item.type.toLowerCase() === 'gem';
     const displayValue = item.isNilValue ? 'Indefinite' : item.baseValue;
+    const fallbackEmoji = isGem ? '💎' : '🔨';
+    const imagePath = `images/${item.id}.png`;
 
     card.innerHTML = `
-      <span class="badge ${isGem ? 'badge-gem' : ''}">${item.type}</span>
-      <h3 class="card-title">${item.name}</h3>
-      <div class="row">
-        <span>Set / Event:</span>
-        <span>${item.releaseEvent || item.setName}</span>
+      <div class="card-image-wrap">
+        <img 
+          src="${imagePath}" 
+          alt="${item.name}" 
+          class="card-img"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        />
+        <div class="card-img-fallback" style="display: none;">${fallbackEmoji}</div>
       </div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="badge ${isGem ? 'badge-gem' : ''}">${item.type}</span>
+        <span style="font-size: 12px; color: #8b949e;">${item.setName || item.releaseEvent}</span>
+      </div>
+      <h3 class="card-title">${item.name}</h3>
       <div class="row">
         <span>Value:</span>
         <span class="val">${displayValue}</span>
@@ -241,7 +247,25 @@ function renderItems(items) {
   });
 }
 
-// Initialize and Fetch
+// Filter items based on search input and active type button
+function applyFilters() {
+  const query = document.getElementById('search').value.toLowerCase().trim();
+
+  const filtered = allItems.filter((item) => {
+    const itemType = item.type.toLowerCase();
+    const matchesType = currentFilter === 'all' || itemType === currentFilter;
+    const matchesSearch =
+      item.name.toLowerCase().includes(query) ||
+      (item.setName && item.setName.toLowerCase().includes(query)) ||
+      (item.releaseEvent && item.releaseEvent.toLowerCase().includes(query));
+
+    return matchesType && matchesSearch;
+  });
+
+  renderItems(filtered);
+}
+
+// Fetch spreadsheet data
 async function loadData() {
   const statusEl = document.getElementById('status');
   try {
@@ -253,14 +277,14 @@ async function loadData() {
 
     statusEl.textContent = `Loaded ${allItems.length} items successfully.`;
     populateDropdowns(allItems);
-    renderItems(allItems);
+    applyFilters();
   } catch (error) {
     statusEl.textContent = 'Failed to load items. Check internet connection or sheet permissions.';
     console.error(error);
   }
 }
 
-// Event Listeners for Adding Items
+// Trade Calculator Event Listeners
 document.getElementById('btn-add-a').addEventListener('click', () => {
   const id = document.getElementById('select-a').value;
   if (!id) return;
@@ -291,16 +315,16 @@ document.getElementById('btn-reset').addEventListener('click', () => {
   updateTradeVerdict();
 });
 
-// Search filter
-document.getElementById('search').addEventListener('input', (e) => {
-  const query = e.target.value.toLowerCase();
-  const filtered = allItems.filter(
-    (item) =>
-      item.name.toLowerCase().includes(query) ||
-      item.setName.toLowerCase().includes(query) ||
-      item.releaseEvent.toLowerCase().includes(query)
-  );
-  renderItems(filtered);
+// Search and Filter Listeners
+document.getElementById('search').addEventListener('input', applyFilters);
+
+document.querySelectorAll('.filter-btn').forEach((btn) => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
+    e.target.classList.add('active');
+    currentFilter = e.target.getAttribute('data-filter');
+    applyFilters();
+  });
 });
 
 loadData();
