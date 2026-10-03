@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>10 Player Flee - Value List & Trade Calculator</title>
+  <title>10 Player Flee - Value Hub</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -25,8 +25,8 @@
       color: #58a6ff;
       margin-bottom: 16px;
     }
-    
-    /* Trade Calculator Styles */
+
+    /* --- Trade Calculator Styles --- */
     .calculator-container {
       background: #161b22;
       border: 1px solid #30363d;
@@ -170,7 +170,35 @@
     .status-fair { color: #f2cc60; }
     .status-loss { color: #f85149; }
 
-    /* Catalog / Inventory Section */
+    /* Thumbnail preview inside trade list */
+    .trade-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .trade-thumb {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      background: #21262d;
+      object-fit: contain;
+      border: 1px solid #30363d;
+      flex-shrink: 0;
+    }
+    .trade-thumb-fallback {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      background: #21262d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      border: 1px solid #30363d;
+      flex-shrink: 0;
+    }
+
+    /* --- Catalog Card Styles --- */
     .search-box {
       width: 100%;
       max-width: 400px;
@@ -185,7 +213,7 @@
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 16px;
     }
     .card {
@@ -196,6 +224,33 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+    }
+    .card-image-wrap {
+      width: 100%;
+      height: 140px;
+      background: #0d1117;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    .card-img-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      width: 100%;
+      height: 100%;
     }
     .card-title {
       font-size: 18px;
@@ -233,35 +288,6 @@
 </head>
 <body>
 
-  /* Thumbnail preview in trade list */
-.trade-item-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.trade-thumb {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  background: #21262d;
-  object-fit: contain;
-  border: 1px solid #30363d;
-  flex-shrink: 0;
-}
-
-.trade-thumb-fallback {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  background: #21262d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  border: 1px solid #30363d;
-  flex-shrink: 0;
-}
   <h1>10 Player Flee - Value Hub</h1>
   <p>Live inventory and trade fairness calculator synced with Google Sheets</p>
   <div id="status">Loading items from Google Sheets...</div>
