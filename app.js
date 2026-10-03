@@ -376,6 +376,7 @@ function renderItems(items) {
       </div>
     `;
 
+    // Touch & Click In-place Shiny Toggle
     const starBtn = card.querySelector('.shiny-star-btn');
     if (starBtn) {
       starBtn.addEventListener('click', (e) => {
@@ -544,8 +545,27 @@ function setupEventListeners() {
     });
   }
 
+  // Live Search with Quick Clear Button
   const searchInput = document.getElementById('search');
-  if (searchInput) searchInput.addEventListener('input', applyFilters);
+  const btnClearSearch = document.getElementById('btn-clear-search');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      if (btnClearSearch) {
+        btnClearSearch.style.display = searchInput.value.trim().length > 0 ? 'flex' : 'none';
+      }
+      applyFilters();
+    });
+  }
+
+  if (btnClearSearch && searchInput) {
+    btnClearSearch.addEventListener('click', () => {
+      searchInput.value = '';
+      btnClearSearch.style.display = 'none';
+      searchInput.focus();
+      applyFilters();
+    });
+  }
 
   const sortSelect = document.getElementById('sort-select');
   if (sortSelect) {
