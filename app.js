@@ -789,7 +789,7 @@ function removeItemFromTrade(itemId, sideTarget) {
   updateTradeVerdict();
 }
 
-// Render Catalog Grid with Robust Image Fallbacks
+// Render Catalog Grid with Foolproof Image Fallbacks
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
@@ -840,8 +840,7 @@ function renderItems(items) {
           src="images/${item.id}.png" 
           alt="" 
           class="card-img" 
-          onload="this.style.display='block'; this.nextElementSibling.style.display='none';"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+          onerror="this.remove();"
         />
         <div class="card-img-fallback" style="display: flex; align-items: center; justify-content: center; font-size: 42px; width: 100%; height: 100%; background: #090b10;">${fallbackEmoji}</div>
       </div>
