@@ -433,7 +433,7 @@ function refreshCardButtonBadges() {
   });
 }
 
-// Sequential Word-Prefix Search & Autocomplete with Sanitization
+// Sequential Word-Prefix Search & Autocomplete with Selection (Allows checking Shiny before adding)
 function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
   const input = document.getElementById(inputId);
   const clearBtn = document.getElementById(clearBtnId);
@@ -502,13 +502,10 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
       `;
 
       row.addEventListener('click', () => {
-        const isShiny = document.getElementById(`shiny-${side}`)?.checked || false;
-        addItemToTrade(item, side, isShiny);
-
-        input.value = '';
-        if (clearBtn) clearBtn.style.display = 'none';
+        selectItemForSide(item, side);
+        input.value = item.name;
+        if (clearBtn) clearBtn.style.display = 'flex';
         panel.classList.remove('open');
-        selectItemForSide(null, side);
       });
 
       panel.appendChild(row);
@@ -518,11 +515,12 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
   }
 
   input.addEventListener('input', (e) => {
+    selectItemForSide(null, side);
     renderMatches(e.target.value);
   });
 
   input.addEventListener('focus', () => {
-    if (input.value.trim().length > 0) {
+    if (input.value.trim().length > 0 && !((side === 'your' ? selectedItemYour : selectedItemTheir))) {
       renderMatches(input.value);
     }
   });
@@ -547,7 +545,7 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
     if (e.key === 'Enter') {
       e.preventDefault();
       const firstMatch = panel.querySelector('.calc-match-item');
-      if (firstMatch) {
+      if (firstMatch && panel.classList.contains('open')) {
         firstMatch.click();
       } else {
         const btnAdd = document.getElementById(side === 'your' ? 'btn-add-your' : 'btn-add-their');
@@ -647,7 +645,7 @@ function updateTradeVerdict() {
   }
 
   if (dataYour.hasNil || dataTheir.hasNil) {
-    verdictEl.textContent = '⚠️️ Contains Indefinite / Nil Item(s)';
+    verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
     detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
     verdictEl.classList.add('status-fair');
     return;
