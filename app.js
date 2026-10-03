@@ -1,12 +1,11 @@
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2RfYHa6ffWiale6czVqih6e7BrrZ-ZmRdnT10WTsS5M1ZJF9-jKSvcpyyrv5imytQ9lZsvL8su/pub?gid=0&single=true&output=csv';
 
-let allItems = [];
+let allItems = [];      // Clean list of unique base items only
 let sideA = [];
 let sideB = [];
 let currentFilter = 'all'; // 'all' | 'hammer' | 'gem'
 let currentSort = 'val-desc';
-// Track shiny toggle per item ID
-const shinyState = {};
+const shinyState = {};  // Tracks active toggle per item ID (true/false)
 
 // CSV Parser
 function parseCSV(text) {
@@ -45,34 +44,104 @@ function parseCSV(text) {
     });
     return {
       id: row.id,
-      name: row.name,
-      type: row.type,
-      category: row.category,
-      releaseEvent: row.release_event,
+      name: row.name.trim(),
+      type: row.type.trim(),
+      category: row.category.trim(),
+      releaseEvent: row.release_event.trim(),
       baseValue: Number(row.base_value) || 0,
       isNilValue: row.is_nil_value?.toUpperCase() === 'TRUE',
       demandTier: Number(row.demand_tier) || 1,
-      demandLabel: row.demand_label,
-      status: row.status,
-      setName: row.set_name,
+      demandLabel: row.demand_label.trim(),
+      status: row.status.trim(),
+      setName: row.set_name.trim(),
     };
   });
 }
 
-// Determines the shiny multiplier (4x for Commons/Rares; 10x for Epics/Legendaries/Event bundles)
+// Determines the shiny multiplier based on item tier/event
 function getShinyMultiplier(item) {
   const name = (item.name || '').toLowerCase();
-  const cat = (item.category || '').toLowerCase();
   if (name.includes('rare') || name.includes('common')) {
     return 4;
   }
   return 10;
 }
 
-// Calculates active display value taking into account shiny toggle
-function getItemActiveValue(item, isShiny = false) {
-  if (item.isNilValue) return 0;
-  return isShiny ? item.baseValue * getShinyMultiplier(item) : item.baseValue;
+// Merges separate "Shiny ..." rows into their base items so no duplicate cards exist
+function processAndDeduplicateItems(rawItems) {
+  const baseMap = new Map();
+  const explicitShinies = [];
+
+  // 1. Separate base items from items with "Shiny" in their title
+  rawItems.forEach((item) => {
+    if (item.name.toLowerCase().startsWith('shiny ')) {
+      explicitShinies.push(item);
+    } else {
+      // Create a lookup key combining normalized name and type (Hammer vs Gem)
+      const key = `${item.name.toLowerCase()}_${item.type.toLowerCase()}`;
+      item.hasShiny = false;
+      item.shinyData = null;
+      baseMap.set(key, item);
+    }
+  });
+
+  // 2. Attach explicit shiny rows directly to their corresponding base item
+  explicitShinies.forEach((shinyItem) => {
+    const baseName = shinyItem.name.replace(/^shiny\s+/i, '').trim().toLowerCase();
+    const key = `${baseName}_${shinyItem.type.toLowerCase()}`;
+
+    if (baseMap.has(key)) {
+      const baseItem = baseMap.get(key);
+      baseItem.hasShiny = true;
+      baseItem.shinyData = {
+        value: shinyItem.baseValue,
+        isNilValue: shinyItem.isNilValue,
+        demandTier: shinyItem.demandTier,
+        demandLabel: shinyItem.demandLabel,
+        status: shinyItem.status,
+      };
+    }
+  });
+
+  // 3. For any items that don't have explicit sheet rows but are eligible via multiplier rules
+  // (e.g. Crate items, Event items that can be shiny)
+  baseMap.forEach((item) => {
+    if (!item.hasShiny && !item.name.toLowerCase().includes('permanent') && !item.category.toLowerCase().includes('permanent')) {
+      const mult = getShinyMultiplier(item);
+      item.hasShiny = true;
+      item.shinyData = {
+        value: item.isNilValue ? 0 : item.baseValue * mult,
+        isNilValue: item.isNilValue,
+        demandTier: item.demandTier,
+        demandLabel: item.demandLabel,
+        status: item.status,
+      };
+    }
+  });
+
+  return Array.from(baseMap.values());
+}
+
+// Get the current display values depending on whether shiny mode is toggled on
+function getItemActiveDisplay(item, isShiny = false) {
+  if (isShiny && item.hasShiny && item.shinyData) {
+    return {
+      value: item.shinyData.isNilValue ? 'Indefinite' : item.shinyData.value,
+      numValue: item.shinyData.isNilValue ? 0 : item.shinyData.value,
+      isNil: item.shinyData.isNilValue,
+      demandLabel: item.shinyData.demandLabel,
+      demandTier: item.shinyData.demandTier,
+      status: item.shinyData.status,
+    };
+  }
+  return {
+    value: item.isNilValue ? 'Indefinite' : item.baseValue,
+    numValue: item.isNilValue ? 0 : item.baseValue,
+    isNil: item.isNilValue,
+    demandLabel: item.demandLabel,
+    demandTier: item.demandTier,
+    status: item.status,
+  };
 }
 
 // Populate dropdown selectors for trade calculator
@@ -80,6 +149,9 @@ function populateDropdowns(items) {
   const selectA = document.getElementById('select-a');
   const selectB = document.getElementById('select-b');
   if (!selectA || !selectB) return;
+
+  selectA.innerHTML = '<option value="">Select an item to add...</option>';
+  selectB.innerHTML = '<option value="">Select an item to add...</option>';
 
   const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -99,7 +171,7 @@ function populateDropdowns(items) {
   });
 }
 
-// Calculate total value and average demand tier
+// Calculate total value and average demand tier for a trade side
 function calculateSide(items) {
   let totalValue = 0;
   let totalDemandTier = 0;
@@ -224,10 +296,16 @@ function addItemToTrade(itemId, sideTarget, isShiny = false) {
   const item = allItems.find((i) => i.id === itemId);
   if (!item) return;
 
+  const display = getItemActiveDisplay(item, isShiny);
+
   const tradeItem = {
     ...item,
     isShiny: isShiny,
-    tradeValue: getItemActiveValue(item, isShiny),
+    tradeValue: display.numValue,
+    isNilValue: display.isNil,
+    demandLabel: display.demandLabel,
+    demandTier: display.demandTier,
+    status: display.status,
   };
 
   if (sideTarget === 'A') {
@@ -240,7 +318,7 @@ function addItemToTrade(itemId, sideTarget, isShiny = false) {
   updateTradeVerdict();
 }
 
-// Render catalog cards with yellow star shiny toggle
+// Render catalog cards
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
@@ -257,18 +335,17 @@ function renderItems(items) {
     card.className = `card ${isShiny ? 'is-shiny' : ''}`;
 
     const isGem = (item.type || '').toLowerCase() === 'gem';
-    const activeValue = getItemActiveValue(item, isShiny);
-    const displayValue = item.isNilValue ? 'Indefinite' : activeValue;
+    const display = getItemActiveDisplay(item, isShiny);
     const fallbackEmoji = isGem ? '💎' : '🔨';
     const imagePath = isShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
 
-    card.innerHTML = `
-      <div 
-        class="shiny-star-btn ${isShiny ? 'active' : ''}" 
-        data-id="${item.id}"
-        title="Toggle Shiny Version"
-      >★</div>
+    // Only render the star button if the item actually has a shiny version
+    const starButtonHtml = item.hasShiny
+      ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-id="${item.id}" title="Toggle Shiny Version">★</div>`
+      : '';
 
+    card.innerHTML = `
+      ${starButtonHtml}
       <div class="card-image-wrap">
         <img 
           src="${imagePath}" 
@@ -288,15 +365,15 @@ function renderItems(items) {
       <h3 class="card-title">${item.name}</h3>
       <div class="row">
         <span>Value:</span>
-        <span class="val">${displayValue}</span>
+        <span class="val">${display.value}</span>
       </div>
       <div class="row">
         <span>Demand:</span>
-        <span class="demand">${item.demandLabel}</span>
+        <span class="demand">${display.demandLabel}</span>
       </div>
       <div class="row">
         <span>Status:</span>
-        <span>${item.status}</span>
+        <span>${display.status}</span>
       </div>
       <div class="card-actions">
         <button class="card-add-btn side-a" data-id="${item.id}">+ Side A</button>
@@ -304,14 +381,17 @@ function renderItems(items) {
       </div>
     `;
 
-    // Star Click: Toggle regular <-> shiny
-    card.querySelector('.shiny-star-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      shinyState[item.id] = !shinyState[item.id];
-      applyFilters(); // Re-renders the card instantly with updated values and glowing star
-    });
+    // Attach click listener to star button if it exists on this card
+    const starBtn = card.querySelector('.shiny-star-btn');
+    if (starBtn) {
+      starBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        shinyState[item.id] = !shinyState[item.id];
+        applyFilters();
+      });
+    }
 
-    // Quick Add Buttons (pass the current shiny state into the trade)
+    // Quick Add Buttons
     card.querySelector('.card-add-btn.side-a').addEventListener('click', (e) => {
       addItemToTrade(e.currentTarget.getAttribute('data-id'), 'A', !!shinyState[item.id]);
     });
@@ -323,7 +403,7 @@ function renderItems(items) {
   });
 }
 
-// Filter and Sort items safely
+// Filter and Sort items
 function applyFilters() {
   const searchInput = document.getElementById('search');
   const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
@@ -342,17 +422,19 @@ function applyFilters() {
     return matchesType && matchesSearch;
   });
 
-  // 2. Sort items (taking into account their active shiny values if toggled)
+  // 2. Sort items
   filtered.sort((a, b) => {
-    const valA = getItemActiveValue(a, !!shinyState[a.id]);
-    const valB = getItemActiveValue(b, !!shinyState[b.id]);
+    const isShinyA = !!shinyState[a.id];
+    const isShinyB = !!shinyState[b.id];
+    const dispA = getItemActiveDisplay(a, isShinyA);
+    const dispB = getItemActiveDisplay(b, isShinyB);
 
     if (currentSort === 'val-desc') {
-      return valB - valA;
+      return dispB.numValue - dispA.numValue;
     } else if (currentSort === 'val-asc') {
-      return valA - valB;
+      return dispA.numValue - dispB.numValue;
     } else if (currentSort === 'dem-desc') {
-      return b.demandTier - a.demandTier;
+      return dispB.demandTier - dispA.demandTier;
     } else if (currentSort === 'name-asc') {
       return a.name.localeCompare(b.name);
     }
@@ -362,7 +444,7 @@ function applyFilters() {
   renderItems(filtered);
 }
 
-// Setup Event Listeners safely
+// Setup Event Listeners
 function setupEventListeners() {
   const btnAddA = document.getElementById('btn-add-a');
   if (btnAddA) {
@@ -423,10 +505,13 @@ async function loadData() {
     if (!response.ok) throw new Error(`HTTP ${response.status}: Could not load CSV`);
 
     const csvText = await response.text();
-    allItems = parseCSV(csvText);
+    const rawItems = parseCSV(csvText);
+
+    // Filter duplicates and attach shiny properties to the base items
+    allItems = processAndDeduplicateItems(rawItems);
 
     if (statusEl) {
-      statusEl.textContent = `Loaded ${allItems.length} items successfully.`;
+      statusEl.textContent = `Loaded ${allItems.length} unique items successfully.`;
     }
     populateDropdowns(allItems);
     setupEventListeners();
