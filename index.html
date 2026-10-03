@@ -196,7 +196,7 @@
     .status-fair { color: #f2cc60; }
     .status-loss { color: #f85149; }
 
-    /* --- Catalog & Filter Controls --- */
+    /* --- Catalog Controls --- */
     .controls-row {
       display: flex;
       flex-wrap: wrap;
@@ -206,7 +206,7 @@
     }
     .search-box {
       width: 100%;
-      max-width: 350px;
+      max-width: 320px;
       padding: 10px 14px;
       border-radius: 8px;
       border: 1px solid #30363d;
@@ -239,6 +239,8 @@
       border-color: #9d7dfd;
       color: #0f111a;
     }
+
+    /* --- Card Styles & Shiny Star --- */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -252,7 +254,44 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      position: relative;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
     }
+    .card.is-shiny {
+      border-color: #e3b341;
+      box-shadow: 0 0 14px rgba(227, 179, 65, 0.25);
+    }
+    .shiny-star-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(13, 17, 23, 0.7);
+      border: 1px solid #30363d;
+      color: #8b949e;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      z-index: 2;
+      transition: transform 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+      user-select: none;
+    }
+    .shiny-star-btn:hover {
+      transform: scale(1.15);
+      border-color: #f2cc60;
+      color: #f2cc60;
+    }
+    .shiny-star-btn.active {
+      color: #ffd700;
+      border-color: #ffd700;
+      background: rgba(255, 215, 0, 0.15);
+      text-shadow: 0 0 8px #ffd700;
+    }
+
     .card-image-wrap {
       width: 100%;
       height: 140px;
@@ -271,6 +310,10 @@
       object-fit: contain;
       padding: 8px;
       box-sizing: border-box;
+      transition: filter 0.2s ease;
+    }
+    .card.is-shiny .card-img {
+      filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5));
     }
     .card-img-fallback {
       display: flex;
@@ -297,6 +340,12 @@
     }
     .badge-gem {
       background: #1f6feb;
+    }
+    .badge-shiny {
+      background: #d29922;
+      color: #0f111a;
+      font-weight: 800;
+      margin-left: 6px;
     }
     .row {
       display: flex;
@@ -408,7 +457,7 @@
   <!-- ITEM CATALOG SECTION -->
   <h2>Item Database</h2>
   
- <div class="controls-row">
+  <div class="controls-row">
     <input type="text" id="search" class="search-box" placeholder="Search hammer, gem, or crate..." />
     <div class="filter-btn-group">
       <button class="filter-btn active" data-filter="all">All Items</button>
@@ -421,7 +470,6 @@
       <option value="dem-desc">Demand: High to Low</option>
       <option value="name-asc">Name: A to Z</option>
     </select>
-  </div>
   </div>
 
   <div class="grid" id="items-grid"></div>
