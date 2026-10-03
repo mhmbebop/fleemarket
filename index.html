@@ -250,14 +250,16 @@
       position: relative;
     }
 
-    /* Search Box Container */
+    /* Search Box Container with Inside 'X' Button */
     .calc-search-box-wrap {
       position: relative;
       width: 100%;
+      display: flex;
+      align-items: center;
     }
     .calc-search-input {
       width: 100%;
-      padding: 10px 12px;
+      padding: 10px 34px 10px 12px;
       background: var(--surface-2);
       color: #fff;
       border: 1px solid var(--border);
@@ -269,6 +271,27 @@
     .calc-search-input:focus {
       border-color: var(--border-focus);
       box-shadow: 0 0 0 2px rgba(157, 125, 253, 0.2);
+    }
+    .clear-calc-search-btn {
+      position: absolute;
+      right: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--text-muted);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      cursor: pointer;
+      touch-action: manipulation;
+      z-index: 2;
+    }
+    .clear-calc-search-btn:hover {
+      background: rgba(244, 63, 94, 0.2);
+      color: var(--accent-rose);
     }
 
     /* Matching Results Box - Same Width as Search Bar */
@@ -1192,9 +1215,10 @@
             </div>
             
             <div class="calc-controls-stack">
-              <!-- Live Prefix Search -->
+              <!-- Live Prefix Search with Inside 'X' Button -->
               <div class="calc-search-box-wrap">
                 <input type="text" id="calc-search-your" class="calc-search-input" placeholder="Type weapon name (e.g. Amber...)" autocomplete="off" />
+                <button type="button" id="btn-clear-calc-your" class="clear-calc-search-btn" title="Clear search">✕</button>
                 <div class="calc-matches-panel" id="matches-panel-your"></div>
               </div>
 
@@ -1228,9 +1252,10 @@
             </div>
 
             <div class="calc-controls-stack">
-              <!-- Live Prefix Search -->
+              <!-- Live Prefix Search with Inside 'X' Button -->
               <div class="calc-search-box-wrap">
                 <input type="text" id="calc-search-their" class="calc-search-input" placeholder="Type weapon name (e.g. Fried...)" autocomplete="off" />
+                <button type="button" id="btn-clear-calc-their" class="clear-calc-search-btn" title="Clear search">✕</button>
                 <div class="calc-matches-panel" id="matches-panel-their"></div>
               </div>
 
