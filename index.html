@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>10 Player Flee - Official Value List & Trade Hub</title>
-  <!-- Modern Gamer/Tech Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -52,7 +51,6 @@
       margin: 0 auto;
     }
 
-    /* --- Header --- */
     header {
       margin-bottom: 28px;
     }
@@ -151,12 +149,8 @@
       flex-direction: column;
       gap: 12px;
     }
-    .trade-side.side-a {
-      border-top: 3px solid var(--accent-cyan);
-    }
-    .trade-side.side-b {
-      border-top: 3px solid var(--accent-green);
-    }
+    .trade-side.side-a { border-top: 3px solid var(--accent-cyan); }
+    .trade-side.side-b { border-top: 3px solid var(--accent-green); }
 
     .side-header {
       display: flex;
@@ -220,14 +214,6 @@
       flex-direction: column;
       gap: 8px;
     }
-    .selected-list::-webkit-scrollbar {
-      width: 5px;
-    }
-    .selected-list::-webkit-scrollbar-thumb {
-      background: var(--surface-2);
-      border-radius: 4px;
-    }
-
     .trade-item {
       display: flex;
       justify-content: space-between;
@@ -236,9 +222,6 @@
       padding: 8px 12px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
-    }
-    .trade-item:hover {
-      border-color: rgba(255, 255, 255, 0.15);
     }
     .trade-item-left {
       display: flex;
@@ -381,7 +364,7 @@
       font-weight: 700;
     }
 
-    /* --- Cards Grid --- */
+    /* --- Cards Grid & Rarity Colors --- */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
@@ -399,13 +382,89 @@
     }
     .card:hover {
       transform: translateY(-4px);
-      border-color: rgba(255, 255, 255, 0.18);
       box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.7);
     }
+
+    /* MYTHICAL GRADIENT BLUE (Matching Eternaswan, Pan, Sapphira) */
+    .card.rarity-mythical {
+      border: 1.5px solid transparent;
+      background: 
+        linear-gradient(var(--surface-1), var(--surface-1)) padding-box,
+        linear-gradient(135deg, #00d2ff 0%, #3a7bd5 50%, #4a00e0 100%) border-box;
+      box-shadow: 0 0 16px rgba(0, 210, 255, 0.2);
+    }
+    .card.rarity-mythical .card-title {
+      background: linear-gradient(135deg, #70e1ff 0%, #38bdf8 60%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .badge-rarity-mythical {
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.2) 0%, rgba(58, 123, 213, 0.2) 100%);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    /* LEGENDARY (Gold Amber) */
+    .card.rarity-legendary {
+      border-color: rgba(245, 158, 11, 0.45);
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, var(--surface-1) 100%);
+    }
+    .badge-rarity-legendary {
+      background: rgba(245, 158, 11, 0.18);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+
+    /* EPIC (Purple) */
+    .card.rarity-epic {
+      border-color: rgba(168, 85, 247, 0.4);
+      background: linear-gradient(180deg, rgba(168, 85, 247, 0.05) 0%, var(--surface-1) 100%);
+    }
+    .badge-rarity-epic {
+      background: rgba(168, 85, 247, 0.18);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.35);
+    }
+
+    /* RARE (Blue) */
+    .card.rarity-rare {
+      border-color: rgba(59, 130, 246, 0.35);
+    }
+    .badge-rarity-rare {
+      background: rgba(59, 130, 246, 0.18);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+    }
+
+    /* COMMON (Slate) */
+    .card.rarity-common {
+      border-color: rgba(100, 116, 139, 0.3);
+    }
+    .badge-rarity-common {
+      background: rgba(100, 116, 139, 0.18);
+      color: #94a3b8;
+      border: 1px solid rgba(100, 116, 139, 0.35);
+    }
+
+    /* SHINY: PRISMATIC RAINBOW BORDER & GLOW OVERRIDE */
+    @keyframes rainbow-border {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(360deg); }
+    }
     .card.is-shiny {
-      border-color: rgba(251, 191, 36, 0.5);
-      background: linear-gradient(180deg, rgba(251, 191, 36, 0.04) 0%, var(--surface-1) 100%);
-      box-shadow: 0 0 20px rgba(251, 191, 36, 0.15);
+      border: 1.5px solid transparent !important;
+      background: 
+        linear-gradient(var(--surface-1), var(--surface-1)) padding-box,
+        linear-gradient(135deg, #ff007a, #9900ef, #00d2ff, #00ff88, #ffe600, #ff007a) border-box !important;
+      box-shadow: 0 0 22px rgba(153, 0, 239, 0.3) !important;
+      animation: rainbow-border 6s linear infinite;
+    }
+    .badge-shiny {
+      background: linear-gradient(135deg, #ff007a, #9900ef, #00d2ff) !important;
+      color: #fff !important;
+      border: none !important;
+      font-weight: 800;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
     }
 
     .shiny-star-btn {
@@ -428,8 +487,8 @@
     }
     .shiny-star-btn:hover {
       transform: scale(1.15);
-      color: var(--accent-gold);
-      border-color: var(--accent-gold);
+      color: #ffd700;
+      border-color: #ffd700;
     }
     .shiny-star-btn.active {
       color: #ffd700;
@@ -457,7 +516,7 @@
       padding: 10px;
     }
     .card.is-shiny .card-img {
-      filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+      filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.5));
     }
     .card-img-fallback {
       display: flex;
@@ -491,17 +550,21 @@
       background: rgba(56, 189, 248, 0.15);
       color: var(--accent-cyan);
     }
-    .badge-shiny {
-      background: rgba(251, 191, 36, 0.2);
-      color: var(--accent-gold);
-      border: 1px solid rgba(251, 191, 36, 0.35);
+    .badge-rarity {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
       font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     .set-tag {
       font-size: 11px;
       color: var(--text-muted);
       font-weight: 500;
-      max-width: 130px;
+      max-width: 120px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
