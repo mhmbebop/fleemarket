@@ -54,94 +54,22 @@ function parseCSV(text) {
       demandLabel: (row.demand_label || '1').trim(),
       status: (row.status || 'Stable').trim(),
       setName: (row.set_name || '').trim(),
+      hasShiny: (row.has_shiny || '').toUpperCase() === 'TRUE',
+      shinyValue: Number(row.shiny_value) || 0,
+      rarity: (row.rarity || 'Rare').trim(), // Direct from Google Sheet
     };
   });
 }
 
-// Determines accurate game rarity
-function getItemRarity(item) {
-  const name = (item.name || '').toLowerCase();
-  const cat = (item.category || '').toLowerCase();
-
-  if (
-    name.includes('eternaswan') ||
-    name.includes('pan') ||
-    name.includes('sapphira') ||
-    name.includes('mythical') ||
-    cat.includes('mythical')
-  ) {
-    return 'Mythical';
-  }
-
-  if (name.includes('common')) return 'Common';
-  if (name.includes('rare')) return 'Rare';
-
-  if (item.baseValue >= 70 || item.isNilValue || cat.includes('special') || cat.includes('bundle')) {
-    return 'Legendary';
-  }
-
-  if (item.baseValue >= 20) {
-    return 'Epic';
-  }
-
-  return 'Rare';
-}
-
-// Normalizes name strings to pair "Shiny <Name>" with its base weapon
-function normalizeItemName(rawName) {
-  return rawName
-    .replace(/^shiny\s+/i, '')
-    .replace(/\s*\([hg]\)\s*$/i, '')
-    .trim()
-    .toLowerCase();
-}
-
-// Strictly pairs shiny rows ONLY when explicit shiny data exists in the spreadsheet
-function processAndDeduplicateItems(rawItems) {
-  const baseMap = new Map();
-  const explicitShinies = [];
-
-  rawItems.forEach((item) => {
-    if (item.name.toLowerCase().startsWith('shiny ')) {
-      explicitShinies.push(item);
-    } else {
-      const cleanName = normalizeItemName(item.name);
-      const key = `${cleanName}_${item.type.toLowerCase()}`;
-      item.hasShiny = false;
-      item.shinyData = null;
-      baseMap.set(key, item);
-    }
-  });
-
-  explicitShinies.forEach((shinyItem) => {
-    const cleanName = normalizeItemName(shinyItem.name);
-    const key = `${cleanName}_${shinyItem.type.toLowerCase()}`;
-
-    if (baseMap.has(key)) {
-      const baseItem = baseMap.get(key);
-      baseItem.hasShiny = true;
-      baseItem.shinyData = {
-        value: shinyItem.baseValue,
-        isNilValue: shinyItem.isNilValue,
-        demandTier: shinyItem.demandTier,
-        demandLabel: shinyItem.demandLabel,
-        status: shinyItem.status,
-      };
-    }
-  });
-
-  return Array.from(baseMap.values());
-}
-
 function getItemActiveDisplay(item, isShiny = false) {
-  if (isShiny && item.hasShiny && item.shinyData) {
+  if (isShiny && item.hasShiny) {
     return {
-      value: item.shinyData.isNilValue ? 'Indefinite' : item.shinyData.value,
-      numValue: item.shinyData.isNilValue ? 0 : item.shinyData.value,
-      isNil: item.shinyData.isNilValue,
-      demandLabel: item.shinyData.demandLabel,
-      demandTier: item.shinyData.demandTier,
-      status: item.shinyData.status,
+      value: item.isNilValue ? 'Indefinite' : item.shinyValue,
+      numValue: item.isNilValue ? 0 : item.shinyValue,
+      isNil: item.isNilValue,
+      demandLabel: item.demandLabel,
+      demandTier: item.demandTier,
+      status: item.status,
     };
   }
   return {
@@ -336,8 +264,7 @@ function renderItems(items) {
   items.forEach((item) => {
     const card = document.createElement('div');
     const isShiny = item.hasShiny && !!shinyState[item.id];
-    const rarity = getItemRarity(item);
-    const rarityClass = `rarity-${rarity.toLowerCase()}`;
+    const rarityClass = `rarity-${(item.rarity || 'rare').toLowerCase()}`;
 
     card.className = `card ${rarityClass} ${isShiny ? 'is-shiny' : ''}`;
 
@@ -346,7 +273,6 @@ function renderItems(items) {
     const fallbackEmoji = isGem ? '💎' : '🔨';
     const imagePath = isShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
 
-    // Only render the star button if the item actually has synced shiny data
     const starButtonHtml = item.hasShiny
       ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-id="${item.id}" title="Toggle Shiny Version">★</div>`
       : '';
@@ -365,7 +291,7 @@ function renderItems(items) {
       <div class="card-top-info">
         <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
           <span class="badge ${isGem ? 'badge-gem' : ''}">${item.type}</span>
-          <span class="badge-rarity badge-${rarityClass}">${rarity}</span>
+          <span class="badge-rarity badge-${rarityClass}">${item.rarity}</span>
           ${isShiny ? '<span class="badge badge-shiny">★ SHINY</span>' : ''}
         </div>
         <span class="set-tag" title="${item.setName || item.releaseEvent}">${item.setName || item.releaseEvent}</span>
@@ -458,7 +384,6 @@ function renderItems(items) {
   });
 }
 
-// Filter items by Type, Shiny status, and Search query
 function applyFilters() {
   const searchInput = document.getElementById('search');
   const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
@@ -557,9 +482,7 @@ async function loadData() {
     if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to load CSV`);
 
     const csvText = await response.text();
-    const rawItems = parseCSV(csvText);
-
-    allItems = processAndDeduplicateItems(rawItems);
+    allItems = parseCSV(csvText);
 
     if (statusEl) {
       statusEl.textContent = `✓ Synced ${allItems.length} items from Google Sheets`;
