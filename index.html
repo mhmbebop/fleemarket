@@ -307,7 +307,7 @@
       align-items: flex-end;
       flex-wrap: wrap;
       gap: 16px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .catalog-title {
       font-family: 'Outfit', sans-serif;
@@ -322,7 +322,7 @@
       align-items: center;
     }
     .search-box {
-      width: 260px;
+      width: 220px;
       padding: 10px 14px;
       border-radius: var(--radius-md);
       border: 1px solid var(--border);
@@ -348,7 +348,7 @@
       background: transparent;
       border: none;
       color: var(--text-muted);
-      padding: 7px 14px;
+      padding: 7px 13px;
       border-radius: var(--radius-sm);
       cursor: pointer;
       font-size: 13px;
@@ -362,6 +362,127 @@
       background: var(--primary);
       color: #0b0f17;
       font-weight: 700;
+    }
+
+    /* Multi-Filter Drawer Toggle Button */
+    .filter-drawer-btn {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 9px 14px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .filter-drawer-btn:hover, .filter-drawer-btn.open {
+      color: #fff;
+      border-color: var(--primary);
+      background: var(--surface-2);
+    }
+    .filter-badge-count {
+      background: var(--primary);
+      color: #0b0f17;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    /* --- Multi-Filter Accordion Drawer --- */
+    .filter-drawer {
+      display: none;
+      background: var(--surface-glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 16px 32px -10px rgba(0, 0, 0, 0.5);
+    }
+    .filter-drawer.open {
+      display: block;
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .drawer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .drawer-section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .drawer-checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+    .drawer-checkbox-group::-webkit-scrollbar {
+      width: 4px;
+    }
+    .drawer-checkbox-group::-webkit-scrollbar-thumb {
+      background: var(--surface-2);
+      border-radius: 4px;
+    }
+    .drawer-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .drawer-label:hover {
+      color: #fff;
+    }
+    .drawer-label input[type="checkbox"] {
+      accent-color: var(--primary);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .drawer-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .clear-filters-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .clear-filters-btn:hover {
+      color: var(--accent-rose);
+      border-color: rgba(244, 63, 94, 0.4);
     }
 
     /* --- Cards Grid & Rarity Colors --- */
@@ -385,7 +506,7 @@
       box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.7);
     }
 
-    /* MYTHICAL GRADIENT BLUE (Matching Eternaswan, Pan, Sapphira) */
+    /* MYTHICAL GRADIENT BLUE */
     .card.rarity-mythical {
       border: 1.5px solid transparent;
       background: 
@@ -610,7 +731,6 @@
       font-weight: 500;
     }
 
-    /* Quick Add Buttons on Cards */
     .card-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -716,12 +836,53 @@
           <button class="filter-btn" data-filter="hammer">🔨 Hammers</button>
           <button class="filter-btn" data-filter="gem">💎 Gems</button>
         </div>
-        <select id="sort-select" class="select-dropdown" style="max-width: 190px;">
+        <button class="filter-drawer-btn" id="btn-toggle-filters">
+          <span>⚙ Filters</span>
+          <span class="filter-badge-count" id="filter-count" style="display: none;">0</span>
+        </button>
+        <select id="sort-select" class="select-dropdown" style="max-width: 185px;">
           <option value="val-desc">Value: High to Low</option>
           <option value="val-asc">Value: Low to High</option>
           <option value="dem-desc">Demand: High to Low</option>
           <option value="name-asc">Name: A to Z</option>
         </select>
+      </div>
+    </div>
+
+    <!-- EXPANDABLE MULTI-FILTER DRAWER -->
+    <div class="filter-drawer" id="filter-drawer">
+      <div class="drawer-grid">
+        <!-- RARITY OPTIONS -->
+        <div>
+          <div class="drawer-section-title">Rarity Tier</div>
+          <div class="drawer-checkbox-group">
+            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Mythical"> Mythical</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Legendary"> Legendary</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Epic"> Epic</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Rare"> Rare</label>
+            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Common"> Common</label>
+          </div>
+        </div>
+
+        <!-- SPECIAL PROPERTIES -->
+        <div>
+          <div class="drawer-section-title">Item Properties</div>
+          <div class="drawer-checkbox-group">
+            <label class="drawer-label"><input type="checkbox" id="cb-has-shiny"> Has Shiny Variant</label>
+          </div>
+        </div>
+
+        <!-- EVENTS & CRATES (Populated Dynamically) -->
+        <div>
+          <div class="drawer-section-title">Event & Crate</div>
+          <div class="drawer-checkbox-group" id="events-checkbox-group">
+            <!-- Injected by app.js -->
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button class="clear-filters-btn" id="btn-clear-filters">Reset All Filters</button>
       </div>
     </div>
 
