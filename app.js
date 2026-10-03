@@ -669,48 +669,9 @@ function updateTradeVerdict() {
   if (!verdictEl || !detailsEl) return;
   verdictEl.className = 'verdict-text';
 
-  if (yourOffer.length === 0 && theirOffer.length === 0) {
-    verdictEl.textContent = 'Add items to compare trade';
-    detailsEl.textContent = 'Difference: 0 Value';
-    return;
-  }
-
-  if (dataYour.hasNil || dataTheir.hasNil) {
-    verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
-    detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
-    verdictEl.classList.add('status-fair');
-    return;
-  }
-
-  const diff = dataTheir.totalValue - dataYour.totalValue;
-  const maxVal = Math.max(dataYour.totalValue, dataTheir.totalValue, 1);
-  const percentDiff = (diff / maxVal) * 100;
-
-  let verdictString = 'Fair Trade';
-  if (percentDiff > 15) {
-    verdictEl.textContent = '🎉 Big Win';
-    verdictEl.classList.add('status-win');
-    verdictString = 'Big Win';
-  } else if (percentDiff > 5) {
-    verdictEl.textContent = '✅ Small Win';
-    verdictEl.classList.add('status-win');
-    verdictString = 'Small Win';
-  } else if (percentDiff >= -5) {
-    verdictEl.textContent = '⚖️ Fair Trade';
-    verdictEl.classList.add('status-fair');
-    verdictString = 'Fair Trade';
-  } else if (percentDiff >= -15) {
-    verdictEl.textContent = '🔻 Small Loss';
-    verdictEl.classList.add('status-loss');
-    verdictString = 'Small Loss';
-  } else {
-    verdictEl.textContent = '❌ Big Loss';
-    verdictEl.classList.add('status-loss');
-    verdictString = 'Big Loss';
-  }
-
-  const sign = diff > 0 ? '+' : '';
-  detailsEl.textContent = `Their Offer has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
+  // Keep verdict neutral until Calculate Trade is explicitly clicked
+  verdictEl.textContent = 'Add items to both sides & click Calculate Trade';
+  detailsEl.textContent = 'Difference: -';
 }
 
 // Group duplicate items by quantity stacking with corrected listElementId parameter
@@ -1072,7 +1033,7 @@ function copyTradeForDiscord() {
     return Array.from(map.entries()).map(([k, count]) => count > 1 ? `${k} x${count}` : k).join(', ');
   };
 
-  const text = `### ⚖️️ **FLEEMARKET Trade Breakdown**\n` +
+  const text = `### ⚖️ **FLEEMARKET Trade Breakdown**\n` +
     `**Your Offer:** ${formatList(yourOffer)} (Val: **${dataYour.totalValue}**)\n` +
     `**Their Offer:** ${formatList(theirOffer)} (Val: **${dataTheir.totalValue}**)\n` +
     `**Verdict:** ${document.getElementById('verdict-text')?.textContent || 'Fair Trade'}\n` +
@@ -1223,37 +1184,77 @@ function setupEventListeners() {
   const btnFinalize = document.getElementById('btn-finalize-trade');
   if (btnFinalize) {
     btnFinalize.addEventListener('click', () => {
-      const verdictText = document.getElementById('verdict-text')?.textContent || 'Completed Trade';
-      
+      const dataYour = calculateSide(yourOffer);
+      const dataTheir = calculateSide(theirOffer);
+
+      let verdictString = 'Fair Trade';
+      const verdictEl = document.getElementById('verdict-text');
+      const detailsEl = document.getElementById('verdict-details');
+
+      if (dataYour.hasNil || dataTheir.hasNil) {
+        verdictString = 'Contains Nil';
+        if (verdictEl) {
+          verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
+          verdictEl.className = 'verdict-text status-fair';
+        }
+        if (detailsEl) detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
+      } else {
+        const diff = dataTheir.totalValue - dataYour.totalValue;
+        const maxVal = Math.max(dataYour.totalValue, dataTheir.totalValue, 1);
+        const percentDiff = (diff / maxVal) * 100;
+
+        if (percentDiff > 15) {
+          verdictString = 'Big Win';
+          if (verdictEl) { verdictEl.textContent = '🎉 Big Win'; verdictEl.className = 'verdict-text status-win'; }
+        } else if (percentDiff > 5) {
+          verdictString = 'Small Win';
+          if (verdictEl) { verdictEl.textContent = '✅ Small Win'; verdictEl.className = 'verdict-text status-win'; }
+        } else if (percentDiff >= -5) {
+          verdictString = 'Fair Trade';
+          if (verdictEl) { verdictEl.textContent = '⚖️ Fair Trade'; verdictEl.className = 'verdict-text status-fair'; }
+        } else if (percentDiff >= -15) {
+          verdictString = 'Small Loss';
+          if (verdictEl) { verdictEl.textContent = '🔻 Small Loss'; verdictEl.className = 'verdict-text status-loss'; }
+        } else {
+          verdictString = 'Big Loss';
+          if (verdictEl) { verdictEl.textContent = '❌ Big Loss'; verdictEl.className = 'verdict-text status-loss'; }
+        }
+
+        const sign = diff > 0 ? '+' : '';
+        if (detailsEl) detailsEl.textContent = `Their Offer has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
+      }
+
       // Save trade to history log
-      saveCompletedTrade(verdictText);
+      saveCompletedTrade(verdictString);
 
-      // Reset offers and clear from localStorage
-      yourOffer = [];
-      theirOffer = [];
-      localStorage.removeItem(TRADE_KEY_YOUR);
-      localStorage.removeItem(TRADE_KEY_THEIR);
+      // Wipe clean after 1.5 seconds so user can see result
+      setTimeout(() => {
+        yourOffer = [];
+        theirOffer = [];
+        localStorage.removeItem(TRADE_KEY_YOUR);
+        localStorage.removeItem(TRADE_KEY_THEIR);
 
-      // Refresh calculator UI, lists, and verdict display
-      renderTradeList(yourOffer, 'list-your');
-      renderTradeList(theirOffer, 'list-their');
-      selectedItemYour = null;
-      selectedItemTheir = null;
-      updateSidePreview('your', null);
-      updateSidePreview('their', null);
+        renderTradeList(yourOffer, 'list-your');
+        renderTradeList(theirOffer, 'list-their');
+        selectedItemYour = null;
+        selectedItemTheir = null;
+        updateSidePreview('your', null);
+        updateSidePreview('their', null);
 
-      const inYour = document.getElementById('calc-search-your');
-      const inTheir = document.getElementById('calc-search-their');
-      const clrYour = document.getElementById('btn-clear-calc-your');
-      const clrTheir = document.getElementById('btn-clear-calc-their');
-      if (inYour) inYour.value = '';
-      if (inTheir) inTheir.value = '';
-      if (clrYour) clrYour.style.display = 'none';
-      if (clrTheir) clrTheir.style.display = 'none';
+        const inYour = document.getElementById('calc-search-your');
+        const inTheir = document.getElementById('calc-search-their');
+        const clrYour = document.getElementById('btn-clear-calc-your');
+        const clrTheir = document.getElementById('btn-clear-calc-their');
+        if (inYour) inYour.value = '';
+        if (inTheir) inTheir.value = '';
+        if (clrYour) clrYour.style.display = 'none';
+        if (clrTheir) clrTheir.style.display = 'none';
 
-      document.getElementById('dock-items-drawer')?.classList.remove('open');
-      document.getElementById('floating-trade-dock')?.classList.remove('visible');
-      updateTradeVerdict();
+        document.getElementById('dock-items-drawer')?.classList.remove('open');
+        document.getElementById('floating-trade-dock')?.classList.remove('visible');
+        updateCalculateButtonState();
+        updateTradeVerdict();
+      }, 1500);
     });
   }
 
