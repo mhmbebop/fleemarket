@@ -1,4 +1,9 @@
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2RfYHa6ffWiale6czVqih6e7BrrZ-ZmRdnT10WTsS5M1ZJF9-jKSvcpyyrv5imytQ9lZsvL8su/pub?gid=0&single=true&output=csv';
+// Primary Published CSV URL
+const PRIMARY_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2RfYHa6ffWiale6czVqih6e7BrrZ-ZmRdnT10WTsS5M1ZJF9-jKSvcpyyrv5imytQ9lZsvL8su/pub?gid=0&single=true&output=csv';
+
+// Backup GVIZ Endpoint (CORS-friendly direct export)
+const SPREADSHEET_ID = '1XKPloRF46l0GGQOCdH0ce6Krjriitvj1LAdGTl_kkLI';
+const GVIZ_CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
 
 let allItems = [];
 let yourOffer = [];
@@ -42,6 +47,7 @@ function initTabNavigation() {
 
 // Robust CSV Parser
 function parseCSV(text) {
+  if (!text || typeof text !== 'string') return [];
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
 
@@ -67,7 +73,7 @@ function parseCSV(text) {
     return values.map((val) => val.replace(/^"|"$/g, '').trim());
   };
 
-  const headers = splitLine(lines[0]).map((h) => h.toLowerCase());
+  const headers = splitLine(lines[0]).map((h) => h.toLowerCase().replace(/[^a-z0-9_]/g, ''));
 
   return lines.slice(1).map((line) => {
     const cols = splitLine(line);
@@ -80,22 +86,22 @@ function parseCSV(text) {
     const normalizedRarity = rawRarity.toLowerCase() === 'unobtainable' ? 'Untradeable' : rawRarity;
 
     return {
-      id: row.id,
+      id: (row.id || '').trim(),
       name: (row.name || '').trim(),
-      type: (row.type || '').trim(),
+      type: (row.type || 'Hammer').trim(),
       category: (row.category || '').trim(),
-      releaseEvent: (row.release_event || '').trim(),
-      baseValue: Number(row.base_value) || 0,
-      isNilValue: (row.is_nil_value || '').toUpperCase() === 'TRUE',
-      demandTier: Number(row.demand_tier) || 1,
-      demandLabel: (row.demand_label || '1').trim(),
+      releaseEvent: (row.release_event || row.releaseevent || '').trim(),
+      baseValue: Number(row.base_value || row.basevalue) || 0,
+      isNilValue: String(row.is_nil_value || row.isnilvalue).toUpperCase() === 'TRUE',
+      demandTier: Number(row.demand_tier || row.demandtier) || 1,
+      demandLabel: String(row.demand_label || row.demandlabel || '1').trim(),
       status: (row.status || 'Stable').trim(),
-      setName: (row.set_name || '').trim(),
-      hasShiny: (row.has_shiny || '').toUpperCase() === 'TRUE',
-      shinyValue: Number(row.shiny_value) || 0,
+      setName: (row.set_name || row.setname || '').trim(),
+      hasShiny: String(row.has_shiny || row.hasshiny).toUpperCase() === 'TRUE',
+      shinyValue: Number(row.shiny_value || row.shinyvalue) || 0,
       rarity: normalizedRarity,
     };
-  });
+  }).filter((item) => item.name.length > 0);
 }
 
 // Builds the dynamic list of events/crates inside the filter drawer
@@ -184,7 +190,7 @@ function getItemActiveDisplay(item, isShiny = false) {
   };
 }
 
-// Sequential Word-Prefix Search & Autocomplete
+// Sequential Prefix Search & Autocomplete
 function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
   const input = document.getElementById(inputId);
   const clearBtn = document.getElementById(clearBtnId);
@@ -206,24 +212,19 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
 
     const queryWords = cleanQuery.split(/\s+/);
 
-    // Filter by sequential prefix: checks whole name AND each word inside the name
     const matches = allItems.filter((item) => {
       const name = (item.name || '').toLowerCase();
       const words = name.split(/\s+/);
 
-      // 1. Direct prefix match for the full name
       if (name.startsWith(cleanQuery)) return true;
 
-      // 2. Single-word search: check if ANY word in the name starts with the prefix
       if (queryWords.length === 1) {
         return words.some((w) => w.startsWith(cleanQuery));
       }
 
-      // 3. Multi-word search (e.g. "coral tiki"): ensure every query word matches the prefix of a word
       return queryWords.every((qw) => words.some((w) => w.startsWith(qw))) || name.includes(cleanQuery);
     });
 
-    // Priority Rank: Items starting with the query appear first, then word-matches
     matches.sort((a, b) => {
       const aName = (a.name || '').toLowerCase();
       const bName = (b.name || '').toLowerCase();
@@ -235,87 +236,7 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
     });
 
     if (matches.length === 0) {
-      panel.innerHTML = `<div class="calc-no-match-msg">⚠️ No items starting with "${query}"</div>`;
-      panel.classList.add('open');
-      return;
-    }
-
-    matches.forEach((item) => {
-      const row = document.createElement('div');
-      row.className = 'calc-match-item';
-      const valText = item.isNilValue ? 'Nil' : item.tradeValue;
-      const shinyTag = item.hasShiny ? '★' : '';
-
-      row.innerHTML = `
-        <div class="calc-match-item-name">
-          <span>${item.name}</span>
-          <span style="font-size: 10px; color: var(--accent-cyan);">(${item.type})</span>
-          ${shinyTag ? '<span style="color: var(--accent-gold); font-size: 10px;">★</span>' : ''}
-        </div>
-        <div class="calc-match-item-meta">Val: ${valText} | Dem: ${item.demandLabel}</div>
-      `;
-
-      row.addEventListener('click', () => {
-        selectItemForSide(item, side);
-        input.value = item.name;
-        if (clearBtn) clearBtn.style.display = 'flex';
-        panel.classList.remove('open');
-      });
-
-      panel.appendChild(row);
-    });
-
-    panel.classList.add('open');
-  }
-
-  input.addEventListener('input', (e) => {
-    renderMatches(e.target.value);
-  });
-
-  input.addEventListener('focus', () => {
-    if (input.value.trim().length > 0) {
-      renderMatches(input.value);
-    }
-  });
-
-  if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      input.value = '';
-      clearBtn.style.display = 'none';
-      panel.classList.remove('open');
-      selectItemForSide(null, side);
-      input.focus();
-    });
-  }
-
-  document.addEventListener('click', (e) => {
-    if (!input.contains(e.target) && !panel.contains(e.target)) {
-      panel.classList.remove('open');
-    }
-  });
-
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const firstMatch = panel.querySelector('.calc-match-item');
-      if (firstMatch) {
-        firstMatch.click();
-      } else {
-        const btnAdd = document.getElementById(side === 'your' ? 'btn-add-your' : 'btn-add-their');
-        if (btnAdd) btnAdd.click();
-      }
-    }
-  });
-}
-
-    // Matches MUST start with the sequential characters typed
-    const matches = allItems.filter((item) => {
-      const name = (item.name || '').toLowerCase();
-      return name.startsWith(cleanQuery);
-    }).sort((a, b) => a.name.localeCompare(b.name));
-
-    if (matches.length === 0) {
-      panel.innerHTML = `<div class="calc-no-match-msg">⚠️ No items starting with "${query}"</div>`;
+      panel.innerHTML = `<div class="calc-no-match-msg">⚠️ No items matching "${query}"</div>`;
       panel.classList.add('open');
       return;
     }
@@ -358,7 +279,6 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
     }
   });
 
-  // Clear button click listener
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
       input.value = '';
@@ -369,14 +289,12 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
     });
   }
 
-  // Close panel on outside click
   document.addEventListener('click', (e) => {
     if (!input.contains(e.target) && !panel.contains(e.target)) {
       panel.classList.remove('open');
     }
   });
 
-  // Enter selects top match
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -645,7 +563,6 @@ function renderItems(items) {
       </div>
     `;
 
-    // Touch & Click In-place Shiny Toggle
     const starBtn = card.querySelector('.shiny-star-btn');
     if (starBtn) {
       starBtn.addEventListener('click', (e) => {
@@ -808,7 +725,6 @@ function applyFilters() {
 }
 
 function setupEventListeners() {
-  // Mount Live Prefix Search & Clear Buttons on Calculator Inputs
   setupPrefixSearch('calc-search-your', 'btn-clear-calc-your', 'matches-panel-your', 'your');
   setupPrefixSearch('calc-search-their', 'btn-clear-calc-their', 'matches-panel-their', 'their');
 
@@ -975,31 +891,62 @@ function setupEventListeners() {
   }
 }
 
+// Resilient Loader with CORS Fallback
 async function loadData() {
   const statusEl = document.getElementById('status');
+  let csvText = null;
+
+  // Attempt 1: Fetch Primary Published Sheet URL
   try {
-    const response = await fetch(CSV_URL);
-    if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to load CSV`);
+    const res = await fetch(PRIMARY_CSV_URL);
+    if (res.ok) {
+      csvText = await res.text();
+    }
+  } catch (err) {
+    console.warn('Primary CSV link failed (likely CORS), attempting GVIZ fallback...', err);
+  }
 
-    const csvText = await response.text();
+  // Attempt 2: Fetch GVIZ Endpoint if primary blocked
+  if (!csvText) {
+    try {
+      const res = await fetch(GVIZ_CSV_URL);
+      if (res.ok) {
+        csvText = await res.text();
+      }
+    } catch (err) {
+      console.warn('GVIZ fallback also failed, attempting relative dataset...', err);
+    }
+  }
+
+  // Attempt 3: Fetch local backup CSV in repo
+  if (!csvText) {
+    try {
+      const res = await fetch('10_Player_Flee_Items_Database_Complete.csv');
+      if (res.ok) {
+        csvText = await res.text();
+      }
+    } catch (err) {
+      console.error('All fetch strategies failed.', err);
+    }
+  }
+
+  if (csvText) {
     allItems = parseCSV(csvText);
-
     if (statusEl) {
-      statusEl.textContent = `✓ Synced ${allItems.length} items from Google Sheets`;
+      statusEl.textContent = `✓ Synced ${allItems.length} items successfully`;
       statusEl.style.color = 'var(--accent-green)';
     }
     populateEventFilters(allItems);
     applyFilters();
-  } catch (error) {
+  } else {
     if (statusEl) {
-      statusEl.textContent = `Error: ${error.message}. Please refresh or check sheet permissions.`;
+      statusEl.textContent = '⚠️ Could not reach Google Sheets. Please ensure the sheet is Published to Web (CSV).';
       statusEl.style.color = 'var(--accent-rose)';
     }
-    console.error('Data sync failed:', error);
   }
 }
 
-// Initialize Navigation & UI Controls
+// Initialize Navigation & UI Controls immediately
 initTabNavigation();
 setupEventListeners();
 
