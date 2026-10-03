@@ -87,37 +87,16 @@ function getItemRarity(item) {
   return 'Rare';
 }
 
-// Multiplier calculation for shinies
-function getShinyMultiplier(item) {
-  const name = (item.name || '').toLowerCase();
-  if (name.includes('rare') || name.includes('common')) return 4;
-  return 10;
+// Normalizes name strings to pair "Shiny <Name>" with its base weapon
+function normalizeItemName(rawName) {
+  return rawName
+    .replace(/^shiny\s+/i, '')
+    .replace(/\s*\([hg]\)\s*$/i, '')
+    .trim()
+    .toLowerCase();
 }
 
-// Checks if weapon has an official in-game shiny variant
-function itemHasShinyVariant(item) {
-  const cat = (item.category || '').toLowerCase();
-  const name = (item.name || '').toLowerCase();
-
-  if (cat.includes('tournament') || name.includes('tournament')) {
-    return false;
-  }
-
-  if (cat.includes('crate')) {
-    return true;
-  }
-
-  if (cat.includes('event shop') || cat.includes('bundle')) {
-    if (cat.includes('permanent') && !name.includes('pan') && !name.includes('midaflame') && !name.includes('cash')) {
-      return false;
-    }
-    return true;
-  }
-
-  return false;
-}
-
-// Deduplicates and builds shiny records cleanly
+// Strictly pairs shiny rows ONLY when explicit shiny data exists in the spreadsheet
 function processAndDeduplicateItems(rawItems) {
   const baseMap = new Map();
   const explicitShinies = [];
@@ -126,7 +105,8 @@ function processAndDeduplicateItems(rawItems) {
     if (item.name.toLowerCase().startsWith('shiny ')) {
       explicitShinies.push(item);
     } else {
-      const key = `${item.name.toLowerCase()}_${item.type.toLowerCase()}`;
+      const cleanName = normalizeItemName(item.name);
+      const key = `${cleanName}_${item.type.toLowerCase()}`;
       item.hasShiny = false;
       item.shinyData = null;
       baseMap.set(key, item);
@@ -134,8 +114,8 @@ function processAndDeduplicateItems(rawItems) {
   });
 
   explicitShinies.forEach((shinyItem) => {
-    const baseName = shinyItem.name.replace(/^shiny\s+/i, '').trim().toLowerCase();
-    const key = `${baseName}_${shinyItem.type.toLowerCase()}`;
+    const cleanName = normalizeItemName(shinyItem.name);
+    const key = `${cleanName}_${shinyItem.type.toLowerCase()}`;
 
     if (baseMap.has(key)) {
       const baseItem = baseMap.get(key);
@@ -146,20 +126,6 @@ function processAndDeduplicateItems(rawItems) {
         demandTier: shinyItem.demandTier,
         demandLabel: shinyItem.demandLabel,
         status: shinyItem.status,
-      };
-    }
-  });
-
-  baseMap.forEach((item) => {
-    if (!item.hasShiny && itemHasShinyVariant(item)) {
-      const mult = getShinyMultiplier(item);
-      item.hasShiny = true;
-      item.shinyData = {
-        value: item.isNilValue ? 0 : item.baseValue * mult,
-        isNilValue: item.isNilValue,
-        demandTier: item.demandTier,
-        demandLabel: item.demandLabel,
-        status: item.status,
       };
     }
   });
@@ -258,7 +224,7 @@ function updateTradeVerdict() {
   }
 
   if (dataA.hasNil || dataB.hasNil) {
-    verdictEl.textContent = '⚠ Contains Indefinite / Nil Item(s)';
+    verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
     detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
     verdictEl.classList.add('status-fair');
     return;
@@ -380,6 +346,7 @@ function renderItems(items) {
     const fallbackEmoji = isGem ? '💎' : '🔨';
     const imagePath = isShiny ? `images/${item.id}_shiny.png` : `images/${item.id}.png`;
 
+    // Only render the star button if the item actually has synced shiny data
     const starButtonHtml = item.hasShiny
       ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-id="${item.id}" title="Toggle Shiny Version">★</div>`
       : '';
@@ -491,6 +458,7 @@ function renderItems(items) {
   });
 }
 
+// Filter items by Type, Shiny status, and Search query
 function applyFilters() {
   const searchInput = document.getElementById('search');
   const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
