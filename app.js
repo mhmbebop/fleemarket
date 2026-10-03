@@ -87,12 +87,39 @@ function getItemRarity(item) {
   return 'Rare';
 }
 
-// Separates base items and strictly matches ONLY explicit shiny rows from the sheet
+// Determines if an item naturally has an in-game shiny variant
+function itemHasShinyVariant(item) {
+  const cat = (item.category || '').toLowerCase();
+  const name = (item.name || '').toLowerCase();
+
+  // Special tournament prizes or unique items that cannot be shiny
+  if (cat.includes('tournament') || name.includes('tournament')) {
+    return false;
+  }
+
+  // 1. All crate weapons (Event Crates, Mini Crates, Series Crates) can be Shiny
+  if (cat.includes('crate')) {
+    return true;
+  }
+
+  // 2. Event shop and seasonal bundles with shiny counterparts
+  if (cat.includes('event shop') || cat.includes('bundle')) {
+    // Permanent non-crate items without shiny editions
+    if (cat.includes('permanent') && !name.includes('pan') && !name.includes('midaflame') && !name.includes('cash')) {
+      return false;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+// Merges explicit shiny rows and enables shiny toggle for items with confirmed variants
 function processAndDeduplicateItems(rawItems) {
   const baseMap = new Map();
   const explicitShinies = [];
 
-  // 1. Separate regular items from any rows starting with "Shiny "
+  // 1. Separate base items from explicit "Shiny " rows
   rawItems.forEach((item) => {
     if (item.name.toLowerCase().startsWith('shiny ')) {
       explicitShinies.push(item);
@@ -102,6 +129,43 @@ function processAndDeduplicateItems(rawItems) {
       item.shinyData = null;
       baseMap.set(key, item);
     }
+  });
+
+  // 2. Attach explicit spreadsheet shiny rows to their base item (e.g., Shiny Ouroboros)
+  explicitShinies.forEach((shinyItem) => {
+    const baseName = shinyItem.name.replace(/^shiny\s+/i, '').trim().toLowerCase();
+    const key = `${baseName}_${shinyItem.type.toLowerCase()}`;
+
+    if (baseMap.has(key)) {
+      const baseItem = baseMap.get(key);
+      baseItem.hasShiny = true;
+      baseItem.shinyData = {
+        value: shinyItem.baseValue,
+        isNilValue: shinyItem.isNilValue,
+        demandTier: shinyItem.demandTier,
+        demandLabel: shinyItem.demandLabel,
+        status: shinyItem.status,
+      };
+    }
+  });
+
+  // 3. For all crate items & event weapons with in-game shiny variants, calculate official shiny rules
+  baseMap.forEach((item) => {
+    if (!item.hasShiny && itemHasShinyVariant(item)) {
+      const mult = getShinyMultiplier(item);
+      item.hasShiny = true;
+      item.shinyData = {
+        value: item.isNilValue ? 0 : item.baseValue * mult,
+        isNilValue: item.isNilValue,
+        demandTier: item.demandTier,
+        demandLabel: item.demandLabel,
+        status: item.status,
+      };
+    }
+  });
+
+  return Array.from(baseMap.values());
+}
   });
 
   // 2. ONLY enable shiny if an explicit matching shiny entry was found in the sheet
