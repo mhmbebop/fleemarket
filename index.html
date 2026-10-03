@@ -57,7 +57,7 @@
       padding: clamp(14px, 3vw, 28px) clamp(10px, 3vw, 24px) 110px;
       background-color: #0f111a;
       background-image: 
-        url("images/goose-left-right.png"),
+        url("images/goose-hammer-left-right.png"),
         radial-gradient(circle at 50% 0%, rgba(157, 125, 253, 0.05) 0%, transparent 70%);
       background-repeat: repeat, no-repeat;
       background-size: 480px auto, auto;
@@ -771,36 +771,37 @@
       cursor: pointer;
     }
 
-    /* Rarity Badge Styling for Compact & Grid Views */
-    .badge-rarity-untradeable, .badge-rarity-unobtainable {
-      background: rgba(239, 68, 68, 0.18);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.45);
+    /* Rarity Badge Styling with High Specificity */
+    .badge.badge-rarity.badge-rarity-untradeable, 
+    .badge.badge-rarity.badge-rarity-unobtainable {
+      background: rgba(239, 68, 68, 0.18) !important;
+      color: #f87171 !important;
+      border: 1px solid rgba(239, 68, 68, 0.45) !important;
     }
-    .badge-rarity-mythical {
-      background: linear-gradient(135deg, rgba(0, 210, 255, 0.2) 0%, rgba(58, 123, 213, 0.2) 100%);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.4);
+    .badge.badge-rarity.badge-rarity-mythical {
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.2) 0%, rgba(58, 123, 213, 0.2) 100%) !important;
+      color: #38bdf8 !important;
+      border: 1px solid rgba(56, 189, 248, 0.4) !important;
     }
-    .badge-rarity-legendary {
-      background: rgba(245, 158, 11, 0.18);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.35);
+    .badge.badge-rarity.badge-rarity-legendary {
+      background: rgba(245, 158, 11, 0.18) !important;
+      color: #fbbf24 !important;
+      border: 1px solid rgba(245, 158, 11, 0.35) !important;
     }
-    .badge-rarity-epic {
-      background: rgba(168, 85, 247, 0.18);
-      color: #c084fc;
-      border: 1px solid rgba(168, 85, 247, 0.35);
+    .badge.badge-rarity.badge-rarity-epic {
+      background: rgba(168, 85, 247, 0.18) !important;
+      color: #c084fc !important;
+      border: 1px solid rgba(168, 85, 247, 0.35) !important;
     }
-    .badge-rarity-rare {
-      background: rgba(59, 130, 246, 0.18);
-      color: #60a5fa;
-      border: 1px solid rgba(59, 130, 246, 0.35);
+    .badge.badge-rarity.badge-rarity-rare {
+      background: rgba(59, 130, 246, 0.18) !important;
+      color: #60a5fa !important;
+      border: 1px solid rgba(59, 130, 246, 0.35) !important;
     }
-    .badge-rarity-common {
-      background: rgba(100, 116, 139, 0.18);
-      color: #94a3b8;
-      border: 1px solid rgba(100, 116, 139, 0.35);
+    .badge.badge-rarity.badge-rarity-common {
+      background: rgba(52, 211, 153, 0.18) !important;
+      color: #34d399 !important;
+      border: 1px solid rgba(52, 211, 153, 0.35) !important;
     }
 
     /* Compact List View Styles */
@@ -1754,7 +1755,7 @@
             <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Recent Trades</span>
             <button type="button" id="btn-clear-history" aria-label="Clear recent trade history" style="background: transparent; border: none; color: var(--accent-rose); font-size: 11px; cursor: pointer;">Clear History</button>
           </div>
-          <ul id="text-history-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
+          <ul id="trade-history-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-directory: column; gap: 6px; max-height: 140px; overflow-y: auto;">
             <li style="font-size: 11px; color: var(--text-muted);">No recent trades saved</li>
           </ul>
         </div>
