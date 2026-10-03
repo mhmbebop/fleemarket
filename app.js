@@ -1,8 +1,8 @@
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2RfYHa6ffWiale6czVqih6e7BrrZ-ZmRdnT10WTsS5M1ZJF9-jKSvcpyyrv5imytQ9lZsvL8su/pub?gid=0&single=true&output=csv';
 
 let allItems = [];
-let sideA = [];
-let sideB = [];
+let yourOffer = [];
+let theirOffer = [];
 let currentFilter = 'all'; // 'all' | 'hammer' | 'gem'
 let currentSort = 'val-desc';
 const shinyState = {};
@@ -72,7 +72,7 @@ function parseCSV(text) {
   });
 }
 
-// Builds the dynamic list of events/crates inside the filter drawer, excluding "Unobtainable"
+// Builds the dynamic list of events/crates inside the filter drawer
 function populateEventFilters(items) {
   const container = document.getElementById('events-checkbox-group');
   if (!container) return;
@@ -124,6 +124,19 @@ function updateFilterBadge() {
   }
 }
 
+function updateCalculatorTabBadge() {
+  const badge = document.getElementById('trade-count-badge');
+  const totalItems = yourOffer.length + theirOffer.length;
+  if (badge) {
+    if (totalItems > 0) {
+      badge.textContent = totalItems;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+
 function getItemActiveDisplay(item, isShiny = false) {
   if (isShiny && item.hasShiny) {
     return {
@@ -146,12 +159,12 @@ function getItemActiveDisplay(item, isShiny = false) {
 }
 
 function populateDropdowns(items) {
-  const selectA = document.getElementById('select-a');
-  const selectB = document.getElementById('select-b');
-  if (!selectA || !selectB) return;
+  const selectYour = document.getElementById('select-your');
+  const selectTheir = document.getElementById('select-their');
+  if (!selectYour || !selectTheir) return;
 
-  selectA.innerHTML = '<option value="">Select item...</option>';
-  selectB.innerHTML = '<option value="">Select item...</option>';
+  selectYour.innerHTML = '<option value="">Select item...</option>';
+  selectTheir.innerHTML = '<option value="">Select item...</option>';
 
   const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -159,15 +172,15 @@ function populateDropdowns(items) {
     const valText = item.isNilValue ? 'Nil' : item.baseValue;
     const optionText = `${item.name} (${item.type}) [Val: ${valText} | Dem: ${item.demandLabel}]`;
 
-    const optA = document.createElement('option');
-    optA.value = item.id;
-    optA.textContent = optionText;
-    selectA.appendChild(optA);
+    const optYour = document.createElement('option');
+    optYour.value = item.id;
+    optYour.textContent = optionText;
+    selectYour.appendChild(optYour);
 
-    const optB = document.createElement('option');
-    optB.value = item.id;
-    optB.textContent = optionText;
-    selectB.appendChild(optB);
+    const optTheir = document.createElement('option');
+    optTheir.value = item.id;
+    optTheir.textContent = optionText;
+    selectTheir.appendChild(optTheir);
   });
 }
 
@@ -190,39 +203,41 @@ function calculateSide(items) {
 }
 
 function updateTradeVerdict() {
-  const dataA = calculateSide(sideA);
-  const dataB = calculateSide(sideB);
+  const dataYour = calculateSide(yourOffer);
+  const dataTheir = calculateSide(theirOffer);
 
-  const valA = document.getElementById('total-val-a');
-  const demA = document.getElementById('avg-dem-a');
-  const valB = document.getElementById('total-val-b');
-  const demB = document.getElementById('avg-dem-b');
+  const valYour = document.getElementById('total-val-your');
+  const demYour = document.getElementById('avg-dem-your');
+  const valTheir = document.getElementById('total-val-their');
+  const demTheir = document.getElementById('avg-dem-their');
   const verdictEl = document.getElementById('verdict-text');
   const detailsEl = document.getElementById('verdict-details');
 
-  if (valA) valA.textContent = dataA.hasNil ? `${dataA.totalValue} + Nil` : dataA.totalValue;
-  if (demA) demA.textContent = dataA.avgDemand;
-  if (valB) valB.textContent = dataB.hasNil ? `${dataB.totalValue} + Nil` : dataB.totalValue;
-  if (demB) demB.textContent = dataB.avgDemand;
+  if (valYour) valYour.textContent = dataYour.hasNil ? `${dataYour.totalValue} + Nil` : dataYour.totalValue;
+  if (demYour) demYour.textContent = dataYour.avgDemand;
+  if (valTheir) valTheir.textContent = dataTheir.hasNil ? `${dataTheir.totalValue} + Nil` : dataTheir.totalValue;
+  if (demTheir) demTheir.textContent = dataTheir.avgDemand;
+
+  updateCalculatorTabBadge();
 
   if (!verdictEl || !detailsEl) return;
   verdictEl.className = 'verdict-text';
 
-  if (sideA.length === 0 && sideB.length === 0) {
-    verdictEl.textContent = 'Add items to both sides';
+  if (yourOffer.length === 0 && theirOffer.length === 0) {
+    verdictEl.textContent = 'Add items to compare trade';
     detailsEl.textContent = 'Difference: 0 Value';
     return;
   }
 
-  if (dataA.hasNil || dataB.hasNil) {
+  if (dataYour.hasNil || dataTheir.hasNil) {
     verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
     detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
     verdictEl.classList.add('status-fair');
     return;
   }
 
-  const diff = dataB.totalValue - dataA.totalValue;
-  const maxVal = Math.max(dataA.totalValue, dataB.totalValue, 1);
+  const diff = dataTheir.totalValue - dataYour.totalValue;
+  const maxVal = Math.max(dataYour.totalValue, dataTheir.totalValue, 1);
   const percentDiff = (diff / maxVal) * 100;
 
   if (percentDiff > 15) {
@@ -243,15 +258,15 @@ function updateTradeVerdict() {
   }
 
   const sign = diff > 0 ? '+' : '';
-  detailsEl.textContent = `Side B has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
+  detailsEl.textContent = `Their Offer has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
 }
 
-function renderTradeList(side, listElementId) {
+function renderTradeList(sideItems, listElementId) {
   const ul = document.getElementById(listElementId);
   if (!ul) return;
   ul.innerHTML = '';
 
-  side.forEach((item, index) => {
+  sideItems.forEach((item, index) => {
     const li = document.createElement('li');
     li.className = 'trade-item';
     const valText = item.isNilValue ? 'Nil' : item.tradeValue;
@@ -279,8 +294,8 @@ function renderTradeList(side, listElementId) {
     `;
 
     li.querySelector('.remove-btn').addEventListener('click', () => {
-      side.splice(index, 1);
-      renderTradeList(side, listElementId);
+      sideItems.splice(index, 1);
+      renderTradeList(sideItems, listElementId);
       updateTradeVerdict();
     });
 
@@ -304,12 +319,12 @@ function addItemToTrade(itemId, sideTarget, isShiny = false) {
     status: display.status,
   };
 
-  if (sideTarget === 'A') {
-    sideA.push(tradeItem);
-    renderTradeList(sideA, 'list-a');
-  } else if (sideTarget === 'B') {
-    sideB.push(tradeItem);
-    renderTradeList(sideB, 'list-b');
+  if (sideTarget === 'your') {
+    yourOffer.push(tradeItem);
+    renderTradeList(yourOffer, 'list-your');
+  } else if (sideTarget === 'their') {
+    theirOffer.push(tradeItem);
+    renderTradeList(theirOffer, 'list-their');
   }
   updateTradeVerdict();
 }
@@ -377,8 +392,8 @@ function renderItems(items) {
         </div>
       </div>
       <div class="card-actions">
-        <button class="card-add-btn side-a" data-id="${item.id}">+ Side A</button>
-        <button class="card-add-btn side-b" data-id="${item.id}">+ Side B</button>
+        <button class="card-add-btn side-your" data-id="${item.id}">+ Your Offer</button>
+        <button class="card-add-btn side-their" data-id="${item.id}">+ Their Offer</button>
       </div>
     `;
 
@@ -434,17 +449,17 @@ function renderItems(items) {
       });
     }
 
-    const btnA = card.querySelector('.card-add-btn.side-a');
-    if (btnA) {
-      btnA.addEventListener('click', (e) => {
-        addItemToTrade(e.currentTarget.getAttribute('data-id'), 'A', item.hasShiny && !!shinyState[item.id]);
+    const btnYour = card.querySelector('.card-add-btn.side-your');
+    if (btnYour) {
+      btnYour.addEventListener('click', (e) => {
+        addItemToTrade(e.currentTarget.getAttribute('data-id'), 'your', item.hasShiny && !!shinyState[item.id]);
       });
     }
 
-    const btnB = card.querySelector('.card-add-btn.side-b');
-    if (btnB) {
-      btnB.addEventListener('click', (e) => {
-        addItemToTrade(e.currentTarget.getAttribute('data-id'), 'B', item.hasShiny && !!shinyState[item.id]);
+    const btnTheir = card.querySelector('.card-add-btn.side-their');
+    if (btnTheir) {
+      btnTheir.addEventListener('click', (e) => {
+        addItemToTrade(e.currentTarget.getAttribute('data-id'), 'their', item.hasShiny && !!shinyState[item.id]);
       });
     }
 
@@ -543,29 +558,44 @@ function applyFilters() {
 }
 
 function setupEventListeners() {
-  const btnAddA = document.getElementById('btn-add-a');
-  if (btnAddA) {
-    btnAddA.addEventListener('click', () => {
-      const selectA = document.getElementById('select-a');
-      if (selectA && selectA.value) addItemToTrade(selectA.value, 'A', false);
+  // Navigation Tabs Switcher
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const targetTab = e.currentTarget.getAttribute('data-tab');
+
+      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.remove('active'));
+
+      e.currentTarget.classList.add('active');
+      const activePanel = document.getElementById(`tab-${targetTab}`);
+      if (activePanel) activePanel.classList.add('active');
+    });
+  });
+
+  // Calculator Buttons
+  const btnAddYour = document.getElementById('btn-add-your');
+  if (btnAddYour) {
+    btnAddYour.addEventListener('click', () => {
+      const selectYour = document.getElementById('select-your');
+      if (selectYour && selectYour.value) addItemToTrade(selectYour.value, 'your', false);
     });
   }
 
-  const btnAddB = document.getElementById('btn-add-b');
-  if (btnAddB) {
-    btnAddB.addEventListener('click', () => {
-      const selectB = document.getElementById('select-b');
-      if (selectB && selectB.value) addItemToTrade(selectB.value, 'B', false);
+  const btnAddTheir = document.getElementById('btn-add-their');
+  if (btnAddTheir) {
+    btnAddTheir.addEventListener('click', () => {
+      const selectTheir = document.getElementById('select-their');
+      if (selectTheir && selectTheir.value) addItemToTrade(selectTheir.value, 'their', false);
     });
   }
 
   const btnReset = document.getElementById('btn-reset');
   if (btnReset) {
     btnReset.addEventListener('click', () => {
-      sideA = [];
-      sideB = [];
-      renderTradeList(sideA, 'list-a');
-      renderTradeList(sideB, 'list-b');
+      yourOffer = [];
+      theirOffer = [];
+      renderTradeList(yourOffer, 'list-your');
+      renderTradeList(theirOffer, 'list-their');
       updateTradeVerdict();
     });
   }
@@ -619,7 +649,7 @@ function setupEventListeners() {
     });
   }
 
-  // Rarity Checkbox Listeners
+  // Rarity Checkboxes
   document.querySelectorAll('.cb-rarity').forEach((cb) => {
     cb.addEventListener('change', (e) => {
       if (e.target.checked) {
@@ -632,7 +662,7 @@ function setupEventListeners() {
     });
   });
 
-  // Demand Checkbox Listeners
+  // Demand Checkboxes
   document.querySelectorAll('.cb-demand').forEach((cb) => {
     cb.addEventListener('change', (e) => {
       if (e.target.checked) {
@@ -645,7 +675,7 @@ function setupEventListeners() {
     });
   });
 
-  // Status Checkbox Listeners
+  // Status Checkboxes
   document.querySelectorAll('.cb-status').forEach((cb) => {
     cb.addEventListener('change', (e) => {
       if (e.target.checked) {
