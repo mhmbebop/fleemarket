@@ -26,7 +26,7 @@
     }
 
     :root {
-      --bg-dark: #0d0f12;
+      --bg-dark: #0d0f17;
       --surface-1: #15181e;
       --surface-2: #1c2028;
       --surface-glass: rgba(21, 24, 30, 0.90);
@@ -51,11 +51,11 @@
       transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     }
 
-body {
+    body {
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       margin: 0;
       padding: clamp(14px, 3vw, 28px) clamp(10px, 3vw, 24px) 110px;
-      background-color: #0b1120;
+      background-color: #0f111a;
       background-image: 
         url("images/goose-left-right.png"),
         radial-gradient(circle at 50% 0%, rgba(157, 125, 253, 0.05) 0%, transparent 70%);
@@ -771,6 +771,38 @@ body {
       cursor: pointer;
     }
 
+    /* Rarity Badge Styling for Compact & Grid Views */
+    .badge-rarity-untradeable, .badge-rarity-unobtainable {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.45);
+    }
+    .badge-rarity-mythical {
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.2) 0%, rgba(58, 123, 213, 0.2) 100%);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .badge-rarity-legendary {
+      background: rgba(245, 158, 11, 0.18);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+    .badge-rarity-epic {
+      background: rgba(168, 85, 247, 0.18);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.35);
+    }
+    .badge-rarity-rare {
+      background: rgba(59, 130, 246, 0.18);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+    }
+    .badge-rarity-common {
+      background: rgba(100, 116, 139, 0.18);
+      color: #94a3b8;
+      border: 1px solid rgba(100, 116, 139, 0.35);
+    }
+
     /* Compact List View Styles */
     .compact-container {
       grid-column: 1 / -1;
@@ -961,11 +993,6 @@ body {
       color: #ef4444;
       text-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
     }
-    .badge-rarity-untradeable, .badge-rarity-unobtainable {
-      background: rgba(239, 68, 68, 0.18);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.45);
-    }
 
     /* MYTHICAL */
     .card.rarity-mythical {
@@ -980,21 +1007,11 @@ body {
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    .badge-rarity-mythical {
-      background: linear-gradient(135deg, rgba(0, 210, 255, 0.2) 0%, rgba(58, 123, 213, 0.2) 100%);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.4);
-    }
 
     /* LEGENDARY */
     .card.rarity-legendary {
       border-color: rgba(245, 158, 11, 0.45);
       background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, var(--surface-1) 100%);
-    }
-    .badge-rarity-legendary {
-      background: rgba(245, 158, 11, 0.18);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.35);
     }
 
     /* EPIC */
@@ -1002,30 +1019,15 @@ body {
       border-color: rgba(168, 85, 247, 0.4);
       background: linear-gradient(180deg, rgba(168, 85, 247, 0.05) 0%, var(--surface-1) 100%);
     }
-    .badge-rarity-epic {
-      background: rgba(168, 85, 247, 0.18);
-      color: #c084fc;
-      border: 1px solid rgba(168, 85, 247, 0.35);
-    }
 
     /* RARE */
     .card.rarity-rare {
       border-color: rgba(59, 130, 246, 0.35);
     }
-    .badge-rarity-rare {
-      background: rgba(59, 130, 246, 0.18);
-      color: #60a5fa;
-      border: 1px solid rgba(59, 130, 246, 0.35);
-    }
 
     /* COMMON */
     .card.rarity-common {
       border-color: rgba(100, 116, 139, 0.3);
-    }
-    .badge-rarity-common {
-      background: rgba(100, 116, 139, 0.18);
-      color: #94a3b8;
-      border: 1px solid rgba(100, 116, 139, 0.35);
     }
 
     /* SHINY BORDER */
@@ -1298,7 +1300,7 @@ body {
       touch-action: manipulation;
     }
     .card-minus-btn:hover {
-      background: var(--accent-rose);
+      background: rgba(244, 63, 94, 0.15);
       color: #fff;
     }
     .card-btn-group.has-items .card-minus-btn {
@@ -1752,7 +1754,7 @@ body {
             <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Recent Trades</span>
             <button type="button" id="btn-clear-history" aria-label="Clear recent trade history" style="background: transparent; border: none; color: var(--accent-rose); font-size: 11px; cursor: pointer;">Clear History</button>
           </div>
-          <ul id="trade-history-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
+          <ul id="text-history-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
             <li style="font-size: 11px; color: var(--text-muted);">No recent trades saved</li>
           </ul>
         </div>
