@@ -47,11 +47,10 @@ function sanitizeInput(str) {
     .replace(/'/g, '&#x27;');
 }
 
-// 2. LocalStorage Housekeeping (Stale Cache Cleanup on Startup)
+// LocalStorage Housekeeping (Stale Cache Cleanup on Startup)
 function performLocalStorageHousekeeping() {
   try {
     const cachedTime = Number(localStorage.getItem(CACHE_KEY_TIME)) || 0;
-    // If cache is older than 24 hours, purge stale cache to keep mobile footprint lightweight
     if (Date.now() - cachedTime > 24 * 60 * 60 * 1000) {
       localStorage.removeItem(CACHE_KEY_DATA);
       localStorage.removeItem(CACHE_KEY_TIME);
@@ -272,7 +271,6 @@ function saveTradeState() {
 }
 
 function loadTradeState() {
-  // Check URL query parameters first for shareable link loading (?you=...&them=...)
   const params = new URLSearchParams(window.location.search);
   const paramYou = params.get('you');
   const paramTheir = params.get('them');
@@ -652,7 +650,7 @@ function updateTradeVerdict() {
     verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
     detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
     verdictEl.classList.add('status-fair');
-    saveCompletedTrade();
+    saveCompletedTrade('Contains Nil');
     return;
   }
 
@@ -689,7 +687,7 @@ function updateTradeVerdict() {
   saveCompletedTrade(verdictString);
 }
 
-// Group duplicate items by quantity stacking (x2, x3) with WebP image support
+// Group duplicate items by quantity stacking (x2, x3) with clean fallback handling
 function renderTradeList(sideItems, listElementId) {
   const ul = document.getElementById(listElementId);
   if (!ul) return;
@@ -726,7 +724,7 @@ function renderTradeList(sideItems, listElementId) {
           src="${imagePath}" 
           alt="${safeName}" 
           class="trade-thumb"
-          onerror="this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';}; this.src='${fallbackPng}';"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
         />
         <div class="trade-thumb-fallback" style="display: none;">${fallbackEmoji}</div>
         <div style="min-width: 0; flex: 1;">
@@ -813,7 +811,7 @@ function removeItemFromTrade(itemId, sideTarget) {
   updateTradeVerdict();
 }
 
-// Optimized with DocumentFragment Batching & Event Delegation Architecture
+// Optimized with DocumentFragment Batching & Clean Emoji Fallbacks
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
@@ -867,7 +865,7 @@ function renderItems(items) {
           alt="${safeName}" 
           class="card-img"
           loading="lazy"
-          onerror="this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';}; this.src='${fallbackPng}';"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
         />
         <div class="card-img-fallback" style="display: none;">${fallbackEmoji}</div>
       </div>
@@ -1030,7 +1028,7 @@ function applyFilters() {
   renderItems(filtered);
 }
 
-// Global Force Sync Handler with Multi-Source Fallback Cascade
+// Global Force Sync Handler
 window.forceSyncNow = async function(event) {
   if (event) event.preventDefault();
   const btn = document.getElementById('btn-force-sync');
@@ -1137,7 +1135,7 @@ function saveCompletedTrade(verdict = 'Completed Trade') {
     };
 
     history.unshift(entry);
-    if (history.length > 5) history = history.slice(0, 5); // Keep last 5
+    if (history.length > 5) history = history.slice(0, 5);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
     renderTradeHistory();
   } catch (e) {
