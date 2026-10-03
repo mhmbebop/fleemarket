@@ -157,7 +157,7 @@ function updateTradeVerdict() {
   detailsEl.textContent = `Side B has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
 }
 
-// Render selected items list
+// Render selected items list with icon previews
 function renderTradeList(side, listElementId) {
   const ul = document.getElementById(listElementId);
   ul.innerHTML = '';
@@ -166,8 +166,27 @@ function renderTradeList(side, listElementId) {
     const li = document.createElement('li');
     li.className = 'trade-item';
     const valText = item.isNilValue ? 'Nil' : item.baseValue;
+    
+    // Default fallback icon depending on type
+    const fallbackEmoji = item.type.toLowerCase() === 'gem' ? '💎' : '🔨';
+    
+    // Expected image path based on item id
+    const imagePath = `images/${item.id}.png`;
+
     li.innerHTML = `
-      <span>${item.name} (${item.type}) - Val: <b>${valText}</b></span>
+      <div class="trade-item-left">
+        <img 
+          src="${imagePath}" 
+          alt="${item.name}" 
+          class="trade-thumb"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        />
+        <div class="trade-thumb-fallback" style="display: none;">${fallbackEmoji}</div>
+        <div>
+          <div><strong>${item.name}</strong></div>
+          <span style="font-size: 12px; color: #8b949e;">Val: <b style="color: #f2cc60;">${valText}</b> | Dem: ${item.demandLabel}</span>
+        </div>
+      </div>
       <button class="remove-btn" data-index="${index}">✕</button>
     `;
 
