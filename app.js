@@ -7,6 +7,10 @@ const CACHE_KEY_DATA = 'flee_items_cache_v1';
 const CACHE_KEY_TIME = 'flee_items_time_v1';
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
+// Persistent Trade State Keys
+const TRADE_KEY_YOUR = 'flee_trade_your_v1';
+const TRADE_KEY_THEIR = 'flee_trade_their_v1';
+
 let allItems = [];
 let yourOffer = [];
 let theirOffer = [];
@@ -63,7 +67,7 @@ function initTabNavigation() {
   });
 }
 
-// Robust CSV Parser
+// Robust CSV Parser with Row-Error Boundary Protection
 function parseCSV(text) {
   if (!text || typeof text !== 'string') return [];
   const lines = text.trim().split(/\r?\n/);
@@ -92,34 +96,43 @@ function parseCSV(text) {
   };
 
   const headers = splitLine(lines[0]).map((h) => h.toLowerCase().replace(/[^a-z0-9_]/g, ''));
+  const parsedItems = [];
 
-  return lines.slice(1).map((line) => {
-    const cols = splitLine(line);
-    const row = {};
-    headers.forEach((header, index) => {
-      row[header] = cols[index] !== undefined ? cols[index] : '';
-    });
+  for (let r = 1; r < lines.length; r++) {
+    try {
+      const cols = splitLine(lines[r]);
+      const row = {};
+      headers.forEach((header, index) => {
+        row[header] = cols[index] !== undefined ? cols[index] : '';
+      });
 
-    const rawRarity = (row.rarity || 'Rare').trim();
-    const normalizedRarity = rawRarity.toLowerCase() === 'unobtainable' ? 'Untradeable' : rawRarity;
+      if (!row.name || row.name.length === 0) continue;
 
-    return {
-      id: (row.id || '').trim(),
-      name: (row.name || '').trim(),
-      type: (row.type || 'Hammer').trim(),
-      category: (row.category || '').trim(),
-      releaseEvent: (row.release_event || row.releaseevent || '').trim(),
-      baseValue: Number(row.base_value || row.basevalue) || 0,
-      isNilValue: String(row.is_nil_value || row.isnilvalue).toUpperCase() === 'TRUE',
-      demandTier: Number(row.demand_tier || row.demandtier) || 1,
-      demandLabel: String(row.demand_label || row.demandlabel || '1').trim(),
-      status: (row.status || 'Stable').trim(),
-      setName: (row.set_name || row.setname || '').trim(),
-      hasShiny: String(row.has_shiny || row.hasshiny).toUpperCase() === 'TRUE',
-      shinyValue: Number(row.shiny_value || row.shinyvalue) || 0,
-      rarity: normalizedRarity,
-    };
-  }).filter((item) => item.name.length > 0);
+      const rawRarity = (row.rarity || 'Rare').trim();
+      const normalizedRarity = rawRarity.toLowerCase() === 'unobtainable' ? 'Untradeable' : rawRarity;
+
+      parsedItems.push({
+        id: (row.id || '').trim(),
+        name: (row.name || '').trim(),
+        type: (row.type || 'Hammer').trim(),
+        category: (row.category || '').trim(),
+        releaseEvent: (row.release_event || row.releaseevent || '').trim(),
+        baseValue: Number(row.base_value || row.basevalue) || 0,
+        isNilValue: String(row.is_nil_value || row.isnilvalue).toUpperCase() === 'TRUE',
+        demandTier: Number(row.demand_tier || row.demandtier) || 1,
+        demandLabel: String(row.demand_label || row.demandlabel || '1').trim(),
+        status: (row.status || 'Stable').trim(),
+        setName: (row.set_name || row.setname || '').trim(),
+        hasShiny: String(row.has_shiny || row.hasshiny).toUpperCase() === 'TRUE',
+        shinyValue: Number(row.shiny_value || row.shinyvalue) || 0,
+        rarity: normalizedRarity,
+      });
+    } catch (rowErr) {
+      console.warn(`Skipping malformed row at line ${r + 1}:`, rowErr);
+    }
+  }
+
+  return parsedItems;
 }
 
 // Builds the dynamic list of events/crates inside the filter drawer
@@ -200,6 +213,27 @@ function getItemActiveDisplay(item, isShiny = false) {
   };
 }
 
+// Persistent Trade State Storage
+function saveTradeState() {
+  try {
+    localStorage.setItem(TRADE_KEY_YOUR, JSON.stringify(yourOffer));
+    localStorage.setItem(TRADE_KEY_THEIR, JSON.stringify(theirOffer));
+  } catch (e) {
+    console.warn('Failed to save trade state to localStorage:', e);
+  }
+}
+
+function loadTradeState() {
+  try {
+    const savedYour = localStorage.getItem(TRADE_KEY_YOUR);
+    const savedTheir = localStorage.getItem(TRADE_KEY_THEIR);
+    if (savedYour) yourOffer = JSON.parse(savedYour);
+    if (savedTheir) theirOffer = JSON.parse(savedTheir);
+  } catch (e) {
+    console.warn('Failed to load trade state from localStorage:', e);
+  }
+}
+
 // Syncs tab badges, floating dock, and floating tray
 function updateCalculatorUI() {
   const badge = document.getElementById('trade-count-badge');
@@ -219,7 +253,6 @@ function updateCalculatorUI() {
   const dataYour = calculateSide(yourOffer);
   const dataTheir = calculateSide(theirOffer);
 
-  // Dismiss dock and preview drawer when 0 items remain
   if (totalItems === 0) {
     if (dock) dock.classList.remove('visible');
     if (drawer) drawer.classList.remove('open');
@@ -230,7 +263,6 @@ function updateCalculatorUI() {
     }
   }
 
-  // Sync dock stats
   if (dock && totalItems > 0) {
     const countYour = document.getElementById('dock-count-your');
     const valYour = document.getElementById('dock-val-your');
@@ -251,6 +283,7 @@ function updateCalculatorUI() {
   if (trayCountTheir) trayCountTheir.textContent = theirOffer.length;
 
   refreshCardButtonBadges();
+  saveTradeState();
 }
 
 function renderTrayList(sideItems, listId, sideTarget) {
@@ -561,6 +594,7 @@ function renderTradeList(sideItems, listElementId) {
   ul.innerHTML = '';
 
   if (sideItems.length === 0) {
+    ul.innerHTML = '<li style="font-size: 11px; color: var(--text-muted); padding: 4px 0;">No items added</li>';
     return;
   }
 
@@ -606,7 +640,6 @@ function renderTradeList(sideItems, listElementId) {
       </div>
     `;
 
-    // Minus button
     li.querySelector('.btn-minus').addEventListener('click', () => {
       const idx = sideItems.findIndex((i) => i.id === group.id && !!i.isShiny === !!group.isShiny);
       if (idx !== -1) {
@@ -616,12 +649,10 @@ function renderTradeList(sideItems, listElementId) {
       }
     });
 
-    // Plus button
     li.querySelector('.btn-plus').addEventListener('click', () => {
       addItemToTrade(group, listElementId === 'list-your' ? 'your' : 'their', group.isShiny);
     });
 
-    // Remove all button
     li.querySelector('.btn-remove').addEventListener('click', () => {
       const targetArray = listElementId === 'list-your' ? yourOffer : theirOffer;
       for (let i = targetArray.length - 1; i >= 0; i--) {
@@ -1049,6 +1080,8 @@ function setupEventListeners() {
     btnReset.addEventListener('click', () => {
       yourOffer = [];
       theirOffer = [];
+      localStorage.removeItem(TRADE_KEY_YOUR);
+      localStorage.removeItem(TRADE_KEY_THEIR);
       renderTradeList(yourOffer, 'list-your');
       renderTradeList(theirOffer, 'list-their');
       selectedItemYour = null;
@@ -1095,6 +1128,8 @@ function setupEventListeners() {
     btnClearAllDrawer.addEventListener('click', () => {
       yourOffer = [];
       theirOffer = [];
+      localStorage.removeItem(TRADE_KEY_YOUR);
+      localStorage.removeItem(TRADE_KEY_THEIR);
       renderTradeList(yourOffer, 'list-your');
       renderTradeList(theirOffer, 'list-their');
       document.getElementById('dock-items-drawer')?.classList.remove('open');
@@ -1253,7 +1288,13 @@ async function loadData(forceRefresh = false) {
           populateEventFilters(allItems);
           applyFilters();
 
-          if (isFresh) return;
+          if (isFresh) {
+            loadTradeState();
+            renderTradeList(yourOffer, 'list-your');
+            renderTradeList(theirOffer, 'list-their');
+            updateTradeVerdict();
+            return;
+          }
         }
       }
     } catch (e) {
@@ -1288,6 +1329,10 @@ async function loadData(forceRefresh = false) {
       }
       populateEventFilters(allItems);
       applyFilters();
+      loadTradeState();
+      renderTradeList(yourOffer, 'list-your');
+      renderTradeList(theirOffer, 'list-their');
+      updateTradeVerdict();
       return;
     }
   }
