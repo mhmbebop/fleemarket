@@ -7,9 +7,10 @@ const CACHE_KEY_DATA = 'flee_items_cache_v1';
 const CACHE_KEY_TIME = 'flee_items_time_v1';
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
-// Persistent Trade State Keys
+// Persistent Trade & Tab Keys
 const TRADE_KEY_YOUR = 'flee_trade_your_v1';
 const TRADE_KEY_THEIR = 'flee_trade_their_v1';
+const TAB_KEY_PREF = 'flee_active_tab_v1';
 
 let allItems = [];
 let yourOffer = [];
@@ -32,8 +33,6 @@ const activeDemands = new Set();
 const activeStatuses = new Set();
 const activeEvents = new Set();
 let filterHasShiny = false;
-
-const TAB_KEY_PREF = 'flee_active_tab_v1';
 
 // Immediate Tab Switching with Persistent Memory
 function switchTab(targetTab, saveToStorage = true) {
@@ -69,7 +68,6 @@ function initTabNavigation() {
   const tabsContainer = document.querySelector('.nav-tabs');
   if (!tabsContainer) return;
 
-  // Restore last used tab on boot
   try {
     const savedTab = localStorage.getItem(TAB_KEY_PREF);
     if (savedTab) {
@@ -431,7 +429,6 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
         <div class="calc-match-item-meta">Val: ${valText} | Dem: ${item.demandLabel}</div>
       `;
 
-      // Automatically add item directly upon clicking dropdown suggestion
       row.addEventListener('click', () => {
         const isShiny = document.getElementById(`shiny-${side}`)?.checked || false;
         addItemToTrade(item, side, isShiny);
