@@ -57,6 +57,7 @@
       width: 100%;
     }
 
+    /* FTF Logo Header Section */
     header {
       margin-bottom: clamp(16px, 3vw, 24px);
       display: flex;
@@ -67,7 +68,7 @@
     .header-logo-wrap {
       max-width: 320px;
       width: 85%;
-      margin: 4px 0 10px;
+      margin: 4px 0 6px;
       display: flex;
       justify-content: center;
     }
@@ -77,31 +78,11 @@
       object-fit: contain;
       filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.7));
     }
-    .header-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(157, 125, 253, 0.12);
-      border: 1px solid rgba(157, 125, 253, 0.25);
-      color: var(--primary);
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    .subtext {
-      color: var(--text-muted);
-      font-size: clamp(12px, 2.5vw, 14px);
-      margin: 0;
-    }
     #status {
       font-size: 12px;
       font-weight: 600;
       color: var(--accent-cyan);
-      margin-top: 6px;
+      margin-top: 4px;
       display: inline-block;
     }
 
@@ -1381,7 +1362,6 @@
         />
         <h1 id="fallback-title" style="display: none; font-size: 28px; font-weight: 800; margin: 0;">10 PLAYER FLEEMARKET</h1>
       </div>
-      <p class="subtext">Official community weapons catalog & trade fairness calculator</p>
       <div id="status">Syncing with Google Sheets...</div>
     </header>
 
