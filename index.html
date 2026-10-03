@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://docs.google.com https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; media-src 'self' https:;">
+  
+  <!-- 1. Resource Preloading -->
+  <link rel="preload" href="app.js" as="script">
+  <link rel="preload" href="logo.png" as="image">
+
   <title>FLEEMARKET - 10 Player Flee Trade Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,7 +16,6 @@
 
   <style>
     :root {
-      /* Flee the Facility Matte Charcoal Theme */
       --bg-dark: #0d0f12;
       --surface-1: #15181e;
       --surface-2: #1c2028;
@@ -587,6 +591,22 @@
     .status-win { color: var(--accent-green); text-shadow: 0 0 16px rgba(52, 211, 153, 0.3); }
     .status-fair { color: var(--accent-gold); text-shadow: 0 0 16px rgba(251, 191, 36, 0.3); }
     .status-loss { color: var(--accent-rose); text-shadow: 0 0 16px rgba(244, 63, 94, 0.3); }
+
+    .trade-action-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .trade-action-btn:hover {
+      background: rgba(157, 125, 253, 0.2);
+      border-color: var(--primary);
+    }
 
     /* Controls Bar & Filters */
     .catalog-header {
@@ -1426,7 +1446,8 @@
       
       <div class="sync-status-row">
         <div id="status">Syncing with Google Sheets...</div>
-        <button type="button" id="btn-force-sync" class="sync-now-btn" title="Force refresh data directly from Google Sheets" onclick="window.forceSyncNow && window.forceSyncNow(event)">
+        <!-- 3. Accessibility: aria-label -->
+        <button type="button" id="btn-force-sync" class="sync-now-btn" aria-label="Force Sync Data Now" title="Force refresh data directly from Google Sheets" onclick="window.forceSyncNow && window.forceSyncNow(event)">
           <span class="sync-icon">↻</span>
           <span>Sync Now</span>
         </button>
@@ -1434,36 +1455,38 @@
     </header>
 
     <!-- NAVIGATION TABS -->
-    <div class="nav-tabs">
-      <button class="tab-btn active" data-tab="catalog">
+    <div class="nav-tabs" role="tablist">
+      <button class="tab-btn active" data-tab="catalog" role="tab" aria-selected="true" aria-label="Item Catalog Tab">
         <span>📦 Item Catalog</span>
       </button>
-      <button class="tab-btn" data-tab="calculator">
+      <button class="tab-btn" data-tab="calculator" role="tab" aria-selected="false" aria-label="Trade Calculator Tab">
         <span>⚖ Trade Calculator</span>
         <span class="tab-badge" id="trade-count-badge" style="display: none;">0</span>
       </button>
     </div>
 
     <!-- TAB 1: ITEM CATALOG -->
-    <div class="tab-panel active" id="tab-catalog">
+    <div class="tab-panel active" id="tab-catalog" role="tabpanel">
       <div class="catalog-header">
         <h2 class="catalog-title">Item Inventory</h2>
         <div class="controls-row">
           <div class="search-wrap">
-            <input type="text" id="search" class="search-box" placeholder="Search weapons, crates..." autocomplete="off" />
-            <button type="button" id="btn-clear-search" class="clear-search-btn" title="Clear search">✕</button>
+            <!-- 3. Accessibility: aria-label -->
+            <input type="text" id="search" class="search-box" placeholder="Search weapons, crates..." autocomplete="off" aria-label="Search item inventory" />
+            <button type="button" id="btn-clear-search" class="clear-search-btn" aria-label="Clear search input" title="Clear search">✕</button>
           </div>
 
           <div class="filter-btn-group">
-            <button class="filter-btn active" data-filter="all">All</button>
-            <button class="filter-btn" data-filter="hammer">🔨 Hammers</button>
-            <button class="filter-btn" data-filter="gem">💎 Gems</button>
+            <button class="filter-btn active" data-filter="all" aria-label="Show all items">All</button>
+            <button class="filter-btn" data-filter="hammer" aria-label="Filter hammers only">🔨 Hammers</button>
+            <button class="filter-btn" data-filter="gem" aria-label="Filter gems only">💎 Gems</button>
           </div>
-          <button class="filter-drawer-btn" id="btn-toggle-filters">
+          <!-- 3. Accessibility: aria-label -->
+          <button class="filter-drawer-btn" id="btn-toggle-filters" aria-label="Open filter options drawer">
             <span>⚙ Filters</span>
             <span class="filter-badge-count" id="filter-count" style="display: none;">0</span>
           </button>
-          <select id="sort-select" class="sort-dropdown">
+          <select id="sort-select" class="sort-dropdown" aria-label="Sort inventory items">
             <option value="val-desc">Value: High to Low</option>
             <option value="val-asc">Value: Low to High</option>
             <option value="dem-desc">Demand: High to Low</option>
@@ -1480,44 +1503,44 @@
           <div>
             <div class="drawer-section-title">Rarity Tier</div>
             <div class="drawer-checkbox-group">
-              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Untradeable"> Untradeable</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Mythical"> Mythical</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Legendary"> Legendary</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Epic"> Epic</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Rare"> Rare</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Common"> Common</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Untradeable" aria-label="Filter Untradeable"> Untradeable</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Mythical" aria-label="Filter Mythical"> Mythical</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Legendary" aria-label="Filter Legendary"> Legendary</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Epic" aria-label="Filter Epic"> Epic</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Rare" aria-label="Filter Rare"> Rare</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Common" aria-label="Filter Common"> Common</label>
             </div>
           </div>
 
           <div>
             <div class="drawer-section-title">Demand Tier</div>
             <div class="drawer-checkbox-group">
-              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="6"> ★ (Star / Highest)</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="5"> 5 (High)</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="4"> 4 (Good)</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="3"> 3 (Average)</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="2"> 2 (Below Average)</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="1"> 1 (Low)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="6" aria-label="Filter Demand Star"> ★ (Star / Highest)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="5" aria-label="Filter Demand 5"> 5 (High)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="4" aria-label="Filter Demand 4"> 4 (Good)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="3" aria-label="Filter Demand 3"> 3 (Average)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="2" aria-label="Filter Demand 2"> 2 (Below Average)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="1" aria-label="Filter Demand 1"> 1 (Low)</label>
             </div>
           </div>
 
           <div>
             <div class="drawer-section-title">Item Status</div>
             <div class="drawer-checkbox-group">
-              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Exceptional"> Exceptional</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Overpaid For"> Overpaid For</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Doing Well"> Doing Well</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Stable"> Stable</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Fluctuating"> Fluctuating</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Subpar"> Subpar</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Untradeable"> Untradeable</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Exceptional" aria-label="Filter Exceptional"> Exceptional</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Overpaid For" aria-label="Filter Overpaid For"> Overpaid For</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Doing Well" aria-label="Filter Doing Well"> Doing Well</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Stable" aria-label="Filter Stable"> Stable</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Fluctuating" aria-label="Filter Fluctuating"> Fluctuating</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Subpar" aria-label="Filter Subpar"> Subpar</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Untradeable" aria-label="Filter Untradeable"> Untradeable</label>
             </div>
           </div>
 
           <div>
             <div class="drawer-section-title">Properties</div>
             <div class="drawer-checkbox-group">
-              <label class="drawer-label"><input type="checkbox" id="cb-has-shiny"> Has Shiny Variant</label>
+              <label class="drawer-label"><input type="checkbox" id="cb-has-shiny" aria-label="Filter Has Shiny Variant"> Has Shiny Variant</label>
             </div>
           </div>
 
@@ -1528,7 +1551,7 @@
         </div>
 
         <div class="drawer-footer">
-          <button class="clear-filters-btn" id="btn-clear-filters">Reset All Filters</button>
+          <button class="clear-filters-btn" id="btn-clear-filters" aria-label="Reset all active filters">Reset All Filters</button>
         </div>
       </div>
 
@@ -1536,11 +1559,11 @@
     </div>
 
     <!-- TAB 2: TRADE CALCULATOR -->
-    <div class="tab-panel" id="tab-calculator">
+    <div class="tab-panel" id="tab-calculator" role="tabpanel">
       <div class="calculator-container" id="calculator">
         <div class="calculator-title">
           <span>⚖ Trade Fairness Calculator</span>
-          <button class="reset-btn" id="btn-reset">Reset Trade</button>
+          <button class="reset-btn" id="btn-reset" aria-label="Reset active trade offers">Reset Trade</button>
         </div>
 
         <div class="trade-columns">
@@ -1552,8 +1575,9 @@
             
             <div class="calc-controls-stack">
               <div class="calc-search-box-wrap">
-                <input type="text" id="calc-search-your" class="calc-search-input" placeholder="Type weapon name (e.g. Amber...)" autocomplete="off" />
-                <button type="button" id="btn-clear-calc-your" class="clear-calc-search-btn" title="Clear search">✕</button>
+                <!-- 3. Accessibility: aria-label -->
+                <input type="text" id="calc-search-your" class="calc-search-input" placeholder="Type weapon name (e.g. Amber...)" autocomplete="off" aria-label="Search your offer items" />
+                <button type="button" id="btn-clear-calc-your" class="clear-calc-search-btn" aria-label="Clear your offer search" title="Clear search">✕</button>
                 <div class="calc-matches-panel" id="matches-panel-your"></div>
               </div>
 
@@ -1564,10 +1588,10 @@
 
               <div class="calc-actions-row">
                 <label class="calc-shiny-toggle disabled" id="label-shiny-your" title="Select an item with shiny">
-                  <input type="checkbox" id="shiny-your" disabled />
+                  <input type="checkbox" id="shiny-your" aria-label="Toggle shiny variant for your offer" disabled />
                   <span>★ Shiny</span>
                 </label>
-                <button class="add-btn" id="btn-add-your">+ Add Item</button>
+                <button class="add-btn" id="btn-add-your" aria-label="Add item to your offer">+ Add Item</button>
               </div>
             </div>
 
@@ -1586,8 +1610,9 @@
 
             <div class="calc-controls-stack">
               <div class="calc-search-box-wrap">
-                <input type="text" id="calc-search-their" class="calc-search-input" placeholder="Type weapon name (e.g. Fried...)" autocomplete="off" />
-                <button type="button" id="btn-clear-calc-their" class="clear-calc-search-btn" title="Clear search">✕</button>
+                <!-- 3. Accessibility: aria-label -->
+                <input type="text" id="calc-search-their" class="calc-search-input" placeholder="Type weapon name (e.g. Fried...)" autocomplete="off" aria-label="Search their offer items" />
+                <button type="button" id="btn-clear-calc-their" class="clear-calc-search-btn" aria-label="Clear their offer search" title="Clear search">✕</button>
                 <div class="calc-matches-panel" id="matches-panel-their"></div>
               </div>
 
@@ -1598,10 +1623,10 @@
 
               <div class="calc-actions-row">
                 <label class="calc-shiny-toggle disabled" id="label-shiny-their" title="Select an item with shiny">
-                  <input type="checkbox" id="shiny-their" disabled />
+                  <input type="checkbox" id="shiny-their" aria-label="Toggle shiny variant for their offer" disabled />
                   <span>★ Shiny</span>
                 </label>
-                <button class="add-btn" id="btn-add-their">+ Add Item</button>
+                <button class="add-btn" id="btn-add-their" aria-label="Add item to their offer">+ Add Item</button>
               </div>
             </div>
 
@@ -1616,6 +1641,26 @@
         <div class="verdict-box" id="verdict-box">
           <div class="verdict-text" id="verdict-text">Add items to compare trade</div>
           <div class="verdict-details" id="verdict-details">Difference: 0 Value</div>
+          
+          <div class="trade-action-buttons" style="display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap;">
+            <button type="button" id="btn-copy-discord" class="trade-action-btn discord-btn" aria-label="Copy trade breakdown for Discord" title="Copy trade breakdown for Discord">
+              📋 Copy Trade for Discord
+            </button>
+            <button type="button" id="btn-share-link" class="trade-action-btn share-btn" aria-label="Copy shareable trade link" title="Copy shareable trade link">
+              🔗 Copy Shareable Link
+            </button>
+          </div>
+        </div>
+
+        <!-- TRADE HISTORY LOG -->
+        <div class="trade-history-wrap" style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Recent Trades</span>
+            <button type="button" id="btn-clear-history" aria-label="Clear recent trade history" style="background: transparent; border: none; color: var(--accent-rose); font-size: 11px; cursor: pointer;">Clear History</button>
+          </div>
+          <ul id="trade-history-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
+            <li style="font-size: 11px; color: var(--text-muted);">No recent trades saved</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -1626,7 +1671,7 @@
   <div class="dock-items-drawer" id="dock-items-drawer">
     <div class="drawer-header">
       <span class="drawer-title">Trade Basket Preview</span>
-      <button type="button" class="drawer-clear-btn" id="btn-drawer-clear-all">Clear All</button>
+      <button type="button" class="drawer-clear-btn" id="btn-drawer-clear-all" aria-label="Clear all trade items">Clear All</button>
     </div>
     <div class="drawer-sections">
       <div>
@@ -1654,8 +1699,8 @@
       </div>
     </div>
     <div class="dock-action-group">
-      <button type="button" class="dock-tray-toggle-btn" id="btn-dock-tray-toggle">Items ▾</button>
-      <button type="button" class="dock-open-btn" id="btn-dock-open">
+      <button type="button" class="dock-tray-toggle-btn" id="btn-dock-tray-toggle" aria-label="Toggle trade items drawer">Items ▾</button>
+      <button type="button" class="dock-open-btn" id="btn-dock-open" aria-label="Open trade calculator">
         <span>Calculate</span>
         <span>⚖</span>
       </button>
