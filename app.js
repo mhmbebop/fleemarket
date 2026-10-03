@@ -8,17 +8,19 @@ const CACHE_KEY_DATA = 'flee_items_cache_v1';
 const CACHE_KEY_TIME = 'flee_items_time_v1';
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
-// Persistent Trade, Tab & History Keys
+// Persistent Trade, Tab, History & View Keys
 const TRADE_KEY_YOUR = 'flee_trade_your_v1';
 const TRADE_KEY_THEIR = 'flee_trade_their_v1';
 const TAB_KEY_PREF = 'flee_active_tab_v1';
 const HISTORY_KEY = 'flee_trade_history_v1';
+const VIEW_MODE_KEY = 'flee_view_mode_v1';
 
 let allItems = [];
 let yourOffer = [];
 let theirOffer = [];
 let currentFilter = 'all'; // 'all' | 'hammer' | 'gem'
 let currentSort = 'val-desc';
+let currentViewMode = 'grid'; // 'grid' | 'compact'
 const shinyState = {};
 
 // Audio controller
@@ -101,8 +103,15 @@ function initTabNavigation() {
     if (savedTab) {
       switchTab(savedTab, false);
     }
+    const savedView = localStorage.getItem(VIEW_MODE_KEY);
+    if (savedView) {
+      currentViewMode = savedView;
+      document.querySelectorAll('#view-mode-group .filter-btn').forEach((b) => {
+        b.classList.toggle('active', b.getAttribute('data-view') === currentViewMode);
+      });
+    }
   } catch (e) {
-    console.warn('Failed to load tab preference:', e);
+    console.warn('Failed to load preferences:', e);
   }
 
   tabsContainer.addEventListener('click', (e) => {
@@ -439,9 +448,8 @@ function renderTrayList(sideItems, listId, sideTarget) {
 }
 
 function refreshCardButtonBadges() {
-  document.querySelectorAll('.card').forEach((card) => {
-    const starBtn = card.querySelector('.shiny-star-btn');
-    const itemId = starBtn ? starBtn.getAttribute('data-id') : null;
+  document.querySelectorAll('.card, .compact-row').forEach((card) => {
+    const itemId = card.getAttribute('data-id');
     if (!itemId) return;
 
     const countYour = yourOffer.filter((i) => i.id === itemId).length;
@@ -789,7 +797,7 @@ function removeItemFromTrade(itemId, sideTarget) {
   updateTradeVerdict();
 }
 
-// Render Catalog Grid with Clean Image Pre-checking
+// Render Catalog Grid or Compact List View
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
@@ -800,6 +808,78 @@ function renderItems(items) {
     return;
   }
 
+  // COMPACT VIEW MODE
+  if (currentViewMode === 'compact') {
+    const container = document.createElement('div');
+    container.className = 'compact-container';
+
+    // Group items by releaseEvent / set
+    const groups = new Map();
+    items.forEach((item) => {
+      const groupKey = item.releaseEvent || item.setName || 'Other Items';
+      if (!groups.has(groupKey)) groups.set(groupKey, []);
+      groups.get(groupKey).push(item);
+    });
+
+    groups.forEach((groupItems, groupName) => {
+      const section = document.createElement('div');
+      section.className = 'compact-section';
+
+      const header = document.createElement('div');
+      header.className = 'compact-section-header';
+      header.innerHTML = `<span>🎃 ${sanitizeInput(groupName)}</span>`;
+      section.appendChild(header);
+
+      groupItems.forEach((item) => {
+        const isShiny = item.hasShiny && !!shinyState[item.id];
+        const display = getItemActiveDisplay(item, isShiny);
+        const safeName = sanitizeInput(item.name);
+        const safeType = sanitizeInput(item.type).toUpperCase();
+        const displayRarity = item.rarity === 'Unobtainable' ? 'Untradeable' : item.rarity;
+        const rarityClass = `rarity-${sanitizeInput(displayRarity).toLowerCase()}`;
+
+        const countYour = yourOffer.filter((i) => i.id === item.id).length;
+        const countTheir = theirOffer.filter((i) => i.id === item.id).length;
+
+        const row = document.createElement('div');
+        row.className = 'compact-row';
+        row.setAttribute('data-id', item.id);
+
+        row.innerHTML = `
+          <div class="compact-name">
+            <span class="badge badge-rarity badge-${rarityClass}" style="font-size: 8px; padding: 1px 4px;">${sanitizeInput(displayRarity)}</span>
+            <span>${safeName}</span>
+            ${isShiny ? '<span style="color: var(--accent-gold);">★</span>' : ''}
+          </div>
+          <div class="compact-meta">
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 700;">${safeType}</span>
+            <span class="val" style="font-size: 13px; min-width: 32px; text-align: right;">${display.value}</span>
+            <span class="demand" style="min-width: 16px; text-align: center;">${sanitizeInput(display.demandLabel)}</span>
+            <span style="font-size: 11px; color: var(--text-muted); min-width: 80px; text-align: right;">${sanitizeInput(display.status)}</span>
+            
+            <div style="display: flex; gap: 4px;">
+              <div class="card-btn-group side-your ${countYour > 0 ? 'has-items' : ''}" style="height: 26px;">
+                <button class="card-add-btn" data-action="add-your" data-id="${item.id}" style="font-size: 10px; padding: 2px 6px;">${countYour > 0 ? `You (${countYour})` : '+ You'}</button>
+                <button class="card-minus-btn" data-action="minus-your" data-id="${item.id}">−</button>
+              </div>
+              <div class="card-btn-group side-their ${countTheir > 0 ? 'has-items' : ''}" style="height: 26px;">
+                <button class="card-add-btn" data-action="add-their" data-id="${item.id}" style="font-size: 10px; padding: 2px 6px;">${countTheir > 0 ? `Them (${countTheir})` : '+ Them'}</button>
+                <button class="card-minus-btn" data-action="minus-their" data-id="${item.id}">−</button>
+              </div>
+            </div>
+          </div>
+        `;
+        section.appendChild(row);
+      });
+
+      container.appendChild(section);
+    });
+
+    grid.appendChild(container);
+    return;
+  }
+
+  // GRID VIEW MODE
   const fragment = document.createDocumentFragment();
 
   items.forEach((item) => {
@@ -875,7 +955,6 @@ function renderItems(items) {
 
     fragment.appendChild(card);
 
-    // Asynchronously test if the PNG image exists before inserting it into the DOM
     const imgTest = new Image();
     imgTest.src = `images/${item.id}.png`;
     imgTest.onload = () => {
@@ -1221,7 +1300,7 @@ function setupEventListeners() {
           if (verdictEl) { verdictEl.textContent = '✅ Small Win'; verdictEl.className = 'verdict-text status-win'; }
         } else if (percentDiff >= -5) {
           verdictString = 'Fair Trade';
-          if (verdictEl) { verdictEl.textContent = '⚖️️ Fair Trade'; verdictEl.className = 'verdict-text status-fair'; }
+          if (verdictEl) { verdictEl.textContent = '⚖️ Fair Trade'; verdictEl.className = 'verdict-text status-fair'; }
         } else if (percentDiff >= -15) {
           verdictString = 'Small Loss';
           if (verdictEl) { verdictEl.textContent = '🔻 Small Loss'; verdictEl.className = 'verdict-text status-loss'; }
@@ -1425,10 +1504,26 @@ function setupEventListeners() {
     });
   }
 
-  document.querySelectorAll('.filter-btn').forEach((btn) => {
+  // View Mode Toggle (Grid / Compact)
+  document.querySelectorAll('#view-mode-group .filter-btn').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       const button = e.currentTarget;
-      document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
+      document.querySelectorAll('#view-mode-group .filter-btn').forEach((b) => b.classList.remove('active'));
+      button.classList.add('active');
+      currentViewMode = button.getAttribute('data-view');
+      try {
+        localStorage.setItem(VIEW_MODE_KEY, currentViewMode);
+      } catch (err) {
+        console.warn('Failed to save view mode:', err);
+      }
+      applyFilters();
+    });
+  });
+
+  document.querySelectorAll('.filter-btn:not(#view-mode-group .filter-btn)').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const button = e.currentTarget;
+      document.querySelectorAll('.filter-btn:not(#view-mode-group .filter-btn)').forEach((b) => b.classList.remove('active'));
       button.classList.add('active');
       currentFilter = button.getAttribute('data-filter').toLowerCase().trim();
       applyFilters();
