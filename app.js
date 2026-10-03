@@ -10,6 +10,7 @@ const shinyState = {};
 // Multi-filter states
 const activeRarities = new Set();
 const activeDemands = new Set();
+const activeStatuses = new Set();
 const activeEvents = new Set();
 let filterHasShiny = false;
 
@@ -50,7 +51,6 @@ function parseCSV(text) {
     });
 
     const rawRarity = (row.rarity || 'Rare').trim();
-    // Normalize "Unobtainable" from sheet data into "Untradeable"
     const normalizedRarity = rawRarity.toLowerCase() === 'unobtainable' ? 'Untradeable' : rawRarity;
 
     return {
@@ -107,7 +107,12 @@ function populateEventFilters(items) {
 
 function updateFilterBadge() {
   const countBadge = document.getElementById('filter-count');
-  const totalActive = activeRarities.size + activeDemands.size + activeEvents.size + (filterHasShiny ? 1 : 0);
+  const totalActive =
+    activeRarities.size +
+    activeDemands.size +
+    activeStatuses.size +
+    activeEvents.size +
+    (filterHasShiny ? 1 : 0);
 
   if (countBadge) {
     if (totalActive > 0) {
@@ -457,6 +462,7 @@ function applyFilters() {
     const itemRarity = (item.rarity || '').trim().toLowerCase();
     const itemEvent = (item.releaseEvent || '').trim();
     const itemDemand = String(item.demandTier);
+    const itemStatus = (item.status || '').trim().toLowerCase();
 
     // 1. Hammer / Gem pill filter
     if (currentFilter === 'hammer' && itemType !== 'hammer') return false;
@@ -483,17 +489,29 @@ function applyFilters() {
       return false;
     }
 
-    // 4. Has Shiny property filter
+    // 4. Multi-select Status filter
+    if (activeStatuses.size > 0) {
+      let matchesStatus = false;
+      for (const selStatus of activeStatuses) {
+        if (itemStatus === selStatus.toLowerCase()) {
+          matchesStatus = true;
+          break;
+        }
+      }
+      if (!matchesStatus) return false;
+    }
+
+    // 5. Has Shiny property filter
     if (filterHasShiny && !item.hasShiny) {
       return false;
     }
 
-    // 5. Multi-select Event/Crate filter
+    // 6. Multi-select Event/Crate filter
     if (activeEvents.size > 0 && !activeEvents.has(itemEvent)) {
       return false;
     }
 
-    // 6. Search query matching
+    // 7. Search query matching
     const matchesSearch =
       !query ||
       (item.name && item.name.toLowerCase().includes(query)) ||
@@ -627,6 +645,19 @@ function setupEventListeners() {
     });
   });
 
+  // Status Checkbox Listeners
+  document.querySelectorAll('.cb-status').forEach((cb) => {
+    cb.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        activeStatuses.add(e.target.value);
+      } else {
+        activeStatuses.delete(e.target.value);
+      }
+      updateFilterBadge();
+      applyFilters();
+    });
+  });
+
   // Has Shiny Checkbox
   const cbShiny = document.getElementById('cb-has-shiny');
   if (cbShiny) {
@@ -643,10 +674,13 @@ function setupEventListeners() {
     btnClearFilters.addEventListener('click', () => {
       activeRarities.clear();
       activeDemands.clear();
+      activeStatuses.clear();
       activeEvents.clear();
       filterHasShiny = false;
 
-      document.querySelectorAll('.cb-rarity, .cb-demand, .cb-event').forEach((cb) => (cb.checked = false));
+      document
+        .querySelectorAll('.cb-rarity, .cb-demand, .cb-status, .cb-event')
+        .forEach((cb) => (cb.checked = false));
       if (cbShiny) cbShiny.checked = false;
 
       updateFilterBadge();
