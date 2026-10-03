@@ -3,11 +3,16 @@ const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2RfYHa6ffW
 let allItems = [];
 let sideA = [];
 let sideB = [];
-let currentFilter = 'all'; // 'all' | 'hammer' | 'gem' | 'shiny'
+let currentFilter = 'all'; // 'all' | 'hammer' | 'gem'
 let currentSort = 'val-desc';
 const shinyState = {};
 
-// Robust CSV Parser
+// Multi-filter tracking states
+const activeRarities = new Set();
+const activeEvents = new Set();
+let filterHasShiny = false;
+
+// CSV Parser
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
@@ -56,9 +61,50 @@ function parseCSV(text) {
       setName: (row.set_name || '').trim(),
       hasShiny: (row.has_shiny || '').toUpperCase() === 'TRUE',
       shinyValue: Number(row.shiny_value) || 0,
-      rarity: (row.rarity || 'Rare').trim(), // Direct from Google Sheet
+      rarity: (row.rarity || 'Rare').trim(),
     };
   });
+}
+
+// Builds the dynamic list of events/crates inside the filter drawer
+function populateEventFilters(items) {
+  const container = document.getElementById('events-checkbox-group');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const uniqueEvents = [...new Set(items.map((i) => i.releaseEvent).filter(Boolean))].sort();
+
+  uniqueEvents.forEach((ev) => {
+    const label = document.createElement('label');
+    label.className = 'drawer-label';
+    label.innerHTML = `<input type="checkbox" class="cb-event" value="${ev}"> ${ev}`;
+
+    label.querySelector('input').addEventListener('change', (e) => {
+      if (e.target.checked) {
+        activeEvents.add(e.target.value);
+      } else {
+        activeEvents.delete(e.target.value);
+      }
+      updateFilterBadge();
+      applyFilters();
+    });
+
+    container.appendChild(label);
+  });
+}
+
+function updateFilterBadge() {
+  const countBadge = document.getElementById('filter-count');
+  const totalActive = activeRarities.size + activeEvents.size + (filterHasShiny ? 1 : 0);
+
+  if (countBadge) {
+    if (totalActive > 0) {
+      countBadge.textContent = totalActive;
+      countBadge.style.display = 'inline-block';
+    } else {
+      countBadge.style.display = 'none';
+    }
+  }
 }
 
 function getItemActiveDisplay(item, isShiny = false) {
@@ -257,7 +303,7 @@ function renderItems(items) {
   grid.innerHTML = '';
 
   if (items.length === 0) {
-    grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1 / -1;">No matching items found.</p>';
+    grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1 / -1; padding: 24px; text-align: center;">No matching items found with the active filters.</p>';
     return;
   }
 
@@ -317,7 +363,6 @@ function renderItems(items) {
       </div>
     `;
 
-    // In-place Shiny Toggle
     const starBtn = card.querySelector('.shiny-star-btn');
     if (starBtn) {
       starBtn.addEventListener('click', (e) => {
@@ -384,31 +429,46 @@ function renderItems(items) {
   });
 }
 
+// Multi-Criteria Filtering
 function applyFilters() {
   const searchInput = document.getElementById('search');
   const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
 
   let filtered = allItems.filter((item) => {
     const itemType = (item.type || '').toLowerCase().trim();
+    const itemRarity = (item.rarity || '').trim();
+    const itemEvent = (item.releaseEvent || '').trim();
 
-    let matchesFilter = true;
-    if (currentFilter === 'hammer') {
-      matchesFilter = itemType === 'hammer';
-    } else if (currentFilter === 'gem') {
-      matchesFilter = itemType === 'gem';
-    } else if (currentFilter === 'shiny') {
-      matchesFilter = item.hasShiny === true;
+    // 1. Hammer / Gem pill filter
+    if (currentFilter === 'hammer' && itemType !== 'hammer') return false;
+    if (currentFilter === 'gem' && itemType !== 'gem') return false;
+
+    // 2. Multi-select Rarity filter
+    if (activeRarities.size > 0 && !activeRarities.has(itemRarity)) {
+      return false;
     }
 
+    // 3. Has Shiny property filter
+    if (filterHasShiny && !item.hasShiny) {
+      return false;
+    }
+
+    // 4. Multi-select Event/Crate filter
+    if (activeEvents.size > 0 && !activeEvents.has(itemEvent)) {
+      return false;
+    }
+
+    // 5. Search query matching
     const matchesSearch =
       !query ||
       (item.name && item.name.toLowerCase().includes(query)) ||
       (item.setName && item.setName.toLowerCase().includes(query)) ||
       (item.releaseEvent && item.releaseEvent.toLowerCase().includes(query));
 
-    return matchesFilter && matchesSearch;
+    return matchesSearch;
   });
 
+  // Sort items
   filtered.sort((a, b) => {
     if (currentSort === 'val-desc') {
       return b.baseValue - a.baseValue;
@@ -426,6 +486,7 @@ function applyFilters() {
 }
 
 function setupEventListeners() {
+  // Trade Calculator Buttons
   const btnAddA = document.getElementById('btn-add-a');
   if (btnAddA) {
     btnAddA.addEventListener('click', () => {
@@ -453,9 +514,11 @@ function setupEventListeners() {
     });
   }
 
+  // Live Search
   const searchInput = document.getElementById('search');
   if (searchInput) searchInput.addEventListener('input', applyFilters);
 
+  // Sorting
   const sortSelect = document.getElementById('sort-select');
   if (sortSelect) {
     sortSelect.addEventListener('change', (e) => {
@@ -464,6 +527,7 @@ function setupEventListeners() {
     });
   }
 
+  // Item Type (All / Hammers / Gems)
   document.querySelectorAll('.filter-btn').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       const button = e.currentTarget;
@@ -473,6 +537,55 @@ function setupEventListeners() {
       applyFilters();
     });
   });
+
+  // Toggle Filters Drawer
+  const btnToggleDrawer = document.getElementById('btn-toggle-filters');
+  const filterDrawer = document.getElementById('filter-drawer');
+  if (btnToggleDrawer && filterDrawer) {
+    btnToggleDrawer.addEventListener('click', () => {
+      const isOpen = filterDrawer.classList.toggle('open');
+      btnToggleDrawer.classList.toggle('open', isOpen);
+    });
+  }
+
+  // Rarity Checkbox Listeners
+  document.querySelectorAll('.cb-rarity').forEach((cb) => {
+    cb.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        activeRarities.add(e.target.value);
+      } else {
+        activeRarities.delete(e.target.value);
+      }
+      updateFilterBadge();
+      applyFilters();
+    });
+  });
+
+  // Has Shiny Checkbox
+  const cbShiny = document.getElementById('cb-has-shiny');
+  if (cbShiny) {
+    cbShiny.addEventListener('change', (e) => {
+      filterHasShiny = e.target.checked;
+      updateFilterBadge();
+      applyFilters();
+    });
+  }
+
+  // Clear / Reset All Filters
+  const btnClearFilters = document.getElementById('btn-clear-filters');
+  if (btnClearFilters) {
+    btnClearFilters.addEventListener('click', () => {
+      activeRarities.clear();
+      activeEvents.clear();
+      filterHasShiny = false;
+
+      document.querySelectorAll('.cb-rarity, .cb-event').forEach((cb) => (cb.checked = false));
+      if (cbShiny) cbShiny.checked = false;
+
+      updateFilterBadge();
+      applyFilters();
+    });
+  }
 }
 
 async function loadData() {
@@ -489,6 +602,7 @@ async function loadData() {
       statusEl.style.color = 'var(--accent-green)';
     }
     populateDropdowns(allItems);
+    populateEventFilters(allItems);
     setupEventListeners();
     applyFilters();
   } catch (error) {
