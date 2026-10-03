@@ -342,9 +342,9 @@ function updateCalculateButtonState() {
         if (yourOffer.length === 0 && theirOffer.length === 0) {
           helperText.textContent = '⚠️ Add items to both sides to enable calculation';
         } else if (yourOffer.length === 0) {
-          helperText.textContent = '⚠️ Add items to "Your Offer" to calculate';
+          helperText.textContent = '⚠️️ Add items to "Your Offer" to calculate';
         } else {
-          helperText.textContent = '⚠️ Add items to "Their Offer" to calculate';
+          helperText.textContent = '⚠️️ Add items to "Their Offer" to calculate';
         }
       }
     }
@@ -1224,37 +1224,8 @@ function setupEventListeners() {
         if (detailsEl) detailsEl.textContent = `Their Offer has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
       }
 
-      // Save trade to history log
+      // Save trade to history log and keep results visible on screen for discussion
       saveCompletedTrade(verdictString);
-
-      // Wipe clean after 1.5 seconds so user can see result
-      setTimeout(() => {
-        yourOffer = [];
-        theirOffer = [];
-        localStorage.removeItem(TRADE_KEY_YOUR);
-        localStorage.removeItem(TRADE_KEY_THEIR);
-
-        renderTradeList(yourOffer, 'list-your');
-        renderTradeList(theirOffer, 'list-their');
-        selectedItemYour = null;
-        selectedItemTheir = null;
-        updateSidePreview('your', null);
-        updateSidePreview('their', null);
-
-        const inYour = document.getElementById('calc-search-your');
-        const inTheir = document.getElementById('calc-search-their');
-        const clrYour = document.getElementById('btn-clear-calc-your');
-        const clrTheir = document.getElementById('btn-clear-calc-their');
-        if (inYour) inYour.value = '';
-        if (inTheir) inTheir.value = '';
-        if (clrYour) clrYour.style.display = 'none';
-        if (clrTheir) clrTheir.style.display = 'none';
-
-        document.getElementById('dock-items-drawer')?.classList.remove('open');
-        document.getElementById('floating-trade-dock')?.classList.remove('visible');
-        updateCalculateButtonState();
-        updateTradeVerdict();
-      }, 1500);
     });
   }
 
