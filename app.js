@@ -1,394 +1,479 @@
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2RfYHa6ffWiale6czVqih6e7BrrZ-ZmRdnT10WTsS5M1ZJF9-jKSvcpyyrv5imytQ9lZsvL8su/pub?gid=0&single=true&output=csv';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 Player Flee - Value Hub</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background-color: #0f111a;
+      color: #e6edf3;
+    }
+    h1 {
+      margin-bottom: 4px;
+      color: #9d7dfd;
+    }
+    p {
+      color: #8b949e;
+      margin-top: 0;
+    }
+    #status {
+      font-weight: bold;
+      color: #58a6ff;
+      margin-bottom: 16px;
+    }
 
-let allItems = [];
-let sideA = [];
-let sideB = [];
-let currentFilter = 'all'; // 'all' | 'hammer' | 'gem'
-let currentSort = 'val-desc';
-
-// Robust CSV Parser
-function parseCSV(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-
-  const splitLine = (line) => {
-    const values = [];
-    let current = '';
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      if (char === '"' && line[i + 1] === '"') {
-        current += '"';
-        i++;
-      } else if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        values.push(current.trim());
-        current = '';
-      } else {
-        current += char;
+    /* --- Trade Calculator Styles --- */
+    .calculator-container {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 32px;
+    }
+    .calculator-title {
+      margin-top: 0;
+      font-size: 20px;
+      color: #f0f6fc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .reset-btn {
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .reset-btn:hover {
+      background: #30363d;
+    }
+    .trade-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 16px;
+    }
+    @media (max-width: 768px) {
+      .trade-columns {
+        grid-template-columns: 1fr;
       }
     }
-    values.push(current.trim());
-    return values.map((val) => val.replace(/^"|"$/g, '').trim());
-  };
-
-  const headers = splitLine(lines[0]).map((h) => h.toLowerCase());
-
-  return lines.slice(1).map((line) => {
-    const cols = splitLine(line);
-    const row = {};
-    headers.forEach((header, index) => {
-      row[header] = cols[index] !== undefined ? cols[index] : '';
-    });
-    return {
-      id: row.id,
-      name: row.name,
-      type: row.type,
-      category: row.category,
-      releaseEvent: row.release_event,
-      baseValue: Number(row.base_value) || 0,
-      isNilValue: row.is_nil_value?.toUpperCase() === 'TRUE',
-      demandTier: Number(row.demand_tier) || 1,
-      demandLabel: row.demand_label,
-      status: row.status,
-      setName: row.set_name,
-    };
-  });
-}
-
-// Populate dropdown selectors for trade calculator
-function populateDropdowns(items) {
-  const selectA = document.getElementById('select-a');
-  const selectB = document.getElementById('select-b');
-  if (!selectA || !selectB) return;
-
-  const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name));
-
-  sorted.forEach((item) => {
-    const valText = item.isNilValue ? 'Nil' : item.baseValue;
-    const optionText = `${item.name} (${item.type}) [Val: ${valText} | Dem: ${item.demandLabel}]`;
-
-    const optA = document.createElement('option');
-    optA.value = item.id;
-    optA.textContent = optionText;
-    selectA.appendChild(optA);
-
-    const optB = document.createElement('option');
-    optB.value = item.id;
-    optB.textContent = optionText;
-    selectB.appendChild(optB);
-  });
-}
-
-// Calculate total value and average demand tier
-function calculateSide(items) {
-  let totalValue = 0;
-  let totalDemandTier = 0;
-  let hasNil = false;
-
-  items.forEach((item) => {
-    if (item.isNilValue) {
-      hasNil = true;
-    } else {
-      totalValue += item.baseValue;
+    .trade-side {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
-    totalDemandTier += item.demandTier;
-  });
+    .side-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #21262d;
+      padding-bottom: 8px;
+    }
+    .side-title {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .item-select-row {
+      display: flex;
+      gap: 8px;
+    }
+    .select-dropdown {
+      flex: 1;
+      padding: 8px 12px;
+      background: #161b22;
+      color: #fff;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+    .add-btn {
+      background: #238636;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .add-btn:hover {
+      background: #2ea043;
+    }
+    .selected-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .trade-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #161b22;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #21262d;
+      font-size: 14px;
+    }
+    .trade-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .trade-thumb {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      background: #21262d;
+      object-fit: contain;
+      border: 1px solid #30363d;
+      flex-shrink: 0;
+    }
+    .trade-thumb-fallback {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      background: #21262d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      border: 1px solid #30363d;
+      flex-shrink: 0;
+    }
+    .remove-btn {
+      background: none;
+      border: none;
+      color: #f85149;
+      cursor: pointer;
+      font-weight: bold;
+      margin-left: 8px;
+    }
+    .side-summary {
+      border-top: 1px solid #21262d;
+      padding-top: 8px;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      color: #8b949e;
+    }
+    .side-summary b {
+      color: #f0f6fc;
+    }
+    .verdict-box {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+      background: #0d1117;
+      border: 1px solid #30363d;
+    }
+    .verdict-text {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .verdict-details {
+      font-size: 14px;
+      color: #8b949e;
+    }
+    .status-win { color: #3fb950; }
+    .status-fair { color: #f2cc60; }
+    .status-loss { color: #f85149; }
 
-  const avgDemand = items.length > 0 ? (totalDemandTier / items.length).toFixed(1) : '-';
-  return { totalValue, hasNil, avgDemand };
-}
+    /* --- Catalog Controls --- */
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .search-box {
+      width: 100%;
+      max-width: 320px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+      background: #161b22;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    .filter-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    .filter-btn {
+      background: #161b22;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .filter-btn:hover {
+      background: #21262d;
+      color: #f0f6fc;
+    }
+    .filter-btn.active {
+      background: #9d7dfd;
+      border-color: #9d7dfd;
+      color: #0f111a;
+    }
 
-// Trade comparison verdict logic
-function updateTradeVerdict() {
-  const dataA = calculateSide(sideA);
-  const dataB = calculateSide(sideB);
+    /* --- Card Styles & Shiny Star --- */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .card.is-shiny {
+      border-color: #e3b341;
+      box-shadow: 0 0 14px rgba(227, 179, 65, 0.25);
+    }
+    .shiny-star-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(13, 17, 23, 0.7);
+      border: 1px solid #30363d;
+      color: #8b949e;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      z-index: 2;
+      transition: transform 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+      user-select: none;
+    }
+    .shiny-star-btn:hover {
+      transform: scale(1.15);
+      border-color: #f2cc60;
+      color: #f2cc60;
+    }
+    .shiny-star-btn.active {
+      color: #ffd700;
+      border-color: #ffd700;
+      background: rgba(255, 215, 0, 0.15);
+      text-shadow: 0 0 8px #ffd700;
+    }
 
-  const valA = document.getElementById('total-val-a');
-  const demA = document.getElementById('avg-dem-a');
-  const valB = document.getElementById('total-val-b');
-  const demB = document.getElementById('avg-dem-b');
-  const verdictEl = document.getElementById('verdict-text');
-  const detailsEl = document.getElementById('verdict-details');
+    .card-image-wrap {
+      width: 100%;
+      height: 140px;
+      background: #0d1117;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 8px;
+      box-sizing: border-box;
+      transition: filter 0.2s ease;
+    }
+    .card.is-shiny .card-img {
+      filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5));
+    }
+    .card-img-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      width: 100%;
+      height: 100%;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #f0f6fc;
+      margin: 0;
+    }
+    .badge {
+      display: inline-block;
+      align-self: flex-start;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #238636;
+      color: #fff;
+    }
+    .badge-gem {
+      background: #1f6feb;
+    }
+    .badge-shiny {
+      background: #d29922;
+      color: #0f111a;
+      font-weight: 800;
+      margin-left: 6px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #8b949e;
+    }
+    .val {
+      color: #f2cc60;
+      font-weight: bold;
+    }
+    .demand {
+      color: #ff7b72;
+      font-weight: bold;
+    }
 
-  if (valA) valA.textContent = dataA.hasNil ? `${dataA.totalValue} + Nil` : dataA.totalValue;
-  if (demA) demA.textContent = dataA.avgDemand;
-  if (valB) valB.textContent = dataB.hasNil ? `${dataB.totalValue} + Nil` : dataB.totalValue;
-  if (demB) demB.textContent = dataB.avgDemand;
+    /* Quick Add Buttons on Cards */
+    .card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+      border-top: 1px solid #21262d;
+      padding-top: 10px;
+    }
+    .card-add-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 6px 0;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .card-add-btn:hover {
+      background: #30363d;
+      color: #fff;
+    }
+    .card-add-btn.side-a:hover {
+      border-color: #58a6ff;
+      color: #58a6ff;
+    }
+    .card-add-btn.side-b:hover {
+      border-color: #3fb950;
+      color: #3fb950;
+    }
+  </style>
+</head>
+<body>
 
-  if (!verdictEl || !detailsEl) return;
-  verdictEl.className = 'verdict-text';
+  <h1>10 Player Flee - Value Hub</h1>
+  <p>Live inventory and trade fairness calculator synced with Google Sheets</p>
+  <div id="status">Loading items from Google Sheets...</div>
 
-  if (sideA.length === 0 && sideB.length === 0) {
-    verdictEl.textContent = 'Add items to both sides';
-    detailsEl.textContent = 'Difference: 0 Value';
-    return;
-  }
+  <!-- TRADE CALCULATOR SECTION -->
+  <div class="calculator-container" id="calculator">
+    <div class="calculator-title">
+      <span>⚖️ Trade Calculator</span>
+      <button class="reset-btn" id="btn-reset">Reset Trade</button>
+    </div>
 
-  if (dataA.hasNil || dataB.hasNil) {
-    verdictEl.textContent = '⚠️️ Contains Indefinite / Nil Item(s)';
-    detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
-    verdictEl.classList.add('status-fair');
-    return;
-  }
-
-  const diff = dataB.totalValue - dataA.totalValue;
-  const maxVal = Math.max(dataA.totalValue, dataB.totalValue, 1);
-  const percentDiff = (diff / maxVal) * 100;
-
-  if (percentDiff > 15) {
-    verdictEl.textContent = '🎉 Big Win';
-    verdictEl.classList.add('status-win');
-  } else if (percentDiff > 5) {
-    verdictEl.textContent = '✅ Small Win';
-    verdictEl.classList.add('status-win');
-  } else if (percentDiff >= -5) {
-    verdictEl.textContent = '⚖️ Fair Trade';
-    verdictEl.classList.add('status-fair');
-  } else if (percentDiff >= -15) {
-    verdictEl.textContent = '🔻 Small Loss';
-    verdictEl.classList.add('status-loss');
-  } else {
-    verdictEl.textContent = '❌ Big Loss';
-    verdictEl.classList.add('status-loss');
-  }
-
-  const sign = diff > 0 ? '+' : '';
-  detailsEl.textContent = `Side B has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
-}
-
-// Render selected items list with icon previews
-function renderTradeList(side, listElementId) {
-  const ul = document.getElementById(listElementId);
-  if (!ul) return;
-  ul.innerHTML = '';
-
-  side.forEach((item, index) => {
-    const li = document.createElement('li');
-    li.className = 'trade-item';
-    const valText = item.isNilValue ? 'Nil' : item.baseValue;
-    const fallbackEmoji = (item.type || '').toLowerCase() === 'gem' ? '💎' : '🔨';
-    const imagePath = `images/${item.id}.png`;
-
-    li.innerHTML = `
-      <div class="trade-item-left">
-        <img 
-          src="${imagePath}" 
-          alt="${item.name}" 
-          class="trade-thumb"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-        />
-        <div class="trade-thumb-fallback" style="display: none;">${fallbackEmoji}</div>
-        <div>
-          <div><strong>${item.name}</strong></div>
-          <span style="font-size: 12px; color: #8b949e;">Val: <b style="color: #f2cc60;">${valText}</b> | Dem: ${item.demandLabel}</span>
+    <div class="trade-columns">
+      <!-- SIDE A -->
+      <div class="trade-side">
+        <div class="side-header">
+          <span class="side-title">Side A (Your Offer)</span>
+        </div>
+        <div class="item-select-row">
+          <select id="select-a" class="select-dropdown">
+            <option value="">Select an item to add...</option>
+          </select>
+          <button class="add-btn" id="btn-add-a">Add</button>
+        </div>
+        <ul id="list-a" class="selected-list"></ul>
+        <div class="side-summary">
+          <span>Total Value: <b id="total-val-a" class="val">0</b></span>
+          <span>Avg Demand: <b id="avg-dem-a" class="demand">-</b></span>
         </div>
       </div>
-      <button class="remove-btn" data-index="${index}">✕</button>
-    `;
 
-    li.querySelector('.remove-btn').addEventListener('click', () => {
-      side.splice(index, 1);
-      renderTradeList(side, listElementId);
-      updateTradeVerdict();
-    });
-
-    ul.appendChild(li);
-  });
-}
-
-// Helper to push items into trade sides from either dropdown or card buttons
-function addItemToTrade(itemId, sideTarget) {
-  const item = allItems.find((i) => i.id === itemId);
-  if (!item) return;
-
-  if (sideTarget === 'A') {
-    sideA.push(item);
-    renderTradeList(sideA, 'list-a');
-  } else if (sideTarget === 'B') {
-    sideB.push(item);
-    renderTradeList(sideB, 'list-b');
-  }
-  updateTradeVerdict();
-}
-
-// Render catalog cards with thumbnails and quick-add buttons
-function renderItems(items) {
-  const grid = document.getElementById('items-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-
-  if (items.length === 0) {
-    grid.innerHTML = '<p>No items found.</p>';
-    return;
-  }
-
-  items.forEach((item) => {
-    const card = document.createElement('div');
-    card.className = 'card';
-
-    const isGem = (item.type || '').toLowerCase() === 'gem';
-    const displayValue = item.isNilValue ? 'Indefinite' : item.baseValue;
-    const fallbackEmoji = isGem ? '💎' : '🔨';
-    const imagePath = `images/${item.id}.png`;
-
-    card.innerHTML = `
-      <div class="card-image-wrap">
-        <img 
-          src="${imagePath}" 
-          alt="${item.name}" 
-          class="card-img"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-        />
-        <div class="card-img-fallback" style="display: none;">${fallbackEmoji}</div>
+      <!-- SIDE B -->
+      <div class="trade-side">
+        <div class="side-header">
+          <span class="side-title">Side B (Their Offer)</span>
+        </div>
+        <div class="item-select-row">
+          <select id="select-b" class="select-dropdown">
+            <option value="">Select an item to add...</option>
+          </select>
+          <button class="add-btn" id="btn-add-b">Add</button>
+        </div>
+        <ul id="list-b" class="selected-list"></ul>
+        <div class="side-summary">
+          <span>Total Value: <b id="total-val-b" class="val">0</b></span>
+          <span>Avg Demand: <b id="avg-dem-b" class="demand">-</b></span>
+        </div>
       </div>
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span class="badge ${isGem ? 'badge-gem' : ''}">${item.type}</span>
-        <span style="font-size: 12px; color: #8b949e;">${item.setName || item.releaseEvent}</span>
-      </div>
-      <h3 class="card-title">${item.name}</h3>
-      <div class="row">
-        <span>Value:</span>
-        <span class="val">${displayValue}</span>
-      </div>
-      <div class="row">
-        <span>Demand:</span>
-        <span class="demand">${item.demandLabel}</span>
-      </div>
-      <div class="row">
-        <span>Status:</span>
-        <span>${item.status}</span>
-      </div>
-      <div class="card-actions">
-        <button class="card-add-btn side-a" data-id="${item.id}">+ Side A</button>
-        <button class="card-add-btn side-b" data-id="${item.id}">+ Side B</button>
-      </div>
-    `;
+    </div>
 
-    card.querySelector('.card-add-btn.side-a').addEventListener('click', (e) => {
-      addItemToTrade(e.currentTarget.getAttribute('data-id'), 'A');
-    });
-    card.querySelector('.card-add-btn.side-b').addEventListener('click', (e) => {
-      addItemToTrade(e.currentTarget.getAttribute('data-id'), 'B');
-    });
+    <div class="verdict-box" id="verdict-box">
+      <div class="verdict-text" id="verdict-text">Add items to both sides</div>
+      <div class="verdict-details" id="verdict-details">Difference: 0 Value</div>
+    </div>
+  </div>
 
-    grid.appendChild(card);
-  });
-}
+  <!-- ITEM CATALOG SECTION -->
+  <h2>Item Database</h2>
+  
+  <div class="controls-row">
+    <input type="text" id="search" class="search-box" placeholder="Search hammer, gem, or crate..." />
+    <div class="filter-btn-group">
+      <button class="filter-btn active" data-filter="all">All Items</button>
+      <button class="filter-btn" data-filter="hammer">🔨 Hammers</button>
+      <button class="filter-btn" data-filter="gem">💎 Gems</button>
+    </div>
+    <select id="sort-select" class="select-dropdown" style="max-width: 200px; padding: 8px 12px;">
+      <option value="val-desc">Value: High to Low</option>
+      <option value="val-asc">Value: Low to High</option>
+      <option value="dem-desc">Demand: High to Low</option>
+      <option value="name-asc">Name: A to Z</option>
+    </select>
+  </div>
 
-// Filter and Sort items safely
-function applyFilters() {
-  const searchInput = document.getElementById('search');
-  const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+  <div class="grid" id="items-grid"></div>
 
-  // 1. Filter by Type and Search Query
-  let filtered = allItems.filter((item) => {
-    const itemType = (item.type || '').toLowerCase().trim();
-    const matchesType = (currentFilter === 'all') || (itemType === currentFilter);
-
-    const matchesSearch =
-      !query ||
-      (item.name && item.name.toLowerCase().includes(query)) ||
-      (item.setName && item.setName.toLowerCase().includes(query)) ||
-      (item.releaseEvent && item.releaseEvent.toLowerCase().includes(query));
-
-    return matchesType && matchesSearch;
-  });
-
-  // 2. Sort items
-  filtered.sort((a, b) => {
-    if (currentSort === 'val-desc') {
-      return b.baseValue - a.baseValue;
-    } else if (currentSort === 'val-asc') {
-      return a.baseValue - b.baseValue;
-    } else if (currentSort === 'dem-desc') {
-      return b.demandTier - a.demandTier;
-    } else if (currentSort === 'name-asc') {
-      return a.name.localeCompare(b.name);
-    }
-    return 0;
-  });
-
-  renderItems(filtered);
-}
-
-// Setup Event Listeners safely
-function setupEventListeners() {
-  const btnAddA = document.getElementById('btn-add-a');
-  if (btnAddA) {
-    btnAddA.addEventListener('click', () => {
-      const selectA = document.getElementById('select-a');
-      if (selectA && selectA.value) addItemToTrade(selectA.value, 'A');
-    });
-  }
-
-  const btnAddB = document.getElementById('btn-add-b');
-  if (btnAddB) {
-    btnAddB.addEventListener('click', () => {
-      const selectB = document.getElementById('select-b');
-      if (selectB && selectB.value) addItemToTrade(selectB.value, 'B');
-    });
-  }
-
-  const btnReset = document.getElementById('btn-reset');
-  if (btnReset) {
-    btnReset.addEventListener('click', () => {
-      sideA = [];
-      sideB = [];
-      renderTradeList(sideA, 'list-a');
-      renderTradeList(sideB, 'list-b');
-      updateTradeVerdict();
-    });
-  }
-
-  const searchInput = document.getElementById('search');
-  if (searchInput) {
-    searchInput.addEventListener('input', applyFilters);
-  }
-
-  const sortSelect = document.getElementById('sort-select');
-  if (sortSelect) {
-    sortSelect.addEventListener('change', (e) => {
-      currentSort = e.target.value;
-      applyFilters();
-    });
-  }
-
-  document.querySelectorAll('.filter-btn').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const button = e.currentTarget;
-      document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
-      button.classList.add('active');
-      currentFilter = button.getAttribute('data-filter').toLowerCase().trim();
-      applyFilters();
-    });
-  });
-}
-
-// Fetch spreadsheet data
-async function loadData() {
-  const statusEl = document.getElementById('status');
-  try {
-    const response = await fetch(CSV_URL);
-    if (!response.ok) throw new Error(`HTTP ${response.status}: Could not load CSV`);
-
-    const csvText = await response.text();
-    allItems = parseCSV(csvText);
-
-    if (statusEl) {
-      statusEl.textContent = `Loaded ${allItems.length} items successfully.`;
-    }
-    populateDropdowns(allItems);
-    setupEventListeners();
-    applyFilters();
-  } catch (error) {
-    if (statusEl) {
-      statusEl.textContent = `Error: ${error.message}. Please refresh or check sheet permissions.`;
-    }
-    console.error(error);
-  }
-}
-
-// Start loading
-loadData();
+  <script src="app.js"></script>
+</body>
+</html>
