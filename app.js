@@ -185,14 +185,19 @@ function getItemActiveDisplay(item, isShiny = false) {
 }
 
 // Sequential Prefix Search & Autocomplete
-function setupPrefixSearch(inputId, panelId, side) {
+function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
   const input = document.getElementById(inputId);
+  const clearBtn = document.getElementById(clearBtnId);
   const panel = document.getElementById(panelId);
   if (!input || !panel) return;
 
   function renderMatches(query) {
     const cleanQuery = query.toLowerCase().trim();
     panel.innerHTML = '';
+
+    if (clearBtn) {
+      clearBtn.style.display = cleanQuery.length > 0 ? 'flex' : 'none';
+    }
 
     if (!cleanQuery) {
       panel.classList.remove('open');
@@ -229,6 +234,7 @@ function setupPrefixSearch(inputId, panelId, side) {
       row.addEventListener('click', () => {
         selectItemForSide(item, side);
         input.value = item.name;
+        if (clearBtn) clearBtn.style.display = 'flex';
         panel.classList.remove('open');
       });
 
@@ -247,6 +253,17 @@ function setupPrefixSearch(inputId, panelId, side) {
       renderMatches(input.value);
     }
   });
+
+  // Clear button click listener
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      clearBtn.style.display = 'none';
+      panel.classList.remove('open');
+      selectItemForSide(null, side);
+      input.focus();
+    });
+  }
 
   // Close panel on outside click
   document.addEventListener('click', (e) => {
@@ -687,9 +704,9 @@ function applyFilters() {
 }
 
 function setupEventListeners() {
-  // Mount Live Sequential Prefix Search on Calculator Inputs
-  setupPrefixSearch('calc-search-your', 'matches-panel-your', 'your');
-  setupPrefixSearch('calc-search-their', 'matches-panel-their', 'their');
+  // Mount Live Prefix Search & Clear Buttons on Calculator Inputs
+  setupPrefixSearch('calc-search-your', 'btn-clear-calc-your', 'matches-panel-your', 'your');
+  setupPrefixSearch('calc-search-their', 'btn-clear-calc-their', 'matches-panel-their', 'their');
 
   // Calculator Add Buttons
   const btnAddYour = document.getElementById('btn-add-your');
@@ -701,7 +718,9 @@ function setupEventListeners() {
         selectedItemYour = null;
         updateSidePreview('your', null);
         const input = document.getElementById('calc-search-your');
+        const clearBtn = document.getElementById('btn-clear-calc-your');
         if (input) input.value = '';
+        if (clearBtn) clearBtn.style.display = 'none';
       }
     });
   }
@@ -715,7 +734,9 @@ function setupEventListeners() {
         selectedItemTheir = null;
         updateSidePreview('their', null);
         const input = document.getElementById('calc-search-their');
+        const clearBtn = document.getElementById('btn-clear-calc-their');
         if (input) input.value = '';
+        if (clearBtn) clearBtn.style.display = 'none';
       }
     });
   }
@@ -733,8 +754,12 @@ function setupEventListeners() {
       updateSidePreview('their', null);
       const inYour = document.getElementById('calc-search-your');
       const inTheir = document.getElementById('calc-search-their');
+      const clrYour = document.getElementById('btn-clear-calc-your');
+      const clrTheir = document.getElementById('btn-clear-calc-their');
       if (inYour) inYour.value = '';
       if (inTheir) inTheir.value = '';
+      if (clrYour) clrYour.style.display = 'none';
+      if (clrTheir) clrTheir.style.display = 'none';
       updateTradeVerdict();
     });
   }
