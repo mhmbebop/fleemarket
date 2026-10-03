@@ -348,7 +348,7 @@
     .status-fair { color: var(--accent-gold); text-shadow: 0 0 16px rgba(251, 191, 36, 0.3); }
     .status-loss { color: var(--accent-rose); text-shadow: 0 0 16px rgba(244, 63, 94, 0.3); }
 
-    /* --- Catalog Controls Bar --- */
+    /* --- Catalog Controls Bar & Search Wrap --- */
     .catalog-header {
       display: flex;
       justify-content: space-between;
@@ -376,10 +376,18 @@
         width: auto;
       }
     }
-    .search-box {
+
+    /* Relative search wrapper containing input & inside clear 'X' button */
+    .search-wrap {
+      position: relative;
       flex: 1 1 180px;
       min-width: 130px;
-      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+    }
+    .search-box {
+      width: 100%;
+      padding: 9px 34px 9px 12px;
       border-radius: var(--radius-md);
       border: 1px solid var(--border);
       background: var(--surface-1);
@@ -392,6 +400,27 @@
       border-color: var(--primary);
       box-shadow: 0 0 0 3px var(--primary-glow);
     }
+    .clear-search-btn {
+      position: absolute;
+      right: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--text-muted);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .clear-search-btn:hover {
+      background: rgba(244, 63, 94, 0.2);
+      color: var(--accent-rose);
+    }
+
     .filter-btn-group {
       display: flex;
       background: var(--surface-1);
@@ -823,6 +852,7 @@
       text-align: right;
     }
 
+    /* Quick Action Buttons */
     .card-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -922,7 +952,12 @@
     <div class="catalog-header">
       <h2 class="catalog-title">Item Catalog</h2>
       <div class="controls-row">
-        <input type="text" id="search" class="search-box" placeholder="Search weapons, crates..." />
+        <!-- Search Input with Inside 'X' Clear Button -->
+        <div class="search-wrap">
+          <input type="text" id="search" class="search-box" placeholder="Search weapons, crates..." autocomplete="off" />
+          <button type="button" id="btn-clear-search" class="clear-search-btn" title="Clear search">✕</button>
+        </div>
+
         <div class="filter-btn-group">
           <button class="filter-btn active" data-filter="all">All</button>
           <button class="filter-btn" data-filter="hammer">🔨 Hammers</button>
