@@ -1,4 +1,4 @@
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSidb2RfYHa6ffWiale6czVqih6e7BrrZ-ZmRdnT10WTsS5M1ZJF9-jKSvcpyyrv5imytQ9lZsvL8su/pub?gid=0&single=true&output=csv';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT_zzYI0whphYA9-JZfWmplFZEs1a8tOwmSL04vXk3t77lFnwv6OCm7W3OyxbjUqBbzBghWcjWpFYk9/pub?output=csv';
 
 let allItems = [];
 let sideA = [];
