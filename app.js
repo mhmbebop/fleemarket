@@ -14,7 +14,7 @@ const activeStatuses = new Set();
 const activeEvents = new Set();
 let filterHasShiny = false;
 
-// Immediate Tab Switching (Runs as soon as DOM loads, no network waiting)
+// Immediate Tab Switching (Instant DOM responsiveness)
 function switchTab(targetTab) {
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.getAttribute('data-tab') === targetTab);
@@ -94,7 +94,7 @@ function parseCSV(text) {
   });
 }
 
-// Builds the dynamic list of events/crates inside the filter drawer, excluding "Unobtainable"
+// Builds the dynamic list of events/crates inside the filter drawer
 function populateEventFilters(items) {
   const container = document.getElementById('events-checkbox-group');
   if (!container) return;
@@ -180,30 +180,67 @@ function getItemActiveDisplay(item, isShiny = false) {
   };
 }
 
+// Populates and filters specific dropdown with item list
+function renderDropdownOptions(selectElement, items, searchQuery = '') {
+  if (!selectElement) return;
+
+  const currentSelection = selectElement.value;
+  selectElement.innerHTML = '<option value="">Select item...</option>';
+
+  const query = (searchQuery || '').toLowerCase().trim();
+  const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name));
+
+  let matchedItems = sorted;
+  if (query) {
+    matchedItems = sorted.filter(
+      (item) =>
+        item.name.toLowerCase().includes(query) ||
+        item.setName.toLowerCase().includes(query) ||
+        item.releaseEvent.toLowerCase().includes(query)
+    );
+  }
+
+  matchedItems.forEach((item) => {
+    const valText = item.isNilValue ? 'Nil' : item.baseValue;
+    const shinyTag = item.hasShiny ? '★' : '';
+    const optionText = `${item.name} (${item.type}) [Val: ${valText} | Dem: ${item.demandLabel}] ${shinyTag}`.trim();
+
+    const opt = document.createElement('option');
+    opt.value = item.id;
+    opt.textContent = optionText;
+    selectElement.appendChild(opt);
+  });
+
+  if (currentSelection && matchedItems.some((i) => i.id === currentSelection)) {
+    selectElement.value = currentSelection;
+  }
+}
+
 function populateDropdowns(items) {
   const selectYour = document.getElementById('select-your');
   const selectTheir = document.getElementById('select-their');
-  if (!selectYour || !selectTheir) return;
+  renderDropdownOptions(selectYour, items);
+  renderDropdownOptions(selectTheir, items);
+}
 
-  selectYour.innerHTML = '<option value="">Select item...</option>';
-  selectTheir.innerHTML = '<option value="">Select item...</option>';
+// Updates shiny checkbox disabled state based on whether selected item has a shiny version
+function handleDropdownItemSelection(selectId, shinyCheckboxId, labelId) {
+  const select = document.getElementById(selectId);
+  const cb = document.getElementById(shinyCheckboxId);
+  const label = document.getElementById(labelId);
+  if (!select || !cb || !label) return;
 
-  const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name));
-
-  sorted.forEach((item) => {
-    const valText = item.isNilValue ? 'Nil' : item.baseValue;
-    const optionText = `${item.name} (${item.type}) [Val: ${valText} | Dem: ${item.demandLabel}]`;
-
-    const optYour = document.createElement('option');
-    optYour.value = item.id;
-    optYour.textContent = optionText;
-    selectYour.appendChild(optYour);
-
-    const optTheir = document.createElement('option');
-    optTheir.value = item.id;
-    optTheir.textContent = optionText;
-    selectTheir.appendChild(optTheir);
-  });
+  const selectedItem = allItems.find((i) => i.id === select.value);
+  if (!selectedItem || !selectedItem.hasShiny) {
+    cb.checked = false;
+    cb.disabled = true;
+    label.classList.add('disabled');
+    label.title = selectedItem ? 'This item does not have a shiny variant' : 'Select an item with shiny';
+  } else {
+    cb.disabled = false;
+    label.classList.remove('disabled');
+    label.title = `Add Shiny ${selectedItem.name} (Val: ${selectedItem.shinyValue})`;
+  }
 }
 
 function calculateSide(items) {
@@ -580,20 +617,56 @@ function applyFilters() {
 }
 
 function setupEventListeners() {
-  // Calculator Dropdown Add Buttons
+  // Calculator Dropdown Item Selection Listeners (Enables/Disables Shiny Checkbox)
+  const selectYour = document.getElementById('select-your');
+  if (selectYour) {
+    selectYour.addEventListener('change', () => {
+      handleDropdownItemSelection('select-your', 'shiny-your', 'label-shiny-your');
+    });
+  }
+
+  const selectTheir = document.getElementById('select-their');
+  if (selectTheir) {
+    selectTheir.addEventListener('change', () => {
+      handleDropdownItemSelection('select-their', 'shiny-their', 'label-shiny-their');
+    });
+  }
+
+  // Live Search within Calculator Dropdowns
+  const calcSearchYour = document.getElementById('calc-search-your');
+  if (calcSearchYour && selectYour) {
+    calcSearchYour.addEventListener('input', (e) => {
+      renderDropdownOptions(selectYour, allItems, e.target.value);
+      handleDropdownItemSelection('select-your', 'shiny-your', 'label-shiny-your');
+    });
+  }
+
+  const calcSearchTheir = document.getElementById('calc-search-their');
+  if (calcSearchTheir && selectTheir) {
+    calcSearchTheir.addEventListener('input', (e) => {
+      renderDropdownOptions(selectTheir, allItems, e.target.value);
+      handleDropdownItemSelection('select-their', 'shiny-their', 'label-shiny-their');
+    });
+  }
+
+  // Calculator Add Buttons with Shiny Checkbox Value
   const btnAddYour = document.getElementById('btn-add-your');
   if (btnAddYour) {
     btnAddYour.addEventListener('click', () => {
-      const selectYour = document.getElementById('select-your');
-      if (selectYour && selectYour.value) addItemToTrade(selectYour.value, 'your', false);
+      if (selectYour && selectYour.value) {
+        const isShiny = document.getElementById('shiny-your')?.checked || false;
+        addItemToTrade(selectYour.value, 'your', isShiny);
+      }
     });
   }
 
   const btnAddTheir = document.getElementById('btn-add-their');
   if (btnAddTheir) {
     btnAddTheir.addEventListener('click', () => {
-      const selectTheir = document.getElementById('select-their');
-      if (selectTheir && selectTheir.value) addItemToTrade(selectTheir.value, 'their', false);
+      if (selectTheir && selectTheir.value) {
+        const isShiny = document.getElementById('shiny-their')?.checked || false;
+        addItemToTrade(selectTheir.value, 'their', isShiny);
+      }
     });
   }
 
@@ -608,7 +681,7 @@ function setupEventListeners() {
     });
   }
 
-  // Live Search with Quick Clear Button
+  // Live Catalog Search with Quick Clear Button
   const searchInput = document.getElementById('search');
   const btnClearSearch = document.getElementById('btn-clear-search');
 
@@ -752,7 +825,7 @@ async function loadData() {
   }
 }
 
-// 1. Immediately mount tab navigation and UI controls
+// 1. Mount Navigation and UI Controls
 initTabNavigation();
 setupEventListeners();
 
