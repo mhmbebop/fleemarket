@@ -789,7 +789,7 @@ function removeItemFromTrade(itemId, sideTarget) {
   updateTradeVerdict();
 }
 
-// Render Catalog Grid with CSS Absolute Overlay Image Fallbacks
+// Render Catalog Grid with Clean Image Pre-checking
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
@@ -835,15 +835,8 @@ function renderItems(items) {
     card.innerHTML = `
       ${audioButtonHtml}
       ${starButtonHtml}
-      <div class="card-image-wrap" style="position: relative; overflow: hidden;">
-        <div class="card-img-fallback" style="display: flex; align-items: center; justify-content: center; font-size: 42px; width: 100%; height: 100%; background: #090b10; position: absolute; top: 0; left: 0; z-index: 1;">${fallbackEmoji}</div>
-        <img 
-          src="images/${item.id}.png" 
-          alt="" 
-          class="card-img" 
-          style="position: relative; z-index: 2; width: 100%; height: 100%; object-fit: contain;" 
-          onerror="this.remove();"
-        />
+      <div class="card-image-wrap" id="img-wrap-${item.id}" style="position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #090b10;">
+        <div class="card-img-fallback" style="font-size: 42px;">${fallbackEmoji}</div>
       </div>
       <div class="card-top-info">
         <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 3px;">
@@ -881,6 +874,16 @@ function renderItems(items) {
     `;
 
     fragment.appendChild(card);
+
+    // Asynchronously test if the PNG image exists before inserting it into the DOM
+    const imgTest = new Image();
+    imgTest.src = `images/${item.id}.png`;
+    imgTest.onload = () => {
+      const wrap = card.querySelector(`#img-wrap-${item.id}`);
+      if (wrap) {
+        wrap.innerHTML = `<img src="images/${item.id}.png" alt="" style="width: 100%; height: 100%; object-fit: contain; padding: 6px;" />`;
+      }
+    };
   });
 
   grid.appendChild(fragment);
@@ -1218,7 +1221,7 @@ function setupEventListeners() {
           if (verdictEl) { verdictEl.textContent = '✅ Small Win'; verdictEl.className = 'verdict-text status-win'; }
         } else if (percentDiff >= -5) {
           verdictString = 'Fair Trade';
-          if (verdictEl) { verdictEl.textContent = '⚖️ Fair Trade'; verdictEl.className = 'verdict-text status-fair'; }
+          if (verdictEl) { verdictEl.textContent = '⚖️️ Fair Trade'; verdictEl.className = 'verdict-text status-fair'; }
         } else if (percentDiff >= -15) {
           verdictString = 'Small Loss';
           if (verdictEl) { verdictEl.textContent = '🔻 Small Loss'; verdictEl.className = 'verdict-text status-loss'; }
