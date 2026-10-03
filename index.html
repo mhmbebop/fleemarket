@@ -408,13 +408,20 @@
   <!-- ITEM CATALOG SECTION -->
   <h2>Item Database</h2>
   
-  <div class="controls-row">
+ <div class="controls-row">
     <input type="text" id="search" class="search-box" placeholder="Search hammer, gem, or crate..." />
     <div class="filter-btn-group">
       <button class="filter-btn active" data-filter="all">All Items</button>
       <button class="filter-btn" data-filter="hammer">🔨 Hammers</button>
       <button class="filter-btn" data-filter="gem">💎 Gems</button>
     </div>
+    <select id="sort-select" class="select-dropdown" style="max-width: 200px; padding: 8px 12px;">
+      <option value="val-desc">Value: High to Low</option>
+      <option value="val-asc">Value: Low to High</option>
+      <option value="dem-desc">Demand: High to Low</option>
+      <option value="name-asc">Name: A to Z</option>
+    </select>
+  </div>
   </div>
 
   <div class="grid" id="items-grid"></div>
