@@ -364,7 +364,6 @@
       font-weight: 700;
     }
 
-    /* Multi-Filter Drawer Toggle Button */
     .filter-drawer-btn {
       background: var(--surface-1);
       border: 1px solid var(--border);
@@ -414,7 +413,7 @@
     }
     .drawer-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 20px;
     }
     .drawer-section-title {
@@ -425,9 +424,6 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
     .drawer-checkbox-group {
       display: flex;
@@ -504,6 +500,25 @@
     .card:hover {
       transform: translateY(-4px);
       box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.7);
+    }
+
+    /* UNOBTAINABLE / UNTRADEABLE (Crimson Red) */
+    .card.rarity-unobtainable, .card.rarity-untradeable {
+      border-color: rgba(239, 68, 68, 0.55);
+      background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, var(--surface-1) 100%);
+    }
+    .card.rarity-unobtainable:hover, .card.rarity-untradeable:hover {
+      box-shadow: 0 12px 28px -10px rgba(239, 68, 68, 0.45);
+      border-color: rgba(239, 68, 68, 0.85);
+    }
+    .card.rarity-unobtainable .card-title, .card.rarity-untradeable .card-title {
+      color: #ef4444;
+      text-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+    }
+    .badge-rarity-unobtainable, .badge-rarity-untradeable {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.45);
     }
 
     /* MYTHICAL GRADIENT BLUE */
@@ -856,6 +871,7 @@
         <div>
           <div class="drawer-section-title">Rarity Tier</div>
           <div class="drawer-checkbox-group">
+            <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Unobtainable"> Unobtainable</label>
             <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Mythical"> Mythical</label>
             <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Legendary"> Legendary</label>
             <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Epic"> Epic</label>
@@ -872,11 +888,11 @@
           </div>
         </div>
 
-        <!-- EVENTS & CRATES (Populated Dynamically) -->
+        <!-- EVENTS & CRATES (Unobtainable Excluded) -->
         <div>
           <div class="drawer-section-title">Event & Crate</div>
           <div class="drawer-checkbox-group" id="events-checkbox-group">
-            <!-- Injected by app.js -->
+            <!-- Dynamically populated from sheet -->
           </div>
         </div>
       </div>
