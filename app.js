@@ -275,14 +275,21 @@ function renderItems(items) {
 }
 
 // Filter items based on search input and active type button
+// Filter items based on search input and active type button
 function applyFilters() {
-  const query = document.getElementById('search').value.toLowerCase().trim();
+  const query = (document.getElementById('search').value || '').toLowerCase().trim();
 
   const filtered = allItems.filter((item) => {
-    const itemType = item.type.toLowerCase();
-    const matchesType = currentFilter === 'all' || itemType === currentFilter;
+    // Clean, lowercase item type check (handles spaces/casing)
+    const itemType = (item.type || '').toLowerCase().trim();
+    
+    // Check type filter ('all', 'hammer', or 'gem')
+    const matchesType = (currentFilter === 'all') || (itemType === currentFilter);
+
+    // Check search input
     const matchesSearch =
-      item.name.toLowerCase().includes(query) ||
+      !query ||
+      (item.name && item.name.toLowerCase().includes(query)) ||
       (item.setName && item.setName.toLowerCase().includes(query)) ||
       (item.releaseEvent && item.releaseEvent.toLowerCase().includes(query));
 
@@ -292,54 +299,19 @@ function applyFilters() {
   renderItems(filtered);
 }
 
-// Fetch spreadsheet data
-async function loadData() {
-  const statusEl = document.getElementById('status');
-  try {
-    const response = await fetch(CSV_URL);
-    if (!response.ok) throw new Error('Could not download spreadsheet data');
-
-    const csvText = await response.text();
-    allItems = parseCSV(csvText);
-
-    statusEl.textContent = `Loaded ${allItems.length} items successfully.`;
-    populateDropdowns(allItems);
-    applyFilters();
-  } catch (error) {
-    statusEl.textContent = 'Failed to load items. Check internet connection or sheet permissions.';
-    console.error(error);
-  }
-}
-
-// Trade Calculator Dropdown Buttons
-document.getElementById('btn-add-a').addEventListener('click', () => {
-  const id = document.getElementById('select-a').value;
-  if (id) addItemToTrade(id, 'A');
-});
-
-document.getElementById('btn-add-b').addEventListener('click', () => {
-  const id = document.getElementById('select-b').value;
-  if (id) addItemToTrade(id, 'B');
-});
-
-document.getElementById('btn-reset').addEventListener('click', () => {
-  sideA = [];
-  sideB = [];
-  renderTradeList(sideA, 'list-a');
-  renderTradeList(sideB, 'list-b');
-  updateTradeVerdict();
-});
-
-// Search and Filter Listeners
+// Search input listener
 document.getElementById('search').addEventListener('input', applyFilters);
 
+// Filter button click listeners using e.currentTarget to always grab the button
 document.querySelectorAll('.filter-btn').forEach((btn) => {
   btn.addEventListener('click', (e) => {
+    // e.currentTarget guarantees we get the <button>, even if clicking the emoji inside it
+    const button = e.currentTarget;
+    
     document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
-    e.target.classList.add('active');
-    currentFilter = e.target.getAttribute('data-filter');
+    button.classList.add('active');
+
+    currentFilter = button.getAttribute('data-filter').toLowerCase().trim();
     applyFilters();
   });
 });
-
-loadData();
