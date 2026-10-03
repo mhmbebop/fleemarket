@@ -4,6 +4,7 @@ let allItems = [];
 let sideA = [];
 let sideB = [];
 let currentFilter = 'all'; // 'all' | 'hammer' | 'gem'
+let currentSort = 'val-desc'; // default sort
 
 // CSV Parser
 function parseCSV(text) {
@@ -276,17 +277,15 @@ function renderItems(items) {
 
 // Filter items based on search input and active type button
 // Filter items based on search input and active type button
+// Filter and Sort items
 function applyFilters() {
   const query = (document.getElementById('search').value || '').toLowerCase().trim();
 
-  const filtered = allItems.filter((item) => {
-    // Clean, lowercase item type check (handles spaces/casing)
+  // 1. Filter by Type and Search Query
+  let filtered = allItems.filter((item) => {
     const itemType = (item.type || '').toLowerCase().trim();
-    
-    // Check type filter ('all', 'hammer', or 'gem')
     const matchesType = (currentFilter === 'all') || (itemType === currentFilter);
 
-    // Check search input
     const matchesSearch =
       !query ||
       (item.name && item.name.toLowerCase().includes(query)) ||
@@ -296,18 +295,36 @@ function applyFilters() {
     return matchesType && matchesSearch;
   });
 
+  // 2. Sort the filtered items
+  filtered.sort((a, b) => {
+    if (currentSort === 'val-desc') {
+      return b.baseValue - a.baseValue;
+    } else if (currentSort === 'val-asc') {
+      return a.baseValue - b.baseValue;
+    } else if (currentSort === 'dem-desc') {
+      return b.demandTier - a.demandTier;
+    } else if (currentSort === 'name-asc') {
+      return a.name.localeCompare(b.name);
+    }
+    return 0;
+  });
+
   renderItems(filtered);
 }
 
 // Search input listener
 document.getElementById('search').addEventListener('input', applyFilters);
 
-// Filter button click listeners using e.currentTarget to always grab the button
+// Sort dropdown listener
+document.getElementById('sort-select').addEventListener('change', (e) => {
+  currentSort = e.target.value;
+  applyFilters();
+});
+
+// Filter button click listeners
 document.querySelectorAll('.filter-btn').forEach((btn) => {
   btn.addEventListener('click', (e) => {
-    // e.currentTarget guarantees we get the <button>, even if clicking the emoji inside it
     const button = e.currentTarget;
-    
     document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
     button.classList.add('active');
 
