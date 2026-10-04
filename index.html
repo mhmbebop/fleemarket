@@ -16,7 +16,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* Prevent broken image placeholder outlines and boxes */
     img:-moz-broken, img:-webkit-broken {
       display: none !important;
     }
@@ -29,7 +28,7 @@
       --bg-dark: #0d0f12;
       --surface-1: #15181e;
       --surface-2: #1c2028;
-      --surface-glass: rgba(21, 24, 30, 0.90);
+      --surface-glass: rgba(17, 20, 27, 0.95);
       --border: rgba(255, 255, 255, 0.08);
       --border-focus: rgba(157, 125, 253, 0.45);
       --primary: #9d7dfd;
@@ -51,7 +50,7 @@
       transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     }
 
-   body {
+    body {
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       margin: 0;
       padding: clamp(14px, 3vw, 28px) clamp(10px, 3vw, 24px) 110px;
@@ -201,32 +200,33 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* NEON CALCULATOR LAYOUT */
     .calculator-container {
       background: var(--surface-glass);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: clamp(14px, 3vw, 26px);
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+      padding: clamp(16px, 3vw, 28px);
+      box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.75);
       width: 100%;
       overflow: visible;
     }
     .calculator-title {
       font-family: 'Outfit', sans-serif;
-      font-size: clamp(16px, 3vw, 20px);
+      font-size: clamp(17px, 3vw, 21px);
       font-weight: 700;
       color: #fff;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 14px;
+      margin-bottom: 18px;
     }
     .reset-btn {
       background: rgba(255, 255, 255, 0.05);
       color: var(--text-muted);
       border: 1px solid var(--border);
-      padding: 6px 12px;
+      padding: 6px 14px;
       border-radius: var(--radius-sm);
       cursor: pointer;
       font-size: 12px;
@@ -242,24 +242,24 @@
     .trade-columns {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      gap: 20px;
       width: 100%;
     }
-    @media (max-width: 820px) {
+    @media (max-width: 860px) {
       .trade-columns {
         grid-template-columns: 1fr;
-        gap: 14px;
+        gap: 16px;
       }
     }
 
     .trade-side {
       background: var(--surface-1);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: clamp(12px, 2.5vw, 18px);
+      border-radius: 14px;
+      padding: clamp(14px, 2.5vw, 20px);
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       min-width: 0;
       width: 100%;
       position: relative;
@@ -271,22 +271,28 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 2px;
     }
     .side-title {
       font-family: 'Outfit', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .side-your .side-title { color: var(--accent-cyan); }
     .side-their .side-title { color: var(--accent-green); }
+    .side-totals {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      gap: 12px;
+    }
 
     .calc-controls-stack {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 10px;
       width: 100%;
       position: relative;
     }
@@ -299,7 +305,7 @@
     }
     .calc-search-input {
       width: 100%;
-      padding: 10px 34px 10px 12px;
+      padding: 10px 36px 10px 14px;
       background: var(--surface-2);
       color: #fff;
       border: 1px solid var(--border);
@@ -314,7 +320,7 @@
     }
     .clear-calc-search-btn {
       position: absolute;
-      right: 8px;
+      right: 10px;
       background: rgba(255, 255, 255, 0.08);
       border: none;
       color: var(--text-muted);
@@ -340,11 +346,11 @@
       left: 0;
       right: 0;
       width: 100%;
-      max-height: 220px;
+      max-height: 240px;
       background: var(--surface-2);
       border: 1px solid var(--border-focus);
       border-radius: var(--radius-sm);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85);
       overflow-y: auto;
       z-index: 50;
       display: none;
@@ -355,7 +361,7 @@
     }
 
     .calc-match-item {
-      padding: 9px 12px;
+      padding: 10px 14px;
       font-size: 13px;
       color: var(--text-main);
       display: flex;
@@ -365,56 +371,86 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
       user-select: none;
     }
-    .calc-match-item:last-child {
-      border-bottom: none;
-    }
+    .calc-match-item:last-child { border-bottom: none; }
     .calc-match-item:hover, .calc-match-item.highlighted {
       background: rgba(157, 125, 253, 0.15);
       color: #fff;
     }
-    .calc-match-item-name {
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .calc-match-item-meta {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-    .calc-no-match-msg {
-      padding: 12px;
-      font-size: 12px;
-      color: var(--accent-rose);
-      text-align: center;
-      font-weight: 600;
-    }
 
-    .calc-selected-preview {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(0, 0, 0, 0.35);
-      padding: 8px 12px;
-      border-radius: var(--radius-sm);
+    /* VISUAL ITEM SEARCH & PREVIEW CARD */
+    .calc-item-preview-card {
+      background: rgba(13, 15, 20, 0.7);
       border: 1px solid var(--border);
-      min-height: 38px;
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 64px;
     }
-    .calc-selected-name {
+    .preview-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
+    }
+    .preview-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      background: #090b10;
+      border: 1px solid var(--border);
+      object-fit: contain;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .preview-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+      flex: 1;
+    }
+    .preview-name {
       font-size: 13px;
       font-weight: 700;
       color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 6px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .preview-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .preview-stats {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+    .preview-val {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      color: var(--accent-gold);
+    }
+    .preview-demand {
+      color: var(--text-muted);
+      font-size: 11px;
+    }
 
     .calc-actions-row {
       display: flex;
-      gap: 8px;
+      justify-content: space-between;
       align-items: center;
       margin-top: 2px;
     }
@@ -427,17 +463,16 @@
       color: var(--accent-gold);
       background: rgba(251, 191, 36, 0.08);
       border: 1px solid rgba(251, 191, 36, 0.25);
-      padding: 8px 12px;
+      padding: 6px 10px;
       border-radius: var(--radius-sm);
       cursor: pointer;
       user-select: none;
-      flex-shrink: 0;
       touch-action: manipulation;
     }
     .calc-shiny-toggle input[type="checkbox"] {
       accent-color: var(--accent-gold);
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       cursor: pointer;
       margin: 0;
     }
@@ -446,32 +481,40 @@
       cursor: not-allowed;
       border-color: var(--border);
       color: var(--text-muted);
+      background: transparent;
     }
 
-    .add-btn {
-      flex: 1;
+    .add-to-trade-btn {
+      background: var(--accent-green);
       color: #0b0f17;
       border: none;
-      padding: 9px 16px;
+      padding: 7px 16px;
       border-radius: var(--radius-sm);
       cursor: pointer;
-      font-weight: 700;
-      font-size: 13px;
-      text-align: center;
+      font-weight: 800;
+      font-size: 12px;
+      font-family: 'Outfit', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       touch-action: manipulation;
     }
-    .side-your .add-btn { background: var(--accent-cyan); }
-    .side-their .add-btn { background: var(--accent-green); }
-    .add-btn:active {
-      transform: scale(0.97);
+    .add-to-trade-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .add-to-trade-btn:active { transform: scale(0.97); }
+    .add-to-trade-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      filter: grayscale(0.5);
+      transform: none !important;
     }
 
+    /* SELECTED ITEMS LIST */
     .selected-list {
       list-style: none;
       padding: 0;
       margin: 0;
-      min-height: 80px;
-      max-height: 260px;
+      min-height: 90px;
+      max-height: 280px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -483,28 +526,28 @@
       justify-content: space-between;
       align-items: center;
       background: var(--surface-2);
-      padding: 8px 10px;
+      padding: 8px 12px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
-      gap: 8px;
+      gap: 10px;
       width: 100%;
       min-width: 0;
     }
     .trade-item-left {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       min-width: 0;
       flex: 1;
       overflow: hidden;
     }
-    .trade-thumb, .trade-thumb-fallback {
-      width: 38px;
-      height: 38px;
+    .trade-thumb {
+      width: 36px;
+      height: 36px;
       border-radius: var(--radius-sm);
       background: #090b10;
-      object-fit: contain;
       border: 1px solid var(--border);
+      object-fit: contain;
       flex-shrink: 0;
       display: flex;
       align-items: center;
@@ -516,19 +559,20 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      color: #fff;
     }
     .trade-item-controls {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       flex-shrink: 0;
     }
     .qty-badge {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 800;
-      color: var(--primary);
-      background: rgba(157, 125, 253, 0.15);
-      padding: 2px 6px;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 3px 8px;
       border-radius: 6px;
       font-family: 'Outfit', sans-serif;
     }
@@ -547,87 +591,188 @@
       cursor: pointer;
       touch-action: manipulation;
     }
-    .qty-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
+    .qty-btn:hover { background: rgba(255, 255, 255, 0.2); }
     .remove-btn {
-      background: rgba(244, 63, 94, 0.1);
-      border: 1px solid rgba(244, 63, 94, 0.2);
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.3);
       color: var(--accent-rose);
       cursor: pointer;
       font-weight: 700;
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
+      font-size: 12px;
       flex-shrink: 0;
       touch-action: manipulation;
     }
-    .remove-btn:hover {
-      background: rgba(244, 63, 94, 0.15);
-      color: var(--accent-rose);
-    }
+    .remove-btn:hover { background: var(--accent-rose); color: #fff; }
 
-    .side-summary {
-      border-top: 1px solid var(--border);
-      padding-top: 8px;
-      font-size: 12px;
+    /* CENTERED VERDICT PANEL */
+    .calculator-footer-panel {
+      margin-top: 20px;
       display: flex;
-      justify-content: space-between;
-      color: var(--text-muted);
-    }
-
-    .verdict-box {
-      margin-top: 16px;
-      padding: clamp(12px, 2.5vw, 18px) 12px;
-      border-radius: var(--radius-md);
-      text-align: center;
-      background: var(--surface-1);
-      border: 1px solid var(--border);
+      flex-direction: column;
+      gap: 14px;
       width: 100%;
     }
-    .verdict-text {
-      font-family: 'Outfit', sans-serif;
-      font-size: clamp(17px, 4vw, 24px);
-      font-weight: 800;
-      letter-spacing: -0.3px;
-      margin-bottom: 2px;
-    }
-    .verdict-details {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-    .status-win { color: var(--accent-green); text-shadow: 0 0 16px rgba(52, 211, 153, 0.3); }
-    .status-fair { color: var(--accent-gold); text-shadow: 0 0 16px rgba(251, 191, 36, 0.3); }
-    .status-loss { color: var(--accent-rose); text-shadow: 0 0 16px rgba(244, 63, 94, 0.3); }
 
+    .verdict-banner {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      gap: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    @media (max-width: 768px) {
+      .verdict-banner {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 10px;
+      }
+    }
+    .verdict-side-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .verdict-side-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+    .verdict-side-val {
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .verdict-center-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px 24px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+    .verdict-status {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .verdict-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .status-win { color: var(--accent-green); text-shadow: 0 0 16px rgba(52, 211, 153, 0.4); }
+    .status-fair { color: var(--accent-gold); text-shadow: 0 0 16px rgba(251, 191, 36, 0.4); }
+    .status-loss { color: var(--accent-rose); text-shadow: 0 0 16px rgba(244, 63, 94, 0.4); }
+
+    .calculator-action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
     .trade-action-btn {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid var(--border);
       color: #fff;
-      padding: 6px 12px;
+      padding: 10px 18px;
       border-radius: var(--radius-sm);
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       touch-action: manipulation;
     }
     .trade-action-btn:hover {
       background: rgba(157, 125, 253, 0.2);
       border-color: var(--primary);
+      color: #fff;
     }
+    .trade-action-btn.primary {
+      background: var(--primary);
+      color: #0b0f17;
+      font-weight: 800;
+      font-family: 'Outfit', sans-serif;
+      border: none;
+    }
+    .trade-action-btn.primary:hover { filter: brightness(1.15); }
 
-    .trade-action-btn:disabled, #btn-finalize-trade:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      filter: grayscale(0.6);
-      pointer-events: none;
-      box-shadow: none !important;
+    /* RECENT TRADES MINI CARDS */
+    .recent-trades-container {
+      margin-top: 20px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
     }
+    .recent-trades-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .recent-trades-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+    }
+    .recent-trade-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .recent-trade-sides {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .recent-thumb {
+      width: 32px;
+      height: 32px;
+      background: #090b10;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .recent-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .badge-win { background: rgba(52, 211, 153, 0.15); color: var(--accent-green); border: 1px solid rgba(52, 211, 153, 0.3); }
+    .badge-fair { background: rgba(251, 191, 36, 0.15); color: var(--accent-gold); border: 1px solid rgba(251, 191, 36, 0.3); }
+    .badge-loss { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); border: 1px solid rgba(244, 63, 94, 0.3); }
 
     /* Controls Bar & Filters */
     .catalog-header {
@@ -653,9 +798,7 @@
       width: 100%;
     }
     @media (min-width: 860px) {
-      .controls-row {
-        width: auto;
-      }
+      .controls-row { width: auto; }
     }
 
     .search-wrap {
@@ -696,10 +839,7 @@
       cursor: pointer;
       touch-action: manipulation;
     }
-    .clear-search-btn:hover {
-      background: rgba(244, 63, 94, 0.2);
-      color: var(--accent-rose);
-    }
+    .clear-search-btn:hover { background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); }
 
     .filter-btn-group {
       display: flex;
@@ -722,9 +862,7 @@
       font-family: inherit;
       touch-action: manipulation;
     }
-    .filter-btn:hover {
-      color: #fff;
-    }
+    .filter-btn:hover { color: #fff; }
     .filter-btn.active {
       background: var(--primary);
       color: #0b0f17;
@@ -775,34 +913,22 @@
 
     /* Rarity Badge Styling */
     .badge-rarity-untradeable, .badge-rarity-unobtainable {
-      background: rgba(239, 68, 68, 0.18);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.45);
+      background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.45);
     }
     .badge-rarity-mythical {
-      background: linear-gradient(135deg, rgba(0, 210, 255, 0.2) 0%, rgba(58, 123, 213, 0.2) 100%);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.4);
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.2) 0%, rgba(58, 123, 213, 0.2) 100%); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4);
     }
     .badge-rarity-legendary {
-      background: rgba(245, 158, 11, 0.18);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.35);
+      background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35);
     }
     .badge-rarity-epic {
-      background: rgba(168, 85, 247, 0.18);
-      color: #c084fc;
-      border: 1px solid rgba(168, 85, 247, 0.35);
+      background: rgba(168, 85, 247, 0.18); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.35);
     }
     .badge-rarity-rare {
-      background: rgba(59, 130, 246, 0.18);
-      color: #60a5fa;
-      border: 1px solid rgba(59, 130, 246, 0.35);
+      background: rgba(59, 130, 246, 0.18); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.35);
     }
     .badge-rarity-common {
-      background: rgba(100, 116, 139, 0.18);
-      color: #94a3b8;
-      border: 1px solid rgba(100, 116, 139, 0.35);
+      background: rgba(52, 211, 153, 0.18); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.35);
     }
 
     /* Compact List View Styles */
@@ -840,12 +966,8 @@
       gap: 12px;
       font-size: 13px;
     }
-    .compact-row:last-child {
-      border-bottom: none;
-    }
-    .compact-row:hover {
-      background: rgba(157, 125, 253, 0.08);
-    }
+    .compact-row:last-child { border-bottom: none; }
+    .compact-row:hover { background: rgba(157, 125, 253, 0.08); }
     .compact-name {
       font-weight: 700;
       color: #fff;
@@ -866,11 +988,7 @@
       justify-content: flex-end;
       font-size: 12px;
     }
-    @media (max-width: 680px) {
-      .compact-meta {
-        gap: 12px;
-      }
-    }
+    @media (max-width: 680px) { .compact-meta { gap: 12px; } }
 
     .filter-drawer {
       display: none;
@@ -923,9 +1041,7 @@
       user-select: none;
       padding: 3px 0;
     }
-    .drawer-label:hover {
-      color: #fff;
-    }
+    .drawer-label:hover { color: #fff; }
     .drawer-label input[type="checkbox"] {
       accent-color: var(--primary);
       width: 17px;
@@ -951,10 +1067,7 @@
       font-weight: 600;
       touch-action: manipulation;
     }
-    .clear-filters-btn:hover {
-      color: var(--accent-rose);
-      border-color: rgba(244, 63, 94, 0.4);
-    }
+    .clear-filters-btn:hover { color: var(--accent-rose); border-color: rgba(244, 63, 94, 0.4); }
 
     /* Cards Grid */
     .grid {
@@ -982,96 +1095,27 @@
       }
     }
 
-    /* UNTRADEABLE */
     .card.rarity-untradeable, .card.rarity-unobtainable {
       border-color: rgba(239, 68, 68, 0.55);
       background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, var(--surface-1) 100%);
     }
-    .card.rarity-untradeable:hover, .card.rarity-unobtainable:hover {
-      box-shadow: 0 12px 28px -10px rgba(239, 68, 68, 0.45);
-      border-color: rgba(239, 68, 68, 0.85);
-    }
-    .card.rarity-untradeable .card-title, .card.rarity-unobtainable .card-title {
-      color: #ef4444;
-      text-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
-    }
-    .badge-rarity-untradeable, .badge-rarity-unobtainable {
-      background: rgba(239, 68, 68, 0.18);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.45);
-    }
-
-    /* MYTHICAL */
     .card.rarity-mythical {
       border: 1.5px solid transparent;
-      background: 
-        linear-gradient(var(--surface-1), var(--surface-1)) padding-box,
-        linear-gradient(135deg, #00d2ff 0%, #3a7bd5 50%, #4a00e0 100%) border-box;
+      background: linear-gradient(var(--surface-1), var(--surface-1)) padding-box, linear-gradient(135deg, #00d2ff 0%, #3a7bd5 50%, #4a00e0 100%) border-box;
       box-shadow: 0 0 16px rgba(0, 210, 255, 0.2);
     }
-    .card.rarity-mythical .card-title {
-      background: linear-gradient(135deg, #70e1ff 0%, #38bdf8 60%, #818cf8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .badge-rarity-mythical {
-      background: linear-gradient(135deg, rgba(0, 210, 255, 0.2) 0%, rgba(58, 123, 213, 0.2) 100%);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.4);
-    }
+    .card.rarity-legendary { border-color: rgba(245, 158, 11, 0.45); background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, var(--surface-1) 100%); }
+    .card.rarity-epic { border-color: rgba(168, 85, 247, 0.4); background: linear-gradient(180deg, rgba(168, 85, 247, 0.05) 0%, var(--surface-1) 100%); }
+    .card.rarity-rare { border-color: rgba(59, 130, 246, 0.35); }
+    .card.rarity-common { border-color: rgba(52, 211, 153, 0.35); }
 
-    /* LEGENDARY */
-    .card.rarity-legendary {
-      border-color: rgba(245, 158, 11, 0.45);
-      background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, var(--surface-1) 100%);
-    }
-    .badge-rarity-legendary {
-      background: rgba(245, 158, 11, 0.18);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.35);
-    }
-
-    /* EPIC */
-    .card.rarity-epic {
-      border-color: rgba(168, 85, 247, 0.4);
-      background: linear-gradient(180deg, rgba(168, 85, 247, 0.05) 0%, var(--surface-1) 100%);
-    }
-    .badge-rarity-epic {
-      background: rgba(168, 85, 247, 0.18);
-      color: #c084fc;
-      border: 1px solid rgba(168, 85, 247, 0.35);
-    }
-
-    /* RARE */
-    .card.rarity-rare {
-      border-color: rgba(59, 130, 246, 0.35);
-    }
-    .badge-rarity-rare {
-      background: rgba(59, 130, 246, 0.18);
-      color: #60a5fa;
-      border: 1px solid rgba(59, 130, 246, 0.35);
-    }
-
-    /* COMMON */
-    .card.rarity-common {
-      border-color: rgba(100, 116, 139, 0.3);
-    }
-    .badge-rarity-common {
-      background: rgba(100, 116, 139, 0.18);
-      color: #94a3b8;
-      border: 1px solid rgba(100, 116, 139, 0.35);
-    }
-
-    /* SHINY BORDER */
     @keyframes rainbow-border {
       0% { filter: hue-rotate(0deg); }
       100% { filter: hue-rotate(360deg); }
     }
     .card.is-shiny {
       border: 1.5px solid transparent !important;
-      background: 
-        linear-gradient(var(--surface-1), var(--surface-1)) padding-box,
-        linear-gradient(135deg, #ff007a, #9900ef, #00d2ff, #00ff88, #ffe600, #ff007a) border-box !important;
+      background: linear-gradient(var(--surface-1), var(--surface-1)) padding-box, linear-gradient(135deg, #ff007a, #9900ef, #00d2ff, #00ff88, #ffe600, #ff007a) border-box !important;
       box-shadow: 0 0 18px rgba(153, 0, 239, 0.3) !important;
       animation: rainbow-border 6s linear infinite;
     }
@@ -1080,10 +1124,8 @@
       color: #fff !important;
       border: none !important;
       font-weight: 800;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
     }
 
-    /* Audio Speaker Button */
     .card-audio-btn {
       position: absolute;
       top: 7px;
@@ -1101,27 +1143,9 @@
       cursor: pointer;
       font-size: 14px;
       z-index: 2;
-      touch-action: manipulation;
     }
-    .card-audio-btn:hover {
-      background: rgba(0, 210, 255, 0.25);
-      border-color: #38bdf8;
-      transform: scale(1.1);
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
-    }
-    .card-audio-btn.is-playing {
-      background: rgba(0, 210, 255, 0.35);
-      border-color: #38bdf8;
-      color: #fff;
-      animation: pulse-audio 1.2s infinite;
-    }
-    @keyframes pulse-audio {
-      0% { transform: scale(1); box-shadow: 0 0 0 rgba(56, 189, 248, 0.4); }
-      50% { transform: scale(1.12); box-shadow: 0 0 16px rgba(56, 189, 248, 0.8); }
-      100% { transform: scale(1); box-shadow: 0 0 0 rgba(56, 189, 248, 0.4); }
-    }
+    .card-audio-btn:hover { background: rgba(0, 210, 255, 0.25); border-color: #38bdf8; }
 
-    /* Shiny Star Button */
     .shiny-star-btn {
       position: absolute;
       top: 7px;
@@ -1139,18 +1163,9 @@
       cursor: pointer;
       font-size: 15px;
       z-index: 2;
-      touch-action: manipulation;
     }
-    .shiny-star-btn:hover {
-      color: #ffd700;
-      border-color: #ffd700;
-    }
-    .shiny-star-btn.active {
-      color: #ffd700;
-      border-color: #ffd700;
-      background: rgba(255, 215, 0, 0.15);
-      text-shadow: 0 0 10px #ffd700;
-    }
+    .shiny-star-btn:hover { color: #ffd700; border-color: #ffd700; }
+    .shiny-star-btn.active { color: #ffd700; border-color: #ffd700; background: rgba(255, 215, 0, 0.15); }
 
     .card-image-wrap {
       width: 100%;
@@ -1164,24 +1179,6 @@
       overflow: hidden;
       position: relative;
     }
-    .card-img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      padding: 6px;
-    }
-    .card.is-shiny .card-img {
-      filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.5));
-    }
-    .card-img-fallback {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: clamp(26px, 6vw, 36px);
-      width: 100%;
-      height: 100%;
-    }
-
     .card-top-info {
       display: flex;
       justify-content: space-between;
@@ -1201,31 +1198,10 @@
       background: rgba(157, 125, 253, 0.15);
       color: var(--primary);
       text-transform: uppercase;
-      letter-spacing: 0.3px;
     }
-    .badge-gem {
-      background: rgba(56, 189, 248, 0.15);
-      color: var(--accent-cyan);
-    }
-    .badge-rarity {
-      display: inline-flex;
-      align-items: center;
-      font-size: 9px;
-      font-weight: 800;
-      padding: 2px 5px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-    .set-tag {
-      font-size: 10px;
-      color: var(--text-muted);
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 80px;
-    }
+    .badge-gem { background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); }
+    .badge-rarity { display: inline-flex; align-items: center; font-size: 9px; font-weight: 800; padding: 2px 5px; border-radius: 4px; text-transform: uppercase; }
+    .set-tag { font-size: 10px; color: var(--text-muted); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
 
     .card-title {
       font-family: 'Outfit', sans-serif;
@@ -1233,7 +1209,6 @@
       font-weight: 700;
       color: #fff;
       margin: 0;
-      letter-spacing: -0.2px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -1247,306 +1222,67 @@
       padding: 5px 7px;
       border-radius: var(--radius-sm);
       border: 1px solid rgba(255, 255, 255, 0.04);
-      min-width: 0;
     }
-    .row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-    .val {
-      color: var(--accent-gold);
-      font-weight: 800;
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px;
-    }
-    .demand {
-      color: var(--accent-cyan);
-      font-weight: 700;
-    }
-    .status-tag {
-      color: #cbd5e1;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 85px;
-      text-align: right;
-    }
+    .row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); }
+    .val { color: var(--accent-gold); font-weight: 800; font-family: 'Outfit', sans-serif; font-size: 13px; }
+    .demand { color: var(--accent-cyan); font-weight: 700; }
+    .status-tag { color: #cbd5e1; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85px; text-align: right; }
 
-    .card-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-      margin-top: 2px;
-    }
-    .card-btn-group {
-      display: flex;
-      align-items: stretch;
-      gap: 2px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-    }
-    .card-add-btn {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      padding: 7px 4px;
-      font-size: 11px;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-      text-align: center;
-      touch-action: manipulation;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .card-add-btn:active {
-      transform: scale(0.97);
-    }
-    .card-btn-group.side-your:hover .card-add-btn {
-      color: var(--accent-cyan);
-    }
-    .card-btn-group.side-their:hover .card-add-btn {
-      color: var(--accent-green);
-    }
+    .card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 2px; }
+    .card-btn-group { display: flex; align-items: stretch; gap: 2px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+    .card-add-btn { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 7px 4px; font-size: 11px; font-weight: 700; font-family: inherit; cursor: pointer; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-add-btn:active { transform: scale(0.97); }
+    .card-btn-group.side-your:hover .card-add-btn { color: var(--accent-cyan); }
+    .card-btn-group.side-their:hover .card-add-btn { color: var(--accent-green); }
+    .card-minus-btn { background: rgba(244, 63, 94, 0.15); border: none; border-left: 1px solid var(--border); color: var(--accent-rose); padding: 0 7px; cursor: pointer; font-size: 13px; font-weight: 800; display: none; align-items: center; justify-content: center; }
+    .card-minus-btn:hover { background: var(--accent-rose); color: #fff; }
+    .card-btn-group.has-items .card-minus-btn { display: flex; }
 
-    .card-minus-btn {
-      background: rgba(244, 63, 94, 0.15);
-      border: none;
-      border-left: 1px solid var(--border);
-      color: var(--accent-rose);
-      padding: 0 7px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 800;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      touch-action: manipulation;
-    }
-    .card-minus-btn:hover {
-      background: rgba(244, 63, 94, 0.15);
-      color: #fff;
-    }
-    .card-btn-group.has-items .card-minus-btn {
-      display: flex;
-    }
-
-    /* Floating Dock & Tray */
+    /* FLOATING TRADE DOCK */
     .floating-trade-dock {
-      position: fixed;
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%) translateY(120%);
-      width: calc(100% - 24px);
-      max-width: 680px;
-      background: rgba(17, 20, 28, 0.94);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--border-focus);
-      border-radius: 16px;
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.85), 0 0 20px rgba(157, 125, 253, 0.2);
-      z-index: 1000;
-      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
-      opacity: 0;
-      pointer-events: none;
+      position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%) translateY(120%);
+      width: calc(100% - 24px); max-width: 680px;
+      background: rgba(17, 20, 28, 0.94); backdrop-filter: blur(16px);
+      border: 1px solid var(--border-focus); border-radius: 16px; padding: 10px 14px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.85); z-index: 1000;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease; opacity: 0; pointer-events: none;
     }
-    .floating-trade-dock.visible {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .dock-stats {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-      flex: 1;
-    }
-    .dock-stat-pill {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-      font-size: 11px;
-      color: var(--text-muted);
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: var(--radius-sm);
-    }
-    .dock-stat-pill:hover {
-      background: rgba(255, 255, 255, 0.05);
-    }
+    .floating-trade-dock.visible { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+    .dock-stats { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+    .dock-stat-pill { display: flex; flex-direction: column; gap: 1px; font-size: 11px; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); }
+    .dock-stat-pill:hover { background: rgba(255, 255, 255, 0.05); }
     .dock-stat-pill.your b { color: var(--accent-cyan); font-family: 'Outfit', sans-serif; font-size: 13px; }
     .dock-stat-pill.their b { color: var(--accent-green); font-family: 'Outfit', sans-serif; font-size: 13px; }
-    .dock-divider {
-      width: 1px;
-      height: 24px;
-      background: var(--border);
-      flex-shrink: 0;
-    }
-    .dock-action-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .dock-tray-toggle-btn {
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text-main);
-      border: 1px solid var(--border);
-      padding: 9px 12px;
-      border-radius: var(--radius-sm);
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-      touch-action: manipulation;
-    }
-    .dock-tray-toggle-btn:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: var(--primary);
-    }
-    .dock-open-btn {
-      background: linear-gradient(135deg, #9d7dfd 0%, #7c54f5 100%);
-      color: #0b0f17;
-      border: none;
-      padding: 9px 16px;
-      border-radius: var(--radius-sm);
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px;
-      font-weight: 800;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-      flex-shrink: 0;
-      touch-action: manipulation;
-    }
-    .dock-open-btn:hover {
-      filter: brightness(1.15);
-      transform: translateY(-1px);
-    }
-    .dock-open-btn:active {
-      transform: scale(0.97);
-    }
+    .dock-divider { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; }
+    .dock-action-group { display: flex; align-items: center; gap: 8px; }
+    .dock-tray-toggle-btn { background: rgba(255, 255, 255, 0.08); color: var(--text-main); border: 1px solid var(--border); padding: 9px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; cursor: pointer; }
+    .dock-open-btn { background: linear-gradient(135deg, #9d7dfd 0%, #7c54f5 100%); color: #0b0f17; border: none; padding: 9px 16px; border-radius: var(--radius-sm); font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 
     .dock-items-drawer {
-      position: fixed;
-      bottom: 84px;
-      left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      width: calc(100% - 24px);
-      max-width: 680px;
-      max-height: 50vh;
-      background: rgba(17, 20, 28, 0.98);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--border-focus);
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.9);
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      z-index: 1001;
-      overflow-y: auto;
+      position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%) translateY(20px);
+      width: calc(100% - 24px); max-width: 680px; max-height: 50vh;
+      background: rgba(17, 20, 28, 0.98); backdrop-filter: blur(20px);
+      border: 1px solid var(--border-focus); border-radius: 16px; padding: 16px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.9); display: none; flex-direction: column; gap: 12px; z-index: 1001; overflow-y: auto;
     }
-    .dock-items-drawer.open {
-      display: flex;
-      animation: tabFadeIn 0.2s ease-out;
-      transform: translateX(-50%) translateY(0);
-    }
-    .drawer-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
-    }
-    .drawer-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      color: #fff;
-    }
-    .drawer-clear-btn {
-      background: transparent;
-      border: 1px solid rgba(244, 63, 94, 0.3);
-      color: var(--accent-rose);
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-    }
-    .drawer-clear-btn:hover {
-      background: rgba(244, 63, 94, 0.15);
-    }
-    .drawer-sections {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    @media (max-width: 580px) {
-      .drawer-sections {
-        grid-template-columns: 1fr;
-      }
-    }
-    .drawer-col-title {
-      font-size: 12px;
-      font-weight: 700;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-    }
+    .dock-items-drawer.open { display: flex; animation: tabFadeIn 0.2s ease-out; transform: translateX(-50%) translateY(0); }
+    .drawer-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .drawer-title { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #fff; }
+    .drawer-clear-btn { background: transparent; border: 1px solid rgba(244, 63, 94, 0.3); color: var(--accent-rose); font-size: 11px; padding: 4px 8px; border-radius: var(--radius-sm); cursor: pointer; }
+    .drawer-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 580px) { .drawer-sections { grid-template-columns: 1fr; } }
+    .drawer-col-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; }
     .drawer-col-title.your { color: var(--accent-cyan); }
     .drawer-col-title.their { color: var(--accent-green); }
-    .drawer-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 180px;
-      overflow-y: auto;
-    }
-    .drawer-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--surface-2);
-      padding: 6px 10px;
-      border-radius: var(--radius-sm);
-      font-size: 12px;
-      border: 1px solid var(--border);
-    }
+    .drawer-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; }
+    .drawer-item { display: flex; justify-content: space-between; align-items: center; background: var(--surface-2); padding: 6px 10px; border-radius: var(--radius-sm); font-size: 12px; border: 1px solid var(--border); }
 
     @media (max-width: 768px) {
-      body {
-        padding-bottom: 120px;
-      }
-      input[type="text"], select {
-        font-size: 16px !important;
-      }
-      .floating-trade-dock {
-        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-        width: calc(100% - 16px);
-        padding: 10px 12px;
-      }
-      .dock-items-drawer {
-        bottom: calc(76px + env(safe-area-inset-bottom, 0px));
-        width: calc(100% - 16px);
-      }
+      body { padding-bottom: 120px; }
+      input[type="text"], select { font-size: 16px !important; }
+      .floating-trade-dock { bottom: calc(12px + env(safe-area-inset-bottom, 0px)); width: calc(100% - 16px); padding: 10px 12px; }
+      .dock-items-drawer { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); width: calc(100% - 16px); }
     }
   </style>
 </head>
@@ -1626,46 +1362,42 @@
           <div>
             <div class="drawer-section-title">Rarity Tier</div>
             <div class="drawer-checkbox-group">
-              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Untradeable" aria-label="Filter Untradeable"> Untradeable</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Mythical" aria-label="Filter Mythical"> Mythical</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Legendary" aria-label="Filter Legendary"> Legendary</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Epic" aria-label="Filter Epic"> Epic</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Rare" aria-label="Filter Rare"> Rare</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Common" aria-label="Filter Common"> Common</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Untradeable"> Untradeable</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Mythical"> Mythical</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Legendary"> Legendary</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Epic"> Epic</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Rare"> Rare</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-rarity" value="Common"> Common</label>
             </div>
           </div>
-
           <div>
             <div class="drawer-section-title">Demand Tier</div>
             <div class="drawer-checkbox-group">
-              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="6" aria-label="Filter Demand Star"> ★ (Star / Highest)</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="5" aria-label="Filter Demand 5"> 5 (High)</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="4" aria-label="Filter Demand 4"> 4 (Good)</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="3" aria-label="Filter Demand 3"> 3 (Average)</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="2" aria-label="Filter Demand 2"> 2 (Below Average)</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="1" aria-label="Filter Demand 1"> 1 (Low)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="6"> ★ (Star / Highest)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="5"> 5 (High)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="4"> 4 (Good)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="3"> 3 (Average)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="2"> 2 (Below Average)</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-demand" value="1"> 1 (Low)</label>
             </div>
           </div>
-
           <div>
             <div class="drawer-section-title">Item Status</div>
             <div class="drawer-checkbox-group">
-              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Exceptional" aria-label="Filter Exceptional"> Exceptional</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Overpaid For" aria-label="Filter Overpaid For"> Overpaid For</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Doing Well" aria-label="Filter Doing Well"> Doing Well</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Stable" aria-label="Filter Stable"> Stable</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Fluctuating" aria-label="Filter Fluctuating"> Fluctuating</label>
-              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Subpar" aria-label="Filter Subpar"> Subpar</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Exceptional"> Exceptional</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Overpaid For"> Overpaid For</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Doing Well"> Doing Well</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Stable"> Stable</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Fluctuating"> Fluctuating</label>
+              <label class="drawer-label"><input type="checkbox" class="cb-status" value="Subpar"> Subpar</label>
             </div>
           </div>
-
           <div>
             <div class="drawer-section-title">Properties</div>
             <div class="drawer-checkbox-group">
-              <label class="drawer-label"><input type="checkbox" id="cb-has-shiny" aria-label="Filter Has Shiny Variant"> Has Shiny Variant</label>
+              <label class="drawer-label"><input type="checkbox" id="cb-has-shiny"> Has Shiny Variant</label>
             </div>
           </div>
-
           <div>
             <div class="drawer-section-title">Event & Crate</div>
             <div class="drawer-checkbox-group" id="events-checkbox-group"></div>
@@ -1673,7 +1405,7 @@
         </div>
 
         <div class="drawer-footer">
-          <button class="clear-filters-btn" id="btn-clear-filters" aria-label="Reset all active filters">Reset All Filters</button>
+          <button class="clear-filters-btn" id="btn-clear-filters">Reset All Filters</button>
         </div>
       </div>
 
@@ -1693,102 +1425,128 @@
           <div class="trade-side side-your">
             <div class="side-header">
               <span class="side-title">Your Offer</span>
+              <div class="side-totals">
+                <span>Value: <b id="total-val-your" class="val" style="color:var(--accent-gold);">0</b></span>
+                <span>Demand: <b id="avg-dem-your" class="demand">-</b></span>
+              </div>
             </div>
             
             <div class="calc-controls-stack">
               <div class="calc-search-box-wrap">
-                <input type="text" id="calc-search-your" class="calc-search-input" placeholder="Type weapon name (e.g. Amber...)" autocomplete="off" aria-label="Search your offer items" />
-                <button type="button" id="btn-clear-calc-your" class="clear-calc-search-btn" aria-label="Clear your offer search" title="Clear search">✕</button>
+                <input type="text" id="calc-search-your" class="calc-search-input" placeholder="Search items (e.g. Pumpkin, Galaxy...)" autocomplete="off" aria-label="Search your offer items" />
+                <button type="button" id="btn-clear-calc-your" class="clear-calc-search-btn" title="Clear search">✕</button>
                 <div class="calc-matches-panel" id="matches-panel-your"></div>
               </div>
 
-              <div class="calc-selected-preview" id="preview-your">
-                <span class="calc-selected-name" id="preview-name-your">Type above to select an item</span>
-                <span style="font-size: 11px; color: var(--text-muted);" id="preview-meta-your">-</span>
+              <!-- Visual Item Preview Card -->
+              <div class="calc-item-preview-card" id="preview-card-your">
+                <div class="preview-left">
+                  <div class="preview-thumb" id="preview-thumb-your">🔨</div>
+                  <div class="preview-info">
+                    <span class="preview-name" id="preview-name-your">Type above to select an item</span>
+                    <div class="preview-badges" id="preview-badges-your">
+                      <span class="badge badge-rarity" style="opacity: 0.5;">Select Item</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="preview-stats">
+                  <span class="preview-val" id="preview-val-your">-</span>
+                  <span class="preview-demand" id="preview-dem-your">Demand: -</span>
+                </div>
               </div>
 
               <div class="calc-actions-row">
-                <label class="calc-shiny-toggle disabled" id="label-shiny-your" title="Select an item with shiny">
-                  <input type="checkbox" id="shiny-your" aria-label="Toggle shiny variant for your offer" disabled />
+                <label class="calc-shiny-toggle disabled" id="label-shiny-your">
+                  <input type="checkbox" id="shiny-your" disabled />
                   <span>★ Shiny</span>
                 </label>
-                <button class="add-btn" id="btn-add-your" aria-label="Add item to your offer">+ Add Item</button>
+                <button class="add-to-trade-btn" id="btn-add-your" disabled>+ Add to Trade</button>
               </div>
             </div>
 
             <ul id="list-your" class="selected-list"></ul>
-            <div class="side-summary">
-              <span>Value Total: <b id="total-val-your" class="val">0</b></span>
-              <span>Average Demand Value: <b id="avg-dem-your" class="demand">-</b></span>
-            </div>
           </div>
 
           <!-- THEIR OFFER -->
           <div class="trade-side side-their">
             <div class="side-header">
               <span class="side-title">Their Offer</span>
+              <div class="side-totals">
+                <span>Value: <b id="total-val-their" class="val" style="color:var(--accent-gold);">0</b></span>
+                <span>Demand: <b id="avg-dem-their" class="demand">-</b></span>
+              </div>
             </div>
 
             <div class="calc-controls-stack">
               <div class="calc-search-box-wrap">
-                <input type="text" id="calc-search-their" class="calc-search-input" placeholder="Type weapon name (e.g. Fried...)" autocomplete="off" aria-label="Search their offer items" />
-                <button type="button" id="btn-clear-calc-their" class="clear-calc-search-btn" aria-label="Clear their offer search" title="Clear search">✕</button>
+                <input type="text" id="calc-search-their" class="calc-search-input" placeholder="Search items (e.g. Galaxy, Corrupt...)" autocomplete="off" aria-label="Search their offer items" />
+                <button type="button" id="btn-clear-calc-their" class="clear-calc-search-btn" title="Clear search">✕</button>
                 <div class="calc-matches-panel" id="matches-panel-their"></div>
               </div>
 
-              <div class="calc-selected-preview" id="preview-their">
-                <span class="calc-selected-name" id="preview-name-their">Type above to select an item</span>
-                <span style="font-size: 11px; color: var(--text-muted);" id="preview-meta-their">-</span>
+              <!-- Visual Item Preview Card -->
+              <div class="calc-item-preview-card" id="preview-card-their">
+                <div class="preview-left">
+                  <div class="preview-thumb" id="preview-thumb-their">🔨</div>
+                  <div class="preview-info">
+                    <span class="preview-name" id="preview-name-their">Type above to select an item</span>
+                    <div class="preview-badges" id="preview-badges-their">
+                      <span class="badge badge-rarity" style="opacity: 0.5;">Select Item</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="preview-stats">
+                  <span class="preview-val" id="preview-val-their">-</span>
+                  <span class="preview-demand" id="preview-dem-their">Demand: -</span>
+                </div>
               </div>
 
               <div class="calc-actions-row">
-                <label class="calc-shiny-toggle disabled" id="label-shiny-their" title="Select an item with shiny">
-                  <input type="checkbox" id="shiny-their" aria-label="Toggle shiny variant for their offer" disabled />
+                <label class="calc-shiny-toggle disabled" id="label-shiny-their">
+                  <input type="checkbox" id="shiny-their" disabled />
                   <span>★ Shiny</span>
                 </label>
-                <button class="add-btn" id="btn-add-their" aria-label="Add item to their offer">+ Add Item</button>
+                <button class="add-to-trade-btn" id="btn-add-their" disabled>+ Add to Trade</button>
               </div>
             </div>
 
             <ul id="list-their" class="selected-list"></ul>
-            <div class="side-summary">
-              <span>Value Total: <b id="total-val-their" class="val">0</b></span>
-              <span>Average Demand Value: <b id="avg-dem-their" class="demand">-</b></span>
+          </div>
+        </div>
+
+        <!-- CENTERED VERDICT FOOTER PANEL -->
+        <div class="calculator-footer-panel">
+          <div class="verdict-banner" id="verdict-banner">
+            <div class="verdict-side-summary">
+              <span class="verdict-side-title">Your Offer</span>
+              <span class="verdict-side-val" id="banner-val-your">0</span>
+            </div>
+            <div class="verdict-center-box" id="verdict-center-box">
+              <div class="verdict-status status-fair" id="verdict-text">ADD ITEMS TO BOTH SIDES</div>
+              <div class="verdict-sub" id="verdict-details">Compare trade fairness instantly</div>
+            </div>
+            <div class="verdict-side-summary" style="align-items: flex-end; text-align: right;">
+              <span class="verdict-side-title">Their Offer</span>
+              <span class="verdict-side-val" id="banner-val-their">0</span>
             </div>
           </div>
-        </div>
 
-        <!-- CALCULATE BUTTON -->
-        <div style="margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-          <button type="button" id="btn-finalize-trade" class="trade-action-btn" style="background: var(--primary); color: #0b0f17; font-weight: 800; font-family: 'Outfit', sans-serif; font-size: 14px; padding: 12px 28px; width: 100%; max-width: 320px; border-radius: var(--radius-md); box-shadow: 0 4px 16px rgba(157, 125, 253, 0.3); cursor: pointer;" aria-label="Calculate trade" title="Add items to both sides to calculate" disabled>
-            ⚖️ Calculate Trade
-          </button>
-          <span id="calculate-helper-text" style="font-size: 11px; color: var(--accent-rose); font-weight: 600;">⚠️ Add items to both sides to enable calculation</span>
-        </div>
-
-        <div class="verdict-box" id="verdict-box">
-          <div class="verdict-text" id="verdict-text">Add items to both sides & click Calculate Trade</div>
-          <div class="verdict-details" id="verdict-details">Difference: -</div>
-          
-          <div class="trade-action-buttons" style="display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap;">
-            <button type="button" id="btn-copy-discord" class="trade-action-btn discord-btn" aria-label="Copy trade breakdown for Discord" title="Copy trade breakdown for Discord">
-              📋 Copy Trade for Discord
-            </button>
-            <button type="button" id="btn-share-link" class="trade-action-btn share-btn" aria-label="Copy shareable trade link" title="Copy shareable trade link">
-              🔗 Copy Shareable Link
-            </button>
+          <div class="calculator-action-buttons">
+            <button type="button" id="btn-finalize-trade" class="trade-action-btn primary" disabled>⚖️ Calculate Trade</button>
+            <button type="button" id="btn-copy-discord" class="trade-action-btn">📋 Copy Trade for Discord</button>
+            <button type="button" id="btn-share-link" class="trade-action-btn">🔗 Copy Shareable Link</button>
           </div>
         </div>
 
-        <!-- TRADE HISTORY LOG -->
-        <div class="trade-history-wrap" style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Recent Trades</span>
-            <button type="button" id="btn-clear-history" aria-label="Clear recent trade history" style="background: transparent; border: none; color: var(--accent-rose); font-size: 11px; cursor: pointer;">Clear History</button>
+        <!-- RECENT TRADES HISTORY MINI CARDS -->
+        <div class="recent-trades-container">
+          <div class="recent-trades-title">
+            <span>Recent Trades</span>
+            <button type="button" id="btn-clear-history" style="background: transparent; border: none; color: var(--accent-rose); font-size: 11px; cursor: pointer;">Clear History</button>
           </div>
-          <ul id="trade-history-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
-            <li style="font-size: 11px; color: var(--text-muted);">No recent trades saved</li>
-          </ul>
+          <div class="recent-trades-grid" id="trade-history-grid">
+            <div style="font-size: 11px; color: var(--text-muted); grid-column: 1 / -1; text-align: center; padding: 10px;">No recent trades saved</div>
+          </div>
         </div>
       </div>
     </div>
