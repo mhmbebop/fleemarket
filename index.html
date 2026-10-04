@@ -26,7 +26,7 @@
     }
 
     :root {
-      --bg-dark: #0d0f17;
+      --bg-dark: #0d0f12;
       --surface-1: #15181e;
       --surface-2: #1c2028;
       --surface-glass: rgba(21, 24, 30, 0.90);
@@ -57,10 +57,11 @@
       padding: clamp(14px, 3vw, 28px) clamp(10px, 3vw, 24px) 110px;
       background-color: #0f111a;
       background-image: 
-        url("ftf-facility-bg.png"),
+        url("images/ftf-facility-bg.png"),
         radial-gradient(circle at 50% 0%, rgba(157, 125, 253, 0.05) 0%, transparent 70%);
       background-repeat: repeat, no-repeat;
-      background-size: 480px auto, auto;
+      background-size: cover, auto;
+      background-position: center, center;
       color: var(--text-main);
       min-height: 100vh;
       overflow-x: hidden;
@@ -143,11 +144,10 @@
     .nav-tabs {
       display: flex;
       gap: 8px;
-      background: rgba(18, 21, 28, 0.94);
+      background: var(--surface-1);
       padding: 5px;
       border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+      border: 1px solid var(--border);
       margin: 0 auto clamp(16px, 3vw, 24px);
       width: 100%;
       max-width: 480px;
@@ -168,16 +168,14 @@
       justify-content: center;
       gap: 8px;
       touch-action: manipulation;
-      transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
     }
-    .tab-btn:hover:not(.active) {
-      background: rgba(255, 255, 255, 0.035);
-      color: var(--text-main);
+    .tab-btn:hover {
+      color: #fff;
     }
     .tab-btn.active {
-      background: #20242d;
+      background: var(--surface-2);
       color: #fff;
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 3px 10px rgba(0, 0, 0, 0.22);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
     .tab-badge {
@@ -203,11 +201,13 @@
     }
 
     .calculator-container {
-      background: rgba(16, 19, 26, 0.955);
-      border: 1px solid rgba(255, 255, 255, 0.075);
+      background: var(--surface-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: clamp(14px, 3vw, 26px);
-      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
       width: 100%;
       overflow: visible;
     }
@@ -231,13 +231,11 @@
       font-size: 12px;
       font-weight: 600;
       touch-action: manipulation;
-      transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
     }
     .reset-btn:hover {
       background: rgba(244, 63, 94, 0.15);
       border-color: rgba(244, 63, 94, 0.3);
       color: var(--accent-rose);
-      transform: translateY(-1px);
     }
 
     .trade-columns {
@@ -254,8 +252,8 @@
     }
 
     .trade-side {
-      background: rgba(21, 24, 31, 0.98);
-      border: 1px solid rgba(255, 255, 255, 0.07);
+      background: var(--surface-1);
+      border: 1px solid var(--border);
       border-radius: 12px;
       padding: clamp(12px, 2.5vw, 18px);
       display: flex;
@@ -264,10 +262,9 @@
       min-width: 0;
       width: 100%;
       position: relative;
-      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.018);
     }
-    .trade-side.side-your { border-top: 2px solid var(--accent-cyan); }
-    .trade-side.side-their { border-top: 2px solid var(--accent-green); }
+    .trade-side.side-your { border-top: 3px solid var(--accent-cyan); }
+    .trade-side.side-their { border-top: 3px solid var(--accent-green); }
 
     .side-header {
       display: flex;
@@ -302,27 +299,17 @@
     .calc-search-input {
       width: 100%;
       padding: 10px 34px 10px 12px;
-      background: rgba(10, 13, 18, 0.76);
+      background: var(--surface-2);
       color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       font-size: 13px;
       font-family: inherit;
       outline: none;
     }
-    .calc-search-input:hover {
-      border-color: rgba(255, 255, 255, 0.12);
-    }
     .calc-search-input:focus {
-      background: rgba(9, 12, 17, 0.94);
-    }
-    .side-your .calc-search-input:focus {
-      border-color: rgba(56, 189, 248, 0.70);
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.08);
-    }
-    .side-their .calc-search-input:focus {
-      border-color: rgba(52, 211, 153, 0.70);
-      box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.08);
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(157, 125, 253, 0.2);
     }
     .clear-calc-search-btn {
       position: absolute;
@@ -406,10 +393,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(10, 13, 18, 0.76);
+      background: rgba(0, 0, 0, 0.35);
       padding: 8px 12px;
       border-radius: var(--radius-sm);
-      border: 1px solid rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--border);
       min-height: 38px;
     }
     .calc-selected-name {
@@ -471,16 +458,11 @@
       font-size: 13px;
       text-align: center;
       touch-action: manipulation;
-      transition: filter 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
     }
     .side-your .add-btn { background: var(--accent-cyan); }
     .side-their .add-btn { background: var(--accent-green); }
-    .add-btn:hover:not(:disabled) {
-      filter: brightness(1.08);
-      transform: translateY(-1px);
-    }
-    .add-btn:active:not(:disabled) {
-      transform: translateY(0);
+    .add-btn:active {
+      transform: scale(0.97);
     }
 
     .selected-list {
@@ -602,16 +584,15 @@
       padding: clamp(12px, 2.5vw, 18px) 12px;
       border-radius: var(--radius-md);
       text-align: center;
-      background: rgba(13, 16, 22, 0.58);
-      border: 1px solid rgba(255, 255, 255, 0.065);
+      background: var(--surface-1);
+      border: 1px solid var(--border);
       width: 100%;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.015);
     }
     .verdict-text {
       font-family: 'Outfit', sans-serif;
       font-size: clamp(17px, 4vw, 24px);
       font-weight: 800;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.3px;
       margin-bottom: 2px;
     }
     .verdict-details {
@@ -633,30 +614,18 @@
       font-weight: 700;
       cursor: pointer;
       touch-action: manipulation;
-      transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
     }
     .trade-action-btn:hover {
       background: rgba(157, 125, 253, 0.2);
       border-color: var(--primary);
-      transform: translateY(-1px);
     }
 
     .trade-action-btn:disabled, #btn-finalize-trade:disabled {
-      opacity: 0.45;
-      cursor: not-allowed !important;
+      opacity: 0.4;
+      cursor: not-allowed;
       filter: grayscale(0.6);
       pointer-events: none;
       box-shadow: none !important;
-    }
-
-    #btn-finalize-trade:not(:disabled) {
-      box-shadow: 0 6px 20px rgba(157, 125, 253, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
-      transition: transform 0.16s ease, filter 0.16s ease, box-shadow 0.16s ease;
-    }
-    #btn-finalize-trade:not(:disabled):hover {
-      transform: translateY(-1px);
-      filter: brightness(1.06);
-      box-shadow: 0 8px 25px rgba(157, 125, 253, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
     }
 
     /* Controls Bar & Filters */
@@ -665,7 +634,7 @@
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 14px;
+      gap: 10px;
       margin-bottom: 14px;
       width: 100%;
     }
@@ -674,7 +643,6 @@
       font-size: clamp(19px, 3.5vw, 24px);
       font-weight: 700;
       margin: 0;
-      letter-spacing: -0.02em;
     }
     .controls-row {
       display: flex;
@@ -691,8 +659,8 @@
 
     .search-wrap {
       position: relative;
-      flex: 1 1 260px;
-      min-width: 220px;
+      flex: 1 1 180px;
+      min-width: 130px;
       display: flex;
       align-items: center;
     }
@@ -700,19 +668,16 @@
       width: 100%;
       padding: 9px 34px 9px 12px;
       border-radius: var(--radius-md);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(14, 17, 23, 0.94);
+      border: 1px solid var(--border);
+      background: var(--surface-1);
       color: #fff;
       font-size: 13px;
       font-family: inherit;
       outline: none;
     }
-    .search-box:hover {
-      border-color: rgba(157, 125, 253, 0.30);
-    }
     .search-box:focus {
-      border-color: rgba(157, 125, 253, 0.75);
-      box-shadow: 0 0 0 3px rgba(157, 125, 253, 0.10);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
     }
     .clear-search-btn {
       position: absolute;
@@ -755,17 +720,14 @@
       font-weight: 600;
       font-family: inherit;
       touch-action: manipulation;
-      transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
     }
     .filter-btn:hover {
       color: #fff;
-      border-color: rgba(157, 125, 253, 0.35);
     }
     .filter-btn.active {
       background: var(--primary);
       color: #0b0f17;
       font-weight: 700;
-      box-shadow: 0 0 0 1px rgba(157, 125, 253, 0.15);
     }
 
     .filter-drawer-btn {
@@ -783,11 +745,10 @@
       gap: 6px;
       flex-shrink: 0;
       touch-action: manipulation;
-      transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
     }
     .filter-drawer-btn:hover, .filter-drawer-btn.open {
       color: #fff;
-      border-color: rgba(157, 125, 253, 0.35);
+      border-color: var(--primary);
       background: var(--surface-2);
     }
     .filter-badge-count {
@@ -809,40 +770,38 @@
       font-size: 13px;
       outline: none;
       cursor: pointer;
-      transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
     }
 
-    /* Rarity Badge Styling with High Specificity (Common is now Green) */
-    .badge.badge-rarity.badge-rarity-untradeable, 
-    .badge.badge-rarity.badge-rarity-unobtainable {
-      background: rgba(239, 68, 68, 0.18) !important;
-      color: #f87171 !important;
-      border: 1px solid rgba(239, 68, 68, 0.45) !important;
+    /* Rarity Badge Styling */
+    .badge-rarity-untradeable, .badge-rarity-unobtainable {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.45);
     }
-    .badge.badge-rarity.badge-rarity-mythical {
-      background: linear-gradient(135deg, rgba(0, 210, 255, 0.2) 0%, rgba(58, 123, 213, 0.2) 100%) !important;
-      color: #38bdf8 !important;
-      border: 1px solid rgba(56, 189, 248, 0.4) !important;
+    .badge-rarity-mythical {
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.2) 0%, rgba(58, 123, 213, 0.2) 100%);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
     }
-    .badge.badge-rarity.badge-rarity-legendary {
-      background: rgba(245, 158, 11, 0.18) !important;
-      color: #fbbf24 !important;
-      border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    .badge-rarity-legendary {
+      background: rgba(245, 158, 11, 0.18);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.35);
     }
-    .badge.badge-rarity.badge-rarity-epic {
-      background: rgba(168, 85, 247, 0.18) !important;
-      color: #c084fc !important;
-      border: 1px solid rgba(168, 85, 247, 0.35) !important;
+    .badge-rarity-epic {
+      background: rgba(168, 85, 247, 0.18);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.35);
     }
-    .badge.badge-rarity.badge-rarity-rare {
-      background: rgba(59, 130, 246, 0.18) !important;
-      color: #60a5fa !important;
-      border: 1px solid rgba(59, 130, 246, 0.35) !important;
+    .badge-rarity-rare {
+      background: rgba(59, 130, 246, 0.18);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.35);
     }
-    .badge.badge-rarity.badge-rarity-common {
-      background: rgba(52, 211, 153, 0.18) !important;
-      color: #34d399 !important;
-      border: 1px solid rgba(52, 211, 153, 0.35) !important;
+    .badge-rarity-common {
+      background: rgba(100, 116, 139, 0.18);
+      color: #94a3b8;
+      border: 1px solid rgba(100, 116, 139, 0.35);
     }
 
     /* Compact List View Styles */
@@ -1035,6 +994,11 @@
       color: #ef4444;
       text-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
     }
+    .badge-rarity-untradeable, .badge-rarity-unobtainable {
+      background: rgba(239, 68, 68, 0.18);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.45);
+    }
 
     /* MYTHICAL */
     .card.rarity-mythical {
@@ -1049,11 +1013,21 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+    .badge-rarity-mythical {
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.2) 0%, rgba(58, 123, 213, 0.2) 100%);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
 
     /* LEGENDARY */
     .card.rarity-legendary {
       border-color: rgba(245, 158, 11, 0.45);
       background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, var(--surface-1) 100%);
+    }
+    .badge-rarity-legendary {
+      background: rgba(245, 158, 11, 0.18);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.35);
     }
 
     /* EPIC */
@@ -1061,15 +1035,30 @@
       border-color: rgba(168, 85, 247, 0.4);
       background: linear-gradient(180deg, rgba(168, 85, 247, 0.05) 0%, var(--surface-1) 100%);
     }
+    .badge-rarity-epic {
+      background: rgba(168, 85, 247, 0.18);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.35);
+    }
 
     /* RARE */
     .card.rarity-rare {
       border-color: rgba(59, 130, 246, 0.35);
     }
+    .badge-rarity-rare {
+      background: rgba(59, 130, 246, 0.18);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+    }
 
     /* COMMON */
     .card.rarity-common {
-      border-color: rgba(52, 211, 153, 0.35);
+      border-color: rgba(100, 116, 139, 0.3);
+    }
+    .badge-rarity-common {
+      background: rgba(100, 116, 139, 0.18);
+      color: #94a3b8;
+      border: 1px solid rgba(100, 116, 139, 0.35);
     }
 
     /* SHINY BORDER */
@@ -1357,17 +1346,17 @@
       transform: translateX(-50%) translateY(120%);
       width: calc(100% - 24px);
       max-width: 680px;
-      background: rgba(15, 18, 25, 0.94);
-      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(17, 20, 28, 0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-focus);
       border-radius: 16px;
       padding: 10px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.025);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.85), 0 0 20px rgba(157, 125, 253, 0.2);
       z-index: 1000;
       transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
       opacity: 0;
@@ -1541,14 +1530,6 @@
       border: 1px solid var(--border);
     }
 
-    button:focus-visible,
-    input:focus-visible,
-    select:focus-visible,
-    [tabindex]:focus-visible {
-      outline: 2px solid #9d7dfd;
-      outline-offset: 2px;
-    }
-
     @media (max-width: 768px) {
       body {
         padding-bottom: 120px;
@@ -1564,69 +1545,6 @@
       .dock-items-drawer {
         bottom: calc(76px + env(safe-area-inset-bottom, 0px));
         width: calc(100% - 16px);
-      }
-      .catalog-header {
-        align-items: stretch;
-      }
-      .controls-row {
-        width: 100%;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-      .search-wrap {
-        flex: 0 0 100%;
-        width: 100%;
-        min-width: 0;
-      }
-      .search-box {
-        width: 100%;
-      }
-      .filter-btn-group {
-        flex: 1 1 auto;
-      }
-      #btn-toggle-filters {
-        flex: 1 1 auto;
-      }
-      .sort-dropdown {
-        flex: 1 1 150px;
-        min-width: 0;
-      }
-      #view-mode-group {
-        flex: 0 0 auto;
-      }
-      .calculator-container {
-        padding: 16px;
-      }
-      .trade-side {
-        padding: 14px;
-      }
-      .verdict-box {
-        padding-left: 12px;
-        padding-right: 12px;
-      }
-    }
-
-    @media (max-width: 520px) {
-      .catalog-title {
-        width: 100%;
-      }
-      .filter-btn-group:first-of-type {
-        width: 100%;
-        flex: 0 0 100%;
-      }
-      .filter-btn-group:first-of-type .filter-btn {
-        flex: 1;
-      }
-      .sort-dropdown {
-        flex: 1 1 100%;
-      }
-      .calculator-title {
-        gap: 10px;
-        align-items: flex-start;
-      }
-      .reset-btn {
-        flex-shrink: 0;
       }
     }
   </style>
