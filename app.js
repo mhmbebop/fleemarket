@@ -3,12 +3,10 @@ const SPREADSHEET_ID = '1XKPloRF46l0GGQOCdH0ce6Krjriitvj1LAdGTl_kkLI';
 const GVIZ_CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv`;
 const LOCAL_CSV_PATH = '10_Player_Flee_Items_Database_Complete.csv';
 
-// LocalStorage Cache Configuration (10 minutes)
 const CACHE_KEY_DATA = 'flee_items_cache_v1';
 const CACHE_KEY_TIME = 'flee_items_time_v1';
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
-// Persistent Trade, Tab, History & View Keys
 const TRADE_KEY_YOUR = 'flee_trade_your_v1';
 const TRADE_KEY_THEIR = 'flee_trade_their_v1';
 const TAB_KEY_PREF = 'flee_active_tab_v1';
@@ -18,27 +16,23 @@ const VIEW_MODE_KEY = 'flee_view_mode_v1';
 let allItems = [];
 let yourOffer = [];
 let theirOffer = [];
-let currentFilter = 'all'; // 'all' | 'hammer' | 'gem'
+let currentFilter = 'all';
 let currentSort = 'val-desc';
-let currentViewMode = 'grid'; // 'grid' | 'compact'
+let currentViewMode = 'grid';
 const shinyState = {};
 
-// Audio controller
 let currentPlayingAudio = null;
 let currentPlayingBtn = null;
 
-// Active selections in calculator
 let selectedItemYour = null;
 let selectedItemTheir = null;
 
-// Multi-filter states
 const activeRarities = new Set();
 const activeDemands = new Set();
 const activeStatuses = new Set();
 const activeEvents = new Set();
 let filterHasShiny = false;
 
-// Security Input Sanitization
 function sanitizeInput(str) {
   if (!str) return '';
   return String(str)
@@ -49,7 +43,6 @@ function sanitizeInput(str) {
     .replace(/'/g, '&#x27;');
 }
 
-// LocalStorage Housekeeping (Stale Cache Cleanup on Startup)
 function performLocalStorageHousekeeping() {
   try {
     const cachedTime = Number(localStorage.getItem(CACHE_KEY_TIME)) || 0;
@@ -62,7 +55,6 @@ function performLocalStorageHousekeeping() {
   }
 }
 
-// Immediate Tab Switching with Persistent Memory
 function switchTab(targetTab, saveToStorage = true) {
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     const isTarget = btn.getAttribute('data-tab') === targetTab;
@@ -100,9 +92,7 @@ function initTabNavigation() {
 
   try {
     const savedTab = localStorage.getItem(TAB_KEY_PREF);
-    if (savedTab) {
-      switchTab(savedTab, false);
-    }
+    if (savedTab) switchTab(savedTab, false);
     const savedView = localStorage.getItem(VIEW_MODE_KEY);
     if (savedView) {
       currentViewMode = savedView;
@@ -122,7 +112,6 @@ function initTabNavigation() {
   });
 }
 
-// Robust CSV Parser with Row-Error Boundary Protection
 function parseCSV(text) {
   if (!text || typeof text !== 'string') return [];
   const lines = text.trim().split(/\r?\n/);
@@ -190,7 +179,6 @@ function parseCSV(text) {
   return parsedItems;
 }
 
-// Builds the dynamic list of events/crates inside the filter drawer
 function populateEventFilters(items) {
   const container = document.getElementById('events-checkbox-group');
   if (!container) return;
@@ -213,14 +201,11 @@ function populateEventFilters(items) {
     const label = document.createElement('label');
     label.className = 'drawer-label';
     const safeEv = sanitizeInput(ev);
-    label.innerHTML = `<input type="checkbox" class="cb-event" value="${safeEv}" aria-label="Filter event ${safeEv}" ${activeEvents.has(ev) ? 'checked' : ''}> ${safeEv}`;
+    label.innerHTML = `<input type="checkbox" class="cb-event" value="${safeEv}" ${activeEvents.has(ev) ? 'checked' : ''}> ${safeEv}`;
 
     label.querySelector('input').addEventListener('change', (e) => {
-      if (e.target.checked) {
-        activeEvents.add(e.target.value);
-      } else {
-        activeEvents.delete(e.target.value);
-      }
+      if (e.target.checked) activeEvents.add(e.target.value);
+      else activeEvents.delete(e.target.value);
       updateFilterBadge();
       applyFilters();
     });
@@ -232,11 +217,7 @@ function populateEventFilters(items) {
 function updateFilterBadge() {
   const countBadge = document.getElementById('filter-count');
   const totalActive =
-    activeRarities.size +
-    activeDemands.size +
-    activeStatuses.size +
-    activeEvents.size +
-    (filterHasShiny ? 1 : 0);
+    activeRarities.size + activeDemands.size + activeStatuses.size + activeEvents.size + (filterHasShiny ? 1 : 0);
 
   if (countBadge) {
     if (totalActive > 0) {
@@ -269,13 +250,12 @@ function getItemActiveDisplay(item, isShiny = false) {
   };
 }
 
-// Persistent Trade State Storage
 function saveTradeState() {
   try {
     localStorage.setItem(TRADE_KEY_YOUR, JSON.stringify(yourOffer));
     localStorage.setItem(TRADE_KEY_THEIR, JSON.stringify(theirOffer));
   } catch (e) {
-    console.warn('Failed to save trade state to localStorage:', e);
+    console.warn('Failed to save trade state:', e);
   }
 }
 
@@ -294,9 +274,7 @@ function loadTradeState() {
           if (item) {
             const count = parseInt(countStr) || 1;
             const isShiny = shinyStr === '1';
-            for (let c = 0; c < count; c++) {
-              addItemToTrade(item, 'your', isShiny);
-            }
+            for (let c = 0; c < count; c++) addItemToTrade(item, 'your', isShiny);
           }
         });
       }
@@ -308,9 +286,7 @@ function loadTradeState() {
           if (item) {
             const count = parseInt(countStr) || 1;
             const isShiny = shinyStr === '1';
-            for (let c = 0; c < count; c++) {
-              addItemToTrade(item, 'their', isShiny);
-            }
+            for (let c = 0; c < count; c++) addItemToTrade(item, 'their', isShiny);
           }
         });
       }
@@ -326,41 +302,10 @@ function loadTradeState() {
     if (savedYour) yourOffer = JSON.parse(savedYour);
     if (savedTheir) theirOffer = JSON.parse(savedTheir);
   } catch (e) {
-    console.warn('Failed to load trade state from localStorage:', e);
+    console.warn('Failed to load trade state:', e);
   }
 }
 
-// Dynamic validation for Calculate Trade button
-function updateCalculateButtonState() {
-  const btnFinalize = document.getElementById('btn-finalize-trade');
-  const helperText = document.getElementById('calculate-helper-text');
-  
-  const hasBothSides = yourOffer.length > 0 && theirOffer.length > 0;
-
-  if (btnFinalize) {
-    btnFinalize.disabled = !hasBothSides;
-    if (hasBothSides) {
-      btnFinalize.style.opacity = '1';
-      btnFinalize.title = 'Calculate and log this trade to history';
-      if (helperText) helperText.style.display = 'none';
-    } else {
-      btnFinalize.style.opacity = '0.4';
-      btnFinalize.title = 'Add items to both sides to calculate';
-      if (helperText) {
-        helperText.style.display = 'block';
-        if (yourOffer.length === 0 && theirOffer.length === 0) {
-          helperText.textContent = '⚠️ Add items to both sides to enable calculation';
-        } else if (yourOffer.length === 0) {
-          helperText.textContent = '⚠️ Add items to "Your Offer" to calculate';
-        } else {
-          helperText.textContent = '⚠️ Add items to "Their Offer" to calculate';
-        }
-      }
-    }
-  }
-}
-
-// Syncs tab badges, floating dock, and floating tray
 function updateCalculatorUI() {
   const badge = document.getElementById('trade-count-badge');
   const dock = document.getElementById('floating-trade-dock');
@@ -384,67 +329,40 @@ function updateCalculatorUI() {
     if (drawer) drawer.classList.remove('open');
   } else {
     const catalogActive = document.getElementById('tab-catalog')?.classList.contains('active');
-    if (dock && catalogActive) {
-      dock.classList.add('visible');
-    }
+    if (dock && catalogActive) dock.classList.add('visible');
   }
 
   if (dock && totalItems > 0) {
-    const countYour = document.getElementById('dock-count-your');
-    const valYour = document.getElementById('dock-val-your');
-    const countTheir = document.getElementById('dock-count-their');
-    const valTheir = document.getElementById('dock-val-their');
-
-    if (countYour) countYour.textContent = yourOffer.length;
-    if (valYour) valYour.textContent = dataYour.hasNil ? `${dataYour.totalValue} + Nil` : dataYour.totalValue;
-    if (countTheir) countTheir.textContent = theirOffer.length;
-    if (valTheir) valTheir.textContent = dataTheir.hasNil ? `${dataTheir.totalValue} + Nil` : dataTheir.totalValue;
+    document.getElementById('dock-count-your').textContent = yourOffer.length;
+    document.getElementById('dock-val-your').textContent = dataYour.hasNil ? `${dataYour.totalValue} + Nil` : dataYour.totalValue;
+    document.getElementById('dock-count-their').textContent = theirOffer.length;
+    document.getElementById('dock-val-their').textContent = dataTheir.hasNil ? `${dataTheir.totalValue} + Nil` : dataTheir.totalValue;
   }
+
+  document.getElementById('total-val-your').textContent = dataYour.hasNil ? `${dataYour.totalValue} + Nil` : dataYour.totalValue;
+  document.getElementById('avg-dem-your').textContent = dataYour.avgDemand;
+  document.getElementById('total-val-their').textContent = dataTheir.hasNil ? `${dataTheir.totalValue} + Nil` : dataTheir.totalValue;
+  document.getElementById('avg-dem-their').textContent = dataTheir.avgDemand;
+
+  document.getElementById('banner-val-your').textContent = dataYour.totalValue;
+  document.getElementById('banner-val-their').textContent = dataTheir.totalValue;
 
   renderTradeList(yourOffer, 'list-your');
   renderTradeList(theirOffer, 'list-their');
+
   const trayCountYour = document.getElementById('tray-count-your');
   const trayCountTheir = document.getElementById('tray-count-their');
   if (trayCountYour) trayCountYour.textContent = yourOffer.length;
   if (trayCountTheir) trayCountTheir.textContent = theirOffer.length;
 
-  updateCalculateButtonState();
-  refreshCardButtonBadges();
-  saveTradeState();
-}
-
-function renderTrayList(sideItems, listId, sideTarget) {
-  const ul = document.getElementById(listId);
-  if (!ul) return;
-  ul.innerHTML = '';
-
-  if (sideItems.length === 0) {
-    ul.innerHTML = '<li style="font-size: 11px; color: var(--text-muted); padding: 4px 0;">No items added</li>';
-    return;
+  const btnFinalize = document.getElementById('btn-finalize-trade');
+  if (btnFinalize) {
+    const hasBoth = yourOffer.length > 0 && theirOffer.length > 0;
+    btnFinalize.disabled = !hasBoth;
   }
 
-  sideItems.forEach((item, index) => {
-    const li = document.createElement('li');
-    li.className = 'drawer-item';
-    const valText = item.isNilValue ? 'Nil' : item.tradeValue;
-    const safeName = sanitizeInput(item.name);
-    li.innerHTML = `
-      <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;">
-        <b>${safeName}</b> ${item.isShiny ? '<span style="color:#fbbf24;">★</span>' : ''}
-        <span style="color:var(--text-muted); font-size:10px;">(${valText})</span>
-      </div>
-      <button type="button" class="remove-btn" aria-label="Remove item" style="width:22px; height:22px; font-size:11px;">✕</button>
-    `;
-
-    li.querySelector('.remove-btn').addEventListener('click', () => {
-      sideItems.splice(index, 1);
-      renderTradeList(yourOffer, 'list-your');
-      renderTradeList(theirOffer, 'list-their');
-      updateTradeVerdict();
-    });
-
-    ul.appendChild(li);
-  });
+  refreshCardButtonBadges();
+  saveTradeState();
 }
 
 function refreshCardButtonBadges() {
@@ -472,7 +390,6 @@ function refreshCardButtonBadges() {
   });
 }
 
-// Sequential Word-Prefix Search & Autocomplete with Selection (Allows checking Shiny before adding)
 function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
   const input = document.getElementById(inputId);
   const clearBtn = document.getElementById(clearBtnId);
@@ -482,10 +399,7 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
   function renderMatches(query) {
     const cleanQuery = sanitizeInput(query).toLowerCase().trim();
     panel.innerHTML = '';
-
-    if (clearBtn) {
-      clearBtn.style.display = cleanQuery.length > 0 ? 'flex' : 'none';
-    }
+    if (clearBtn) clearBtn.style.display = cleanQuery.length > 0 ? 'flex' : 'none';
 
     if (!cleanQuery) {
       panel.classList.remove('open');
@@ -493,28 +407,18 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
     }
 
     const queryWords = cleanQuery.split(/\s+/);
-
     const matches = allItems.filter((item) => {
       const name = (item.name || '').toLowerCase();
       const words = name.split(/\s+/);
-
       if (name.startsWith(cleanQuery)) return true;
-
-      if (queryWords.length === 1) {
-        return words.some((w) => w.startsWith(cleanQuery));
-      }
-
+      if (queryWords.length === 1) return words.some((w) => w.startsWith(cleanQuery));
       return queryWords.every((qw) => words.some((w) => w.startsWith(qw))) || name.includes(cleanQuery);
     });
 
     matches.sort((a, b) => {
       const aName = (a.name || '').toLowerCase();
       const bName = (b.name || '').toLowerCase();
-      const aDirect = aName.startsWith(cleanQuery) ? 0 : 1;
-      const bDirect = bName.startsWith(cleanQuery) ? 0 : 1;
-
-      if (aDirect !== bDirect) return aDirect - bDirect;
-      return aName.localeCompare(bName);
+      return (aName.startsWith(cleanQuery) ? 0 : 1) - (bName.startsWith(cleanQuery) ? 0 : 1) || aName.localeCompare(bName);
     });
 
     if (matches.length === 0) {
@@ -528,16 +432,9 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
       row.className = 'calc-match-item';
       const valText = item.isNilValue ? 'Nil' : item.baseValue;
       const shinyTag = item.hasShiny ? '★' : '';
-      const safeName = sanitizeInput(item.name);
-      const safeType = sanitizeInput(item.type);
-
       row.innerHTML = `
-        <div class="calc-match-item-name">
-          <span>${safeName}</span>
-          <span style="font-size: 10px; color: var(--accent-cyan);">(${safeType})</span>
-          ${shinyTag ? '<span style="color: var(--accent-gold); font-size: 10px;">★</span>' : ''}
-        </div>
-        <div class="calc-match-item-meta">Val: ${valText} | Dem: ${sanitizeInput(item.demandLabel)}</div>
+        <div style="font-weight: 600;">${sanitizeInput(item.name)} ${shinyTag ? '<span style="color:var(--accent-gold);">★</span>' : ''}</div>
+        <div style="font-size: 11px; color: var(--text-muted);">Val: ${valText} | Dem: ${sanitizeInput(item.demandLabel)}</div>
       `;
 
       row.addEventListener('click', () => {
@@ -559,9 +456,7 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
   });
 
   input.addEventListener('focus', () => {
-    if (input.value.trim().length > 0 && !((side === 'your' ? selectedItemYour : selectedItemTheir))) {
-      renderMatches(input.value);
-    }
+    if (input.value.trim().length > 0) renderMatches(input.value);
   });
 
   if (clearBtn) {
@@ -575,67 +470,73 @@ function setupPrefixSearch(inputId, clearBtnId, panelId, side) {
   }
 
   document.addEventListener('click', (e) => {
-    if (!input.contains(e.target) && !panel.contains(e.target)) {
-      panel.classList.remove('open');
-    }
-  });
-
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const firstMatch = panel.querySelector('.calc-match-item');
-      if (firstMatch && panel.classList.contains('open')) {
-        firstMatch.click();
-      } else {
-        const btnAdd = document.getElementById(side === 'your' ? 'btn-add-your' : 'btn-add-their');
-        if (btnAdd) btnAdd.click();
-      }
-    }
+    if (!input.contains(e.target) && !panel.contains(e.target)) panel.classList.remove('open');
   });
 }
 
 function selectItemForSide(item, side) {
-  if (side === 'your') {
-    selectedItemYour = item;
-    updateSidePreview('your', item);
-  } else {
-    selectedItemTheir = item;
-    updateSidePreview('their', item);
-  }
+  if (side === 'your') selectedItemYour = item;
+  else selectedItemTheir = item;
+  updateSidePreview(side, item);
 }
 
 function updateSidePreview(side, item) {
+  const thumbEl = document.getElementById(`preview-thumb-${side}`);
   const nameEl = document.getElementById(`preview-name-${side}`);
-  const metaEl = document.getElementById(`preview-meta-${side}`);
+  const badgesEl = document.getElementById(`preview-badges-${side}`);
+  const valEl = document.getElementById(`preview-val-${side}`);
+  const demEl = document.getElementById(`preview-dem-${side}`);
   const cb = document.getElementById(`shiny-${side}`);
   const label = document.getElementById(`label-shiny-${side}`);
+  const btnAdd = document.getElementById(`btn-add-${side}`);
 
   if (!item) {
+    if (thumbEl) thumbEl.textContent = '🔨';
     if (nameEl) nameEl.textContent = 'Type above to select an item';
-    if (metaEl) metaEl.textContent = '-';
+    if (badgesEl) badgesEl.innerHTML = '<span class="badge badge-rarity" style="opacity: 0.5;">Select Item</span>';
+    if (valEl) valEl.textContent = '-';
+    if (demEl) demEl.textContent = 'Demand: -';
     if (cb) { cb.checked = false; cb.disabled = true; }
-    if (label) { label.classList.add('disabled'); label.title = 'Select an item with shiny'; }
+    if (label) label.classList.add('disabled');
+    if (btnAdd) btnAdd.disabled = true;
     return;
   }
 
-  const valText = item.isNilValue ? 'Nil' : item.baseValue;
-  const safeName = sanitizeInput(item.name);
-  const safeType = sanitizeInput(item.type);
-  if (nameEl) nameEl.innerHTML = `${safeName} <span style="font-size: 11px; color: var(--accent-cyan);">(${safeType})</span>`;
-  if (metaEl) metaEl.textContent = `Val: ${valText} • Dem: ${sanitizeInput(item.demandLabel)}`;
+  const isShiny = cb?.checked && item.hasShiny;
+  const display = getItemActiveDisplay(item, isShiny);
+  const displayRarity = item.rarity === 'Unobtainable' ? 'Untradeable' : item.rarity;
+  const rarityClass = `rarity-${sanitizeInput(displayRarity).toLowerCase()}`;
+  const isGem = (item.type || '').toLowerCase() === 'gem';
+
+  if (thumbEl) {
+    thumbEl.textContent = isGem ? '💎' : '🔨';
+    const testImg = new Image();
+    testImg.src = `images/${item.id}.png`;
+    testImg.onload = () => { thumbEl.innerHTML = `<img src="images/${item.id}.png" style="width:100%; height:100%; object-fit:contain;" />`; };
+  }
+
+  if (nameEl) nameEl.textContent = item.name;
+  if (badgesEl) {
+    badgesEl.innerHTML = `
+      <span class="badge-rarity badge-rarity-${rarityClass}" style="font-size:9px; padding:2px 6px;">${sanitizeInput(displayRarity)}</span>
+      ${isShiny ? '<span class="badge badge-shiny" style="font-size:9px; padding:2px 5px;">★ Shiny</span>' : ''}
+    `;
+  }
+  if (valEl) valEl.textContent = display.value;
+  if (demEl) demEl.textContent = `Demand: ${display.demandLabel}`;
 
   if (cb && label) {
     if (item.hasShiny) {
       cb.disabled = false;
       label.classList.remove('disabled');
-      label.title = `Add Shiny ${safeName} (Val: ${item.shinyValue})`;
     } else {
       cb.checked = false;
       cb.disabled = true;
       label.classList.add('disabled');
-      label.title = 'This item does not have a shiny variant';
     }
   }
+
+  if (btnAdd) btnAdd.disabled = false;
 }
 
 function calculateSide(items) {
@@ -644,11 +545,8 @@ function calculateSide(items) {
   let hasNil = false;
 
   items.forEach((item) => {
-    if (item.isNilValue) {
-      hasNil = true;
-    } else {
-      totalValue += item.tradeValue;
-    }
+    if (item.isNilValue) hasNil = true;
+    else totalValue += item.tradeValue;
     totalDemandTier += item.demandTier;
   });
 
@@ -656,86 +554,82 @@ function calculateSide(items) {
   return { totalValue, hasNil, avgDemand };
 }
 
-function updateTradeVerdict() {
-  const dataYour = calculateSide(yourOffer);
-  const dataTheir = calculateSide(theirOffer);
+function updateTradeVerdict(verdictType = null, diffVal = 0, pctStr = '', isWin = false, isFair = false) {
+  const verdictText = document.getElementById('verdict-text');
+  const verdictDetails = document.getElementById('verdict-details');
+  const centerBox = document.getElementById('verdict-center-box');
 
-  const valYour = document.getElementById('total-val-your');
-  const demYour = document.getElementById('avg-dem-your');
-  const valTheir = document.getElementById('total-val-their');
-  const demTheir = document.getElementById('avg-dem-their');
-  const verdictEl = document.getElementById('verdict-text');
-  const detailsEl = document.getElementById('verdict-details');
+  if (!verdictText || !verdictDetails) return;
 
-  if (valYour) valYour.textContent = dataYour.hasNil ? `${dataYour.totalValue} + Nil` : dataYour.totalValue;
-  if (demYour) demYour.textContent = dataYour.avgDemand;
-  if (valTheir) valTheir.textContent = dataTheir.hasNil ? `${dataTheir.totalValue} + Nil` : dataTheir.totalValue;
-  if (demTheir) demTheir.textContent = dataTheir.avgDemand;
+  if (!verdictType) {
+    verdictText.className = 'verdict-status status-fair';
+    verdictText.textContent = 'ADD ITEMS TO BOTH SIDES';
+    verdictDetails.textContent = 'Compare trade fairness instantly';
+    return;
+  }
 
-  updateCalculatorUI();
-
-  if (!verdictEl || !detailsEl) return;
-  verdictEl.className = 'verdict-text';
-
-  // Keep verdict neutral until Calculate Trade is explicitly clicked
-  verdictEl.textContent = 'Add items to both sides & click Calculate Trade';
-  detailsEl.textContent = 'Difference: -';
+  verdictText.textContent = verdictType;
+  if (isWin) {
+    verdictText.className = 'verdict-status status-win';
+    verdictDetails.textContent = `+${diffVal} value (+${pctStr}%) profit for you`;
+  } else if (isFair) {
+    verdictText.className = 'verdict-status status-fair';
+    verdictDetails.textContent = `Balanced trade within ${pctStr}% value range`;
+  } else {
+    verdictText.className = 'verdict-status status-loss';
+    verdictDetails.textContent = `${diffVal} value (${pctStr}%) deficit for you`;
+  }
 }
 
-// Group duplicate items by quantity stacking with corrected listElementId parameter
 function renderTradeList(sideItems, listElementId) {
   const ul = document.getElementById(listElementId);
   if (!ul) return;
   ul.innerHTML = '';
 
   if (sideItems.length === 0) {
-    ul.innerHTML = '<li style="font-size: 11px; color: var(--text-muted); padding: 4px 0;">No items added</li>';
+    ul.innerHTML = '<li style="font-size: 11px; color: var(--text-muted); padding: 6px 0; text-align:center;">No items added</li>';
     return;
   }
 
   const groupedMap = new Map();
   sideItems.forEach((item) => {
     const key = `${item.id}_${item.isShiny ? 'shiny' : 'base'}`;
-    if (!groupedMap.has(key)) {
-      groupedMap.set(key, { ...item, quantity: 1 });
-    } else {
-      groupedMap.get(key).quantity += 1;
-    }
+    if (!groupedMap.has(key)) groupedMap.set(key, { ...item, quantity: 1 });
+    else groupedMap.get(key).quantity += 1;
   });
 
-  groupedMap.forEach((group, key) => {
+  groupedMap.forEach((group) => {
     const li = document.createElement('li');
     li.className = 'trade-item';
     const valText = group.isNilValue ? 'Nil' : group.tradeValue * group.quantity;
     const fallbackEmoji = (group.type || '').toLowerCase() === 'gem' ? '💎' : '🔨';
-    const safeName = sanitizeInput(group.name);
 
     li.innerHTML = `
       <div class="trade-item-left">
-        <div class="trade-thumb-fallback" style="display: flex; width: 38px; height: 38px; border-radius: var(--radius-sm); background: #090b10; border: 1px solid var(--border); align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">${fallbackEmoji}</div>
+        <div class="trade-thumb" id="tray-thumb-${group.id}-${group.isShiny}">${fallbackEmoji}</div>
         <div style="min-width: 0; flex: 1;">
-          <div class="trade-item-title">
-            ${safeName}
-            ${group.isShiny ? '<span style="color: #fbbf24; font-size: 10px; margin-left: 2px;">★</span>' : ''}
-          </div>
-          <span style="font-size: 10px; color: var(--text-muted);">Val: <b style="color: var(--accent-gold);">${valText}</b> • Dem: ${sanitizeInput(group.demandLabel)}</span>
+          <div class="trade-item-title">${sanitizeInput(group.name)} ${group.isShiny ? '<span style="color:#fbbf24;">★</span>' : ''}</div>
+          <span style="font-size: 10px; color: var(--text-muted);">Val: <b style="color:var(--accent-gold);">${valText}</b></span>
         </div>
       </div>
       <div class="trade-item-controls">
-        <button class="qty-btn btn-minus" aria-label="Decrease quantity">−</button>
+        <button class="qty-btn btn-minus">−</button>
         <span class="qty-badge">×${group.quantity}</span>
-        <button class="qty-btn btn-plus" aria-label="Increase quantity">+</button>
-        <button class="remove-btn btn-remove" aria-label="Remove item" title="Remove all">✕</button>
+        <button class="qty-btn btn-plus">+</button>
+        <button class="remove-btn btn-remove">✕</button>
       </div>
     `;
 
+    const thumbWrap = li.querySelector(`#tray-thumb-${group.id}-${group.isShiny}`);
+    const imgTest = new Image();
+    imgTest.src = `images/${group.id}.png`;
+    imgTest.onload = () => { thumbWrap.innerHTML = `<img src="images/${group.id}.png" style="width:100%; height:100%; object-fit:contain;" />`; };
+
     li.querySelector('.btn-minus').addEventListener('click', () => {
       const idx = sideItems.findIndex((i) => i.id === group.id && !!i.isShiny === !!group.isShiny);
-      if (idx !== -1) {
-        sideItems.splice(idx, 1);
-        renderTradeList(sideItems, listElementId);
-        updateTradeVerdict();
-      }
+      if (idx !== -1) sideItems.splice(idx, 1);
+      updateCalculatorUI();
+      updateTradeVerdict();
     });
 
     li.querySelector('.btn-plus').addEventListener('click', () => {
@@ -745,11 +639,9 @@ function renderTradeList(sideItems, listElementId) {
     li.querySelector('.btn-remove').addEventListener('click', () => {
       const targetArray = listElementId === 'list-your' ? yourOffer : theirOffer;
       for (let i = targetArray.length - 1; i >= 0; i--) {
-        if (targetArray[i].id === group.id && !!targetArray[i].isShiny === !!group.isShiny) {
-          targetArray.splice(i, 1);
-        }
+        if (targetArray[i].id === group.id && !!targetArray[i].isShiny === !!group.isShiny) targetArray.splice(i, 1);
       }
-      renderTradeList(targetArray, listElementId);
+      updateCalculatorUI();
       updateTradeVerdict();
     });
 
@@ -759,9 +651,7 @@ function renderTradeList(sideItems, listElementId) {
 
 function addItemToTrade(item, sideTarget, isShiny = false) {
   if (!item) return;
-
   const display = getItemActiveDisplay(item, isShiny);
-
   const tradeItem = {
     ...item,
     isShiny: isShiny,
@@ -772,98 +662,67 @@ function addItemToTrade(item, sideTarget, isShiny = false) {
     status: display.status,
   };
 
-  if (sideTarget === 'your') {
-    yourOffer.push(tradeItem);
-    renderTradeList(yourOffer, 'list-your');
-  } else if (sideTarget === 'their') {
-    theirOffer.push(tradeItem);
-    renderTradeList(theirOffer, 'list-their');
-  }
+  if (sideTarget === 'your') yourOffer.push(tradeItem);
+  else theirOffer.push(tradeItem);
+
+  updateCalculatorUI();
   updateTradeVerdict();
 }
 
-function removeItemFromTrade(itemId, sideTarget) {
-  const targetArray = sideTarget === 'your' ? yourOffer : theirOffer;
-  const listId = sideTarget === 'your' ? 'list-your' : 'list-their';
-
-  for (let i = targetArray.length - 1; i >= 0; i--) {
-    if (targetArray[i].id === itemId) {
-      targetArray.splice(i, 1);
-      break;
-    }
-  }
-
-  renderTradeList(targetArray, listId);
-  updateTradeVerdict();
-}
-
-// Render Catalog Grid or Compact List View
 function renderItems(items) {
   const grid = document.getElementById('items-grid');
   if (!grid) return;
   grid.innerHTML = '';
 
   if (items.length === 0) {
-    grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1 / -1; padding: 24px; text-align: center;">No matching items found with the active filters.</p>';
+    grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1 / -1; padding: 24px; text-align: center;">No matching items found.</p>';
     return;
   }
 
-  // COMPACT VIEW MODE
   if (currentViewMode === 'compact') {
     const container = document.createElement('div');
     container.className = 'compact-container';
-
-    // Group items by releaseEvent / set
     const groups = new Map();
     items.forEach((item) => {
-      const groupKey = item.releaseEvent || item.setName || 'Other Items';
-      if (!groups.has(groupKey)) groups.set(groupKey, []);
-      groups.get(groupKey).push(item);
+      const key = item.releaseEvent || item.setName || 'Other Items';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
     });
 
     groups.forEach((groupItems, groupName) => {
       const section = document.createElement('div');
       section.className = 'compact-section';
-
-      const header = document.createElement('div');
-      header.className = 'compact-section-header';
-      header.innerHTML = `<span>🎃 ${sanitizeInput(groupName)}</span>`;
-      section.appendChild(header);
+      section.innerHTML = `<div class="compact-section-header"><span>🎃 ${sanitizeInput(groupName)}</span></div>`;
 
       groupItems.forEach((item) => {
         const isShiny = item.hasShiny && !!shinyState[item.id];
         const display = getItemActiveDisplay(item, isShiny);
-        const safeName = sanitizeInput(item.name);
-        const safeType = sanitizeInput(item.type).toUpperCase();
         const displayRarity = item.rarity === 'Unobtainable' ? 'Untradeable' : item.rarity;
         const rarityClass = `rarity-${sanitizeInput(displayRarity).toLowerCase()}`;
-
         const countYour = yourOffer.filter((i) => i.id === item.id).length;
         const countTheir = theirOffer.filter((i) => i.id === item.id).length;
 
         const row = document.createElement('div');
         row.className = 'compact-row';
         row.setAttribute('data-id', item.id);
-
         row.innerHTML = `
           <div class="compact-name">
-            <span class="badge badge-rarity badge-${rarityClass}" style="font-size: 8px; padding: 1px 4px;">${sanitizeInput(displayRarity)}</span>
-            <span style="font-weight: 700; color: #fff;">${safeName}</span>
-            ${isShiny ? '<span style="color: var(--accent-gold);">★</span>' : ''}
+            <span class="badge-rarity badge-rarity-${rarityClass}" style="font-size: 8px; padding: 1px 4px;">${sanitizeInput(displayRarity)}</span>
+            <span>${sanitizeInput(item.name)}</span>
+            ${isShiny ? '<span style="color:var(--accent-gold);">★</span>' : ''}
           </div>
           <div class="compact-meta">
-            <span style="font-size: 11px; color: var(--text-muted); font-weight: 700; width: 60px;">${safeType}</span>
-            <span class="val" style="font-size: 13px; width: 45px; text-align: right;">${display.value}</span>
-            <span class="demand" style="width: 30px; text-align: center;">${sanitizeInput(display.demandLabel)}</span>
-            <span style="font-size: 11px; color: var(--text-muted); width: 90px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${sanitizeInput(display.status)}</span>
-            
+            <span style="font-size: 11px; color: var(--text-muted); width: 50px;">${sanitizeInput(item.type).toUpperCase()}</span>
+            <span class="val" style="width: 45px; text-align: right;">${display.value}</span>
+            <span class="demand" style="width: 25px; text-align: center;">${sanitizeInput(display.demandLabel)}</span>
+            <span style="font-size: 11px; color: var(--text-muted); width: 80px; text-align: right; overflow:hidden; text-overflow:ellipsis;">${sanitizeInput(display.status)}</span>
             <div style="display: flex; gap: 4px;">
-              <div class="card-btn-group side-your ${countYour > 0 ? 'has-items' : ''}" style="height: 26px;">
-                <button class="card-add-btn" data-action="add-your" data-id="${item.id}" style="font-size: 10px; padding: 2px 6px;">${countYour > 0 ? `You (${countYour})` : '+ You'}</button>
+              <div class="card-btn-group side-your ${countYour > 0 ? 'has-items' : ''}" style="height: 24px;">
+                <button class="card-add-btn" data-action="add-your" data-id="${item.id}" style="font-size:9px; padding:2px 5px;">${countYour > 0 ? `You (${countYour})` : '+ You'}</button>
                 <button class="card-minus-btn" data-action="minus-your" data-id="${item.id}">−</button>
               </div>
-              <div class="card-btn-group side-their ${countTheir > 0 ? 'has-items' : ''}" style="height: 26px;">
-                <button class="card-add-btn" data-action="add-their" data-id="${item.id}" style="font-size: 10px; padding: 2px 6px;">${countTheir > 0 ? `Them (${countTheir})` : '+ Them'}</button>
+              <div class="card-btn-group side-their ${countTheir > 0 ? 'has-items' : ''}" style="height: 24px;">
+                <button class="card-add-btn" data-action="add-their" data-id="${item.id}" style="font-size:9px; padding:2px 5px;">${countTheir > 0 ? `Them (${countTheir})` : '+ Them'}</button>
                 <button class="card-minus-btn" data-action="minus-their" data-id="${item.id}">−</button>
               </div>
             </div>
@@ -871,320 +730,68 @@ function renderItems(items) {
         `;
         section.appendChild(row);
       });
-
       container.appendChild(section);
     });
-
     grid.appendChild(container);
     return;
   }
 
-  // GRID VIEW MODE
   const fragment = document.createDocumentFragment();
-
   items.forEach((item) => {
     const card = document.createElement('div');
     const isShiny = item.hasShiny && !!shinyState[item.id];
     const displayRarity = item.rarity === 'Unobtainable' ? 'Untradeable' : item.rarity;
     const rarityClass = `rarity-${sanitizeInput(displayRarity).toLowerCase()}`;
-    const isMythical = (item.rarity || '').toLowerCase() === 'mythical';
-
-    card.className = `card ${rarityClass} ${isShiny ? 'is-shiny' : ''}`;
+    card.className = `card rarity-${rarityClass} ${isShiny ? 'is-shiny' : ''}`;
     card.setAttribute('data-id', item.id);
 
     const isGem = (item.type || '').toLowerCase() === 'gem';
     const display = getItemActiveDisplay(item, isShiny);
-    const fallbackEmoji = isGem ? '💎' : '🔨';
-    
-    const safeName = sanitizeInput(item.name);
-    const safeType = sanitizeInput(item.type);
-    const safeSet = sanitizeInput(item.setName || item.releaseEvent);
-    const safeStatus = sanitizeInput(display.status);
-
     const countYour = yourOffer.filter((i) => i.id === item.id).length;
     const countTheir = theirOffer.filter((i) => i.id === item.id).length;
 
-    const starButtonHtml = item.hasShiny
-      ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-action="toggle-shiny" data-id="${item.id}" aria-label="Toggle shiny for ${safeName}" title="Toggle Shiny Version">★</div>`
-      : '';
-
-    const audioButtonHtml = isMythical
-      ? `<button type="button" class="card-audio-btn" data-action="play-audio" data-id="${item.id}" aria-label="Play sound effect for ${safeName}" title="Play Sound Effect">🔊</button>`
-      : '';
-
     card.innerHTML = `
-      ${audioButtonHtml}
-      ${starButtonHtml}
-      <div class="card-image-wrap" id="img-wrap-${item.id}" style="position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #090b10;">
-        <div class="card-img-fallback" style="font-size: 42px;">${fallbackEmoji}</div>
-      </div>
+      ${(item.rarity || '').toLowerCase() === 'mythical' ? `<button type="button" class="card-audio-btn" data-action="play-audio" data-id="${item.id}">🔊</button>` : ''}
+      ${item.hasShiny ? `<div class="shiny-star-btn ${isShiny ? 'active' : ''}" data-action="toggle-shiny" data-id="${item.id}">★</div>` : ''}
+      <div class="card-image-wrap" id="img-wrap-${item.id}"><div class="card-img-fallback">${isGem ? '💎' : '🔨'}</div></div>
       <div class="card-top-info">
-        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 3px;">
-          <span class="badge ${isGem ? 'badge-gem' : ''}">${safeType}</span>
-          <span class="badge-rarity badge-${rarityClass}">${sanitizeInput(displayRarity)}</span>
+        <div style="display: flex; gap: 3px;">
+          <span class="badge ${isGem ? 'badge-gem' : ''}">${sanitizeInput(item.type)}</span>
+          <span class="badge-rarity badge-rarity-${rarityClass}">${sanitizeInput(displayRarity)}</span>
           ${isShiny ? '<span class="badge badge-shiny">★ SHINY</span>' : ''}
         </div>
-        <span class="set-tag" title="${safeSet}">${safeSet}</span>
+        <span class="set-tag">${sanitizeInput(item.setName || item.releaseEvent)}</span>
       </div>
-      <h3 class="card-title" title="${safeName}">${safeName}</h3>
+      <h3 class="card-title">${sanitizeInput(item.name)}</h3>
       <div class="meta-rows">
-        <div class="row">
-          <span>Value</span>
-          <span class="val">${display.value}</span>
-        </div>
-        <div class="row">
-          <span>Demand</span>
-          <span class="demand">${sanitizeInput(display.demandLabel)}</span>
-        </div>
-        <div class="row">
-          <span>Status</span>
-          <span class="status-tag" title="${safeStatus}">${safeStatus}</span>
-        </div>
+        <div class="row"><span>Value</span><span class="val">${display.value}</span></div>
+        <div class="row"><span>Demand</span><span class="demand">${sanitizeInput(display.demandLabel)}</span></div>
+        <div class="row"><span>Status</span><span class="status-tag">${sanitizeInput(display.status)}</span></div>
       </div>
       <div class="card-actions">
         <div class="card-btn-group side-your ${countYour > 0 ? 'has-items' : ''}">
-          <button class="card-add-btn" data-action="add-your" data-id="${item.id}" aria-label="Add ${safeName} to your offer">${countYour > 0 ? `+ You (${countYour})` : '+ Your Offer'}</button>
-          <button class="card-minus-btn" data-action="minus-your" data-id="${item.id}" aria-label="Remove one ${safeName} from your offer">−</button>
+          <button class="card-add-btn" data-action="add-your" data-id="${item.id}">${countYour > 0 ? `You (${countYour})` : '+ Your Offer'}</button>
+          <button class="card-minus-btn" data-action="minus-your" data-id="${item.id}">−</button>
         </div>
         <div class="card-btn-group side-their ${countTheir > 0 ? 'has-items' : ''}">
-          <button class="card-add-btn" data-action="add-their" data-id="${item.id}" aria-label="Add ${safeName} to their offer">${countTheir > 0 ? `+ Them (${countTheir})` : '+ Their Offer'}</button>
-          <button class="card-minus-btn" data-action="minus-their" data-id="${item.id}" aria-label="Remove one ${safeName} from their offer">−</button>
+          <button class="card-add-btn" data-action="add-their" data-id="${item.id}">${countTheir > 0 ? `Them (${countTheir})` : '+ Their Offer'}</button>
+          <button class="card-minus-btn" data-action="minus-their" data-id="${item.id}">−</button>
         </div>
       </div>
     `;
-
     fragment.appendChild(card);
 
     const imgTest = new Image();
     imgTest.src = `images/${item.id}.png`;
     imgTest.onload = () => {
       const wrap = card.querySelector(`#img-wrap-${item.id}`);
-      if (wrap) {
-        wrap.innerHTML = `<img src="images/${item.id}.png" alt="" style="width: 100%; height: 100%; object-fit: contain; padding: 6px;" />`;
-      }
+      if (wrap) wrap.innerHTML = `<img src="images/${item.id}.png" style="width:100%; height:100%; object-fit:contain; padding:6px;" />`;
     };
   });
-
   grid.appendChild(fragment);
 }
 
-// Mythical Audio Controller Helper
-function playMythicalAudio(item, audioBtn) {
-  if (currentPlayingAudio && currentPlayingBtn === audioBtn) {
-    currentPlayingAudio.pause();
-    currentPlayingAudio.currentTime = 0;
-    audioBtn.classList.remove('is-playing');
-    audioBtn.textContent = '🔊';
-    currentPlayingAudio = null;
-    currentPlayingBtn = null;
-    return;
-  }
-
-  if (currentPlayingAudio) {
-    currentPlayingAudio.pause();
-    currentPlayingAudio.currentTime = 0;
-    if (currentPlayingBtn) {
-      currentPlayingBtn.classList.remove('is-playing');
-      currentPlayingBtn.textContent = '🔊';
-    }
-  }
-
-  const audioPaths = [
-    `audio/${item.id}.mp3`,
-    `audio/${String(item.id).toLowerCase()}.mp3`
-  ];
-
-  let audioLoaded = false;
-  for (const audioSrc of audioPaths) {
-    const audio = new Audio(audioSrc);
-    audio.play().then(() => {
-      audioBtn.classList.add('is-playing');
-      audioBtn.textContent = '⏹';
-      currentPlayingAudio = audio;
-      currentPlayingBtn = audioBtn;
-      audioLoaded = true;
-    }).catch(() => {});
-
-    if (audioLoaded) break;
-
-    audio.onended = () => {
-      audioBtn.classList.remove('is-playing');
-      audioBtn.textContent = '🔊';
-      currentPlayingAudio = null;
-      currentPlayingBtn = null;
-    };
-    break;
-  }
-}
-
-// Multi-Criteria Filtering Logic with Sanitized Query
-function applyFilters() {
-  const searchInput = document.getElementById('search');
-  const query = sanitizeInput(searchInput ? searchInput.value : '').toLowerCase().trim();
-
-  let filtered = allItems.filter((item) => {
-    const itemType = (item.type || '').toLowerCase().trim();
-    const itemRarity = (item.rarity || '').trim().toLowerCase();
-    const itemEvent = (item.releaseEvent || '').trim();
-    const itemDemand = String(item.demandTier);
-    const itemStatus = (item.status || '').trim().toLowerCase();
-
-    if (currentFilter === 'hammer' && itemType !== 'hammer') return false;
-    if (currentFilter === 'gem' && itemType !== 'gem') return false;
-
-    if (activeRarities.size > 0) {
-      let matchesRarity = false;
-      for (const selRarity of activeRarities) {
-        const lowerSel = selRarity.toLowerCase();
-        if (lowerSel === 'untradeable' && (itemRarity === 'untradeable' || itemRarity === 'unobtainable')) {
-          matchesRarity = true;
-          break;
-        } else if (itemRarity === lowerSel) {
-          matchesRarity = true;
-          break;
-        }
-      }
-      if (!matchesRarity) return false;
-    }
-
-    if (activeDemands.size > 0 && !activeDemands.has(itemDemand)) return false;
-
-    if (activeStatuses.size > 0) {
-      let matchesStatus = false;
-      for (const selStatus of activeStatuses) {
-        if (itemStatus === selStatus.toLowerCase()) {
-          matchesStatus = true;
-          break;
-        }
-      }
-      if (!matchesStatus) return false;
-    }
-
-    if (filterHasShiny && !item.hasShiny) return false;
-
-    if (activeEvents.size > 0 && !activeEvents.has(itemEvent)) return false;
-
-    const matchesSearch =
-      !query ||
-      (item.name && item.name.toLowerCase().includes(query)) ||
-      (item.setName && item.setName.toLowerCase().includes(query)) ||
-      (item.releaseEvent && item.releaseEvent.toLowerCase().includes(query));
-
-    return matchesSearch;
-  });
-
-  filtered.sort((a, b) => {
-    if (currentSort === 'val-desc') return b.baseValue - a.baseValue;
-    if (currentSort === 'val-asc') return a.baseValue - b.baseValue;
-    if (currentSort === 'dem-desc') return b.demandTier - a.demandTier;
-    if (currentSort === 'dem-asc') return a.demandTier - b.demandTier;
-    if (currentSort === 'name-asc') return a.name.localeCompare(b.name);
-    if (currentSort === 'name-desc') return b.name.localeCompare(a.name);
-    return 0;
-  });
-
-  renderItems(filtered);
-}
-
-// Global Force Sync Handler
-window.forceSyncNow = async function(event) {
-  if (event) event.preventDefault();
-  const btn = document.getElementById('btn-force-sync');
-  const icon = btn?.querySelector('.sync-icon');
-  
-  if (btn) btn.classList.add('is-syncing');
-  if (icon) icon.textContent = '⏳';
-
-  const startTime = Date.now();
-  await loadData(true);
-
-  const elapsed = Date.now() - startTime;
-  if (elapsed < 600) {
-    await new Promise((resolve) => setTimeout(resolve, 600 - elapsed));
-  }
-
-  if (btn) btn.classList.remove('is-syncing');
-  if (icon) icon.textContent = '↻';
-};
-
-// Discord Trade Export Formatter
-function copyTradeForDiscord() {
-  const dataYour = calculateSide(yourOffer);
-  const dataTheir = calculateSide(theirOffer);
-
-  const formatList = (items) => {
-    if (items.length === 0) return 'None';
-    const map = new Map();
-    items.forEach((i) => {
-      const key = `${i.name} ${i.isShiny ? '★' : ''}`;
-      map.set(key, (map.get(key) || 0) + 1);
-    });
-    return Array.from(map.entries()).map(([k, count]) => count > 1 ? `${k} x${count}` : k).join(', ');
-  };
-
-  const text = `### ⚖️ **FLEEMARKET Trade Breakdown**\n` +
-    `**Your Offer:** ${formatList(yourOffer)} (Val: **${dataYour.totalValue}**)\n` +
-    `**Their Offer:** ${formatList(theirOffer)} (Val: **${dataTheir.totalValue}**)\n` +
-    `**Verdict:** ${document.getElementById('verdict-text')?.textContent || 'Fair Trade'}\n` +
-    `_Generated via FLEEMARKET Trade Hub_`;
-
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById('btn-copy-discord');
-    if (btn) {
-      const orig = btn.textContent;
-      btn.textContent = '✓ Copied to Clipboard!';
-      setTimeout(() => btn.textContent = orig, 2000);
-    }
-  }).catch((err) => {
-    console.warn('Failed to copy to clipboard:', err);
-  });
-}
-
-// Shareable URL Trade Link Generator
-function copyShareableLink() {
-  const encodeSide = (items) => {
-    const map = new Map();
-    items.forEach((i) => {
-      const key = `${i.id}_${i.isShiny ? '1' : '0'}`;
-      map.set(key, (map.get(key) || 0) + 1);
-    });
-    return Array.from(map.entries()).map(([key, count]) => {
-      const [id, shiny] = key.split('_');
-      return `${id}:${count}:${shiny}`;
-    }).join(',');
-  };
-
-  const paramYou = encodeSide(yourOffer);
-  const paramTheir = encodeSide(theirOffer);
-  const url = new URL(window.location.origin + window.location.pathname);
-  if (paramYou) url.searchParams.set('you', paramYou);
-  if (paramTheir) url.searchParams.set('them', paramTheir);
-
-  navigator.clipboard.writeText(url.toString()).then(() => {
-    const btn = document.getElementById('btn-share-link');
-    if (btn) {
-      const orig = btn.textContent;
-      btn.textContent = '✓ Link Copied!';
-      setTimeout(() => btn.textContent = orig, 2000);
-    }
-  }).catch((err) => {
-    console.warn('Failed to copy shareable link:', err);
-  });
-}
-
-// Summarize items helper for history logs
-const formatTradeSummary = (items) => {
-  if (!items || items.length === 0) return 'None';
-  const map = new Map();
-  items.forEach((i) => {
-    const key = `${i.name}${i.isShiny ? ' (★)' : ''}`;
-    map.set(key, (map.get(key) || 0) + 1);
-  });
-  return Array.from(map.entries()).map(([name, count]) => count > 1 ? `${name} x${count}` : name).join(', ');
-};
-
-// Trade History Log Management with Full Item Breakdown
-function saveCompletedTrade(verdict = 'Completed Trade') {
+function saveCompletedTrade(verdict, isWin, isFair) {
   if (yourOffer.length === 0 || theirOffer.length === 0) return;
   try {
     let history = [];
@@ -1195,59 +802,61 @@ function saveCompletedTrade(verdict = 'Completed Trade') {
     const dataTheir = calculateSide(theirOffer);
 
     const entry = {
-      date: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+      date: 'Just now',
+      verdict,
+      isWin,
+      isFair,
+      yourThumb: yourOffer[0]?.id || '',
+      theirThumb: theirOffer[0]?.id || '',
       yourVal: dataYour.totalValue,
-      theirVal: dataTheir.totalValue,
-      verdict: verdict,
-      yourSummary: formatTradeSummary(yourOffer),
-      theirSummary: formatTradeSummary(theirOffer)
+      theirVal: dataTheir.totalValue
     };
 
     history.unshift(entry);
-    if (history.length > 5) history = history.slice(0, 5);
+    if (history.length > 3) history = history.slice(0, 3);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
     renderTradeHistory();
   } catch (e) {
-    console.warn('Failed to save trade history:', e);
+    console.warn('Failed to save history:', e);
   }
 }
 
 function renderTradeHistory() {
-  const ul = document.getElementById('trade-history-list');
-  if (!ul) return;
-  ul.innerHTML = '';
+  const grid = document.getElementById('trade-history-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
 
   try {
     const saved = localStorage.getItem(HISTORY_KEY);
     if (!saved) {
-      ul.innerHTML = '<li style="font-size: 11px; color: var(--text-muted);">No recent trades saved</li>';
+      grid.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); grid-column: 1 / -1; text-align: center; padding: 10px;">No recent trades saved</div>';
       return;
     }
     const history = JSON.parse(saved);
     if (history.length === 0) {
-      ul.innerHTML = '<li style="font-size: 11px; color: var(--text-muted);">No recent trades saved</li>';
+      grid.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); grid-column: 1 / -1; text-align: center; padding: 10px;">No recent trades saved</div>';
       return;
     }
 
     history.forEach((h) => {
-      const li = document.createElement('li');
-      li.style.cssText = 'font-size: 11px; color: var(--text-main); background: var(--surface-2); padding: 8px 10px; border-radius: 6px; display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--border);';
-      li.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="color: var(--text-muted); font-size: 10px;">${h.date}</span>
-          <span style="color: var(--accent-cyan); font-weight: 700;">${h.verdict}</span>
+      const card = document.createElement('div');
+      card.className = 'recent-trade-card';
+      const badgeClass = h.isWin ? 'badge-win' : (h.isFair ? 'badge-fair' : 'badge-loss');
+
+      card.innerHTML = `
+        <div class="recent-trade-sides">
+          <div class="recent-thumb">🔨</div>
+          <span style="font-size: 11px; font-weight:700; color:var(--accent-cyan);">${h.yourVal}</span>
+          <span style="font-size: 11px; color:var(--text-muted);">⇄</span>
+          <div class="recent-thumb">🔨</div>
+          <span style="font-size: 11px; font-weight:700; color:var(--accent-green);">${h.theirVal}</span>
         </div>
-        <div style="font-size: 11px;">
-          <span style="color: var(--accent-cyan);">You (${h.yourVal}):</span> ${sanitizeInput(h.yourSummary)}
-        </div>
-        <div style="font-size: 11px;">
-          <span style="color: var(--accent-green);">Them (${h.theirVal}):</span> ${sanitizeInput(h.theirSummary)}
-        </div>
+        <span class="recent-badge ${badgeClass}">${h.verdict}</span>
       `;
-      ul.appendChild(li);
+      grid.appendChild(card);
     });
   } catch (e) {
-    console.warn('Failed to render trade history:', e);
+    console.warn('History render error:', e);
   }
 }
 
@@ -1256,288 +865,159 @@ function setupEventListeners() {
   setupPrefixSearch('calc-search-their', 'btn-clear-calc-their', 'matches-panel-their', 'their');
 
   const btnForceSync = document.getElementById('btn-force-sync');
-  if (btnForceSync) {
-    btnForceSync.addEventListener('click', (e) => window.forceSyncNow(e));
-  }
+  if (btnForceSync) btnForceSync.addEventListener('click', (e) => window.forceSyncNow(e));
 
-  const btnCopyDiscord = document.getElementById('btn-copy-discord');
-  if (btnCopyDiscord) {
-    btnCopyDiscord.addEventListener('click', copyTradeForDiscord);
-  }
-
-  const btnShareLink = document.getElementById('btn-share-link');
-  if (btnShareLink) {
-    btnShareLink.addEventListener('click', copyShareableLink);
-  }
-
-  const btnFinalize = document.getElementById('btn-finalize-trade');
-  if (btnFinalize) {
-    btnFinalize.addEventListener('click', () => {
-      const dataYour = calculateSide(yourOffer);
-      const dataTheir = calculateSide(theirOffer);
-
-      let verdictString = 'Fair Trade';
-      const verdictEl = document.getElementById('verdict-text');
-      const detailsEl = document.getElementById('verdict-details');
-
-      if (dataYour.hasNil || dataTheir.hasNil) {
-        verdictString = 'Contains Nil';
-        if (verdictEl) {
-          verdictEl.textContent = '⚠️ Contains Indefinite / Nil Item(s)';
-          verdictEl.className = 'verdict-text status-fair';
-        }
-        if (detailsEl) detailsEl.textContent = 'Nil or priceless items cannot be purely compared with numbers.';
-      } else {
-        const diff = dataTheir.totalValue - dataYour.totalValue;
-        const maxVal = Math.max(dataYour.totalValue, dataTheir.totalValue, 1);
-        const percentDiff = (diff / maxVal) * 100;
-
-        if (percentDiff > 15) {
-          verdictString = 'Big Win';
-          if (verdictEl) { verdictEl.textContent = '🎉 Big Win'; verdictEl.className = 'verdict-text status-win'; }
-        } else if (percentDiff > 5) {
-          verdictString = 'Small Win';
-          if (verdictEl) { verdictEl.textContent = '✅ Small Win'; verdictEl.className = 'verdict-text status-win'; }
-        } else if (percentDiff >= -5) {
-          verdictString = 'Fair Trade';
-          if (verdictEl) { verdictEl.textContent = '⚖️ Fair Trade'; verdictEl.className = 'verdict-text status-fair'; }
-        } else if (percentDiff >= -15) {
-          verdictString = 'Small Loss';
-          if (verdictEl) { verdictEl.textContent = '🔻 Small Loss'; verdictEl.className = 'verdict-text status-loss'; }
-        } else {
-          verdictString = 'Big Loss';
-          if (verdictEl) { verdictEl.textContent = '❌ Big Loss'; verdictEl.className = 'verdict-text status-loss'; }
-        }
-
-        const sign = diff > 0 ? '+' : '';
-        if (detailsEl) detailsEl.textContent = `Their Offer has ${sign}${diff} value (${diff >= 0 ? 'Profit' : 'Loss'} for You)`;
-      }
-
-      // Save trade to history log and keep results visible on screen for discussion
-      saveCompletedTrade(verdictString);
+  document.getElementById('btn-copy-discord')?.addEventListener('click', () => {
+    const dataYour = calculateSide(yourOffer);
+    const dataTheir = calculateSide(theirOffer);
+    const text = `### ⚖️ **FLEEMARKET Trade Breakdown**\n**Your Offer Value:** ${dataYour.totalValue}\n**Their Offer Value:** ${dataTheir.totalValue}\n**Verdict:** ${document.getElementById('verdict-text')?.textContent || 'Fair Trade'}`;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('btn-copy-discord');
+      const orig = btn.textContent;
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => btn.textContent = orig, 2000);
     });
-  }
+  });
 
-  const btnClearHistory = document.getElementById('btn-clear-history');
-  if (btnClearHistory) {
-    btnClearHistory.addEventListener('click', () => {
-      localStorage.removeItem(HISTORY_KEY);
-      renderTradeHistory();
+  document.getElementById('btn-share-link')?.addEventListener('click', () => {
+    const encodeSide = (items) => items.map(i => `${i.id}:1:${i.isShiny ? 1 : 0}`).join(',');
+    const url = new URL(window.location.origin + window.location.pathname);
+    if (yourOffer.length) url.searchParams.set('you', encodeSide(yourOffer));
+    if (theirOffer.length) url.searchParams.set('them', encodeSide(theirOffer));
+    navigator.clipboard.writeText(url.toString()).then(() => {
+      const btn = document.getElementById('btn-share-link');
+      const orig = btn.textContent;
+      btn.textContent = '✓ Link Copied!';
+      setTimeout(() => btn.textContent = orig, 2000);
     });
-  }
+  });
 
-  const itemsGrid = document.getElementById('items-grid');
-  if (itemsGrid) {
-    itemsGrid.addEventListener('click', (e) => {
-      const actionEl = e.target.closest('[data-action]');
-      if (!actionEl) return;
+  document.getElementById('btn-finalize-trade')?.addEventListener('click', () => {
+    const dataYour = calculateSide(yourOffer);
+    const dataTheir = calculateSide(theirOffer);
 
-      const action = actionEl.getAttribute('data-action');
-      const itemId = actionEl.getAttribute('data-id');
-      const itemObj = allItems.find((i) => i.id === itemId);
-      if (!itemObj) return;
+    if (dataYour.hasNil || dataTheir.hasNil) {
+      updateTradeVerdict('CONTAINS NIL', 0, '0', false, true);
+      saveCompletedTrade('FAIR', false, true);
+      return;
+    }
 
-      if (action === 'toggle-shiny') {
-        e.stopPropagation();
-        shinyState[itemObj.id] = !shinyState[itemObj.id];
-        applyFilters();
-      } else if (action === 'play-audio') {
-        e.stopPropagation();
-        playMythicalAudio(itemObj, actionEl);
-      } else if (action === 'add-your') {
-        addItemToTrade(itemObj, 'your', itemObj.hasShiny && !!shinyState[itemObj.id]);
-      } else if (action === 'minus-your') {
-        removeItemFromTrade(itemObj.id, 'your');
-      } else if (action === 'add-their') {
-        addItemToTrade(itemObj, 'their', itemObj.hasShiny && !!shinyState[itemObj.id]);
-      } else if (action === 'minus-their') {
-        removeItemFromTrade(itemObj.id, 'their');
-      }
-    });
-  }
+    const diff = dataTheir.totalValue - dataYour.totalValue;
+    const maxVal = Math.max(dataYour.totalValue, dataTheir.totalValue, 1);
+    const pct = ((Math.abs(diff) / maxVal) * 100).toFixed(1);
 
-  const btnAddYour = document.getElementById('btn-add-your');
-  if (btnAddYour) {
-    btnAddYour.addEventListener('click', () => {
-      const input = document.getElementById('calc-search-your');
-      const query = sanitizeInput(input ? input.value : '').toLowerCase().trim();
+    if (diff > 0) {
+      updateTradeVerdict('WIN', diff, pct, true, false);
+      saveCompletedTrade('WIN', true, false);
+    } else if (diff < 0) {
+      updateTradeVerdict('LOSS', Math.abs(diff), pct, false, false);
+      saveCompletedTrade('LOSS', false, false);
+    } else {
+      updateTradeVerdict('FAIR', 0, '0', false, true);
+      saveCompletedTrade('FAIR', false, true);
+    }
+  });
 
-      if (!selectedItemYour && query) {
-        selectedItemYour = allItems.find((i) => 
-          (i.name || '').toLowerCase().startsWith(query) || 
-          (i.name || '').toLowerCase().includes(query)
-        ) || null;
-      }
+  document.getElementById('btn-clear-history')?.addEventListener('click', () => {
+    localStorage.removeItem(HISTORY_KEY);
+    renderTradeHistory();
+  });
 
-      if (selectedItemYour) {
-        const isShiny = document.getElementById('shiny-your')?.checked || false;
-        addItemToTrade(selectedItemYour, 'your', isShiny);
-        selectedItemYour = null;
-        updateSidePreview('your', null);
-        const clearBtn = document.getElementById('btn-clear-calc-your');
-        if (input) input.value = '';
-        if (clearBtn) clearBtn.style.display = 'none';
-        document.getElementById('matches-panel-your')?.classList.remove('open');
-      }
-    });
-  }
+  document.getElementById('shiny-your')?.addEventListener('change', () => {
+    updateSidePreview('your', selectedItemYour);
+  });
+  document.getElementById('shiny-their')?.addEventListener('change', () => {
+    updateSidePreview('their', selectedItemTheir);
+  });
 
-  const btnAddTheir = document.getElementById('btn-add-their');
-  if (btnAddTheir) {
-    btnAddTheir.addEventListener('click', () => {
-      const input = document.getElementById('calc-search-their');
-      const query = sanitizeInput(input ? input.value : '').toLowerCase().trim();
-
-      if (!selectedItemTheir && query) {
-        selectedItemTheir = allItems.find((i) => 
-          (i.name || '').toLowerCase().startsWith(query) || 
-          (i.name || '').toLowerCase().includes(query)
-        ) || null;
-      }
-
-      if (selectedItemTheir) {
-        const isShiny = document.getElementById('shiny-their')?.checked || false;
-        addItemToTrade(selectedItemTheir, 'their', isShiny);
-        selectedItemTheir = null;
-        updateSidePreview('their', null);
-        const clearBtn = document.getElementById('btn-clear-calc-their');
-        if (input) input.value = '';
-        if (clearBtn) clearBtn.style.display = 'none';
-        document.getElementById('matches-panel-their')?.classList.remove('open');
-      }
-    });
-  }
-
-  const btnReset = document.getElementById('btn-reset');
-  if (btnReset) {
-    btnReset.addEventListener('click', () => {
-      yourOffer = [];
-      theirOffer = [];
-      localStorage.removeItem(TRADE_KEY_YOUR);
-      localStorage.removeItem(TRADE_KEY_THEIR);
-      renderTradeList(yourOffer, 'list-your');
-      renderTradeList(theirOffer, 'list-their');
+  document.getElementById('btn-add-your')?.addEventListener('click', () => {
+    if (selectedItemYour) {
+      const isShiny = document.getElementById('shiny-your')?.checked || false;
+      addItemToTrade(selectedItemYour, 'your', isShiny);
       selectedItemYour = null;
-      selectedItemTheir = null;
       updateSidePreview('your', null);
+      document.getElementById('calc-search-your').value = '';
+    }
+  });
+
+  document.getElementById('btn-add-their')?.addEventListener('click', () => {
+    if (selectedItemTheir) {
+      const isShiny = document.getElementById('shiny-their')?.checked || false;
+      addItemToTrade(selectedItemTheir, 'their', isShiny);
+      selectedItemTheir = null;
       updateSidePreview('their', null);
-      const inYour = document.getElementById('calc-search-your');
-      const inTheir = document.getElementById('calc-search-their');
-      const clrYour = document.getElementById('btn-clear-calc-your');
-      const clrTheir = document.getElementById('btn-clear-calc-their');
-      if (inYour) inYour.value = '';
-      if (inTheir) inTheir.value = '';
-      if (clrYour) clrYour.style.display = 'none';
-      if (clrTheir) clrTheir.style.display = 'none';
-      document.getElementById('dock-items-drawer')?.classList.remove('open');
-      document.getElementById('floating-trade-dock')?.classList.remove('visible');
-      updateTradeVerdict();
-    });
-  }
+      document.getElementById('calc-search-their').value = '';
+    }
+  });
 
-  const btnDockOpen = document.getElementById('btn-dock-open');
-  if (btnDockOpen) {
-    btnDockOpen.addEventListener('click', () => {
-      switchTab('calculator');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
+  document.getElementById('btn-reset')?.addEventListener('click', () => {
+    yourOffer = [];
+    theirOffer = [];
+    localStorage.removeItem(TRADE_KEY_YOUR);
+    localStorage.removeItem(TRADE_KEY_THEIR);
+    selectedItemYour = null;
+    selectedItemTheir = null;
+    updateSidePreview('your', null);
+    updateSidePreview('their', null);
+    document.getElementById('calc-search-your').value = '';
+    document.getElementById('calc-search-their').value = '';
+    updateCalculatorUI();
+    updateTradeVerdict();
+  });
 
-  const btnTrayToggle = document.getElementById('btn-dock-tray-toggle');
-  const pillYour = document.getElementById('pill-dock-your');
-  const pillTheir = document.getElementById('pill-dock-their');
-  const drawer = document.getElementById('dock-items-drawer');
+  document.getElementById('items-grid')?.addEventListener('click', (e) => {
+    const actionEl = e.target.closest('[data-action]');
+    if (!actionEl) return;
+    const action = actionEl.getAttribute('data-action');
+    const itemId = actionEl.getAttribute('data-id');
+    const itemObj = allItems.find((i) => i.id === itemId);
+    if (!itemObj) return;
 
-  const toggleDrawer = () => {
-    if (drawer) drawer.classList.toggle('open');
-  };
-
-  if (btnTrayToggle) btnTrayToggle.addEventListener('click', toggleDrawer);
-  if (pillYour) pillYour.addEventListener('click', toggleDrawer);
-  if (pillTheir) pillTheir.addEventListener('click', toggleDrawer);
-
-  const btnClearAllDrawer = document.getElementById('btn-drawer-clear-all');
-  if (btnClearAllDrawer) {
-    btnClearAllDrawer.addEventListener('click', () => {
-      yourOffer = [];
-      theirOffer = [];
-      localStorage.removeItem(TRADE_KEY_YOUR);
-      localStorage.removeItem(TRADE_KEY_THEIR);
-      renderTradeList(yourOffer, 'list-your');
-      renderTradeList(theirOffer, 'list-their');
-      document.getElementById('dock-items-drawer')?.classList.remove('open');
-      document.getElementById('floating-trade-dock')?.classList.remove('visible');
-      updateTradeVerdict();
-    });
-  }
-
-  const searchInput = document.getElementById('search');
-  const btnClearSearch = document.getElementById('btn-clear-search');
-
-  if (searchInput) {
-    let searchTimeout = null;
-    searchInput.addEventListener('input', () => {
-      if (btnClearSearch) {
-        btnClearSearch.style.display = searchInput.value.trim().length > 0 ? 'flex' : 'none';
-      }
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        applyFilters();
-      }, 100);
-    });
-  }
-
-  if (btnClearSearch && searchInput) {
-    btnClearSearch.addEventListener('click', () => {
-      searchInput.value = '';
-      btnClearSearch.style.display = 'none';
-      searchInput.focus();
+    if (action === 'toggle-shiny') {
+      e.stopPropagation();
+      shinyState[itemObj.id] = !shinyState[itemObj.id];
       applyFilters();
-    });
-  }
+    } else if (action === 'add-your') {
+      addItemToTrade(itemObj, 'your', itemObj.hasShiny && !!shinyState[itemObj.id]);
+    } else if (action === 'minus-your') {
+      const idx = yourOffer.findIndex((i) => i.id === itemId);
+      if (idx !== -1) yourOffer.splice(idx, 1);
+      updateCalculatorUI();
+      updateTradeVerdict();
+    } else if (action === 'add-their') {
+      addItemToTrade(itemObj, 'their', itemObj.hasShiny && !!shinyState[itemObj.id]);
+    } else if (action === 'minus-their') {
+      const idx = theirOffer.findIndex((i) => i.id === itemId);
+      if (idx !== -1) theirOffer.splice(idx, 1);
+      updateCalculatorUI();
+      updateTradeVerdict();
+    }
+  });
 
-  const sortSelect = document.getElementById('sort-select');
-  if (sortSelect) {
-    sortSelect.addEventListener('change', (e) => {
-      currentSort = e.target.value;
-      applyFilters();
-    });
-  }
-
-  // View Mode Toggle (Grid / Compact)
   document.querySelectorAll('#view-mode-group .filter-btn').forEach((btn) => {
     btn.addEventListener('click', (e) => {
-      const button = e.currentTarget;
       document.querySelectorAll('#view-mode-group .filter-btn').forEach((b) => b.classList.remove('active'));
-      button.classList.add('active');
-      currentViewMode = button.getAttribute('data-view');
-      try {
-        localStorage.setItem(VIEW_MODE_KEY, currentViewMode);
-      } catch (err) {
-        console.warn('Failed to save view mode:', err);
-      }
+      e.currentTarget.classList.add('active');
+      currentViewMode = e.currentTarget.getAttribute('data-view');
+      localStorage.setItem(VIEW_MODE_KEY, currentViewMode);
       applyFilters();
     });
   });
 
   document.querySelectorAll('.filter-btn:not(#view-mode-group .filter-btn)').forEach((btn) => {
     btn.addEventListener('click', (e) => {
-      const button = e.currentTarget;
       document.querySelectorAll('.filter-btn:not(#view-mode-group .filter-btn)').forEach((b) => b.classList.remove('active'));
-      button.classList.add('active');
-      currentFilter = button.getAttribute('data-filter').toLowerCase().trim();
+      e.currentTarget.classList.add('active');
+      currentFilter = e.currentTarget.getAttribute('data-filter').toLowerCase().trim();
       applyFilters();
     });
   });
 
-  const btnToggleDrawer = document.getElementById('btn-toggle-filters');
-  const filterDrawer = document.getElementById('filter-drawer');
-  if (btnToggleDrawer && filterDrawer) {
-    btnToggleDrawer.addEventListener('click', () => {
-      const isOpen = filterDrawer.classList.toggle('open');
-      btnToggleDrawer.classList.toggle('open', isOpen);
-    });
-  }
+  document.getElementById('btn-toggle-filters')?.addEventListener('click', () => {
+    const drawer = document.getElementById('filter-drawer');
+    const isOpen = drawer.classList.toggle('open');
+    document.getElementById('btn-toggle-filters').classList.toggle('open', isOpen);
+  });
 
   document.querySelectorAll('.cb-rarity').forEach((cb) => {
     cb.addEventListener('change', (e) => {
@@ -1566,145 +1046,162 @@ function setupEventListeners() {
     });
   });
 
-  const cbShiny = document.getElementById('cb-has-shiny');
-  if (cbShiny) {
-    cbShiny.addEventListener('change', (e) => {
-      filterHasShiny = e.target.checked;
-      updateFilterBadge();
+  document.getElementById('cb-has-shiny')?.addEventListener('change', (e) => {
+    filterHasShiny = e.target.checked;
+    updateFilterBadge();
+    applyFilters();
+  });
+
+  document.getElementById('btn-clear-filters')?.addEventListener('click', () => {
+    activeRarities.clear();
+    activeDemands.clear();
+    activeStatuses.clear();
+    activeEvents.clear();
+    filterHasShiny = false;
+    document.querySelectorAll('.cb-rarity, .cb-demand, .cb-status, .cb-event').forEach((cb) => cb.checked = false);
+    document.getElementById('cb-has-shiny').checked = false;
+    updateFilterBadge();
+    applyFilters();
+  });
+
+  const searchInput = document.getElementById('search');
+  const btnClearSearch = document.getElementById('btn-clear-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      if (btnClearSearch) btnClearSearch.style.display = searchInput.value.trim().length > 0 ? 'flex' : 'none';
+      applyFilters();
+    });
+  }
+  if (btnClearSearch && searchInput) {
+    btnClearSearch.addEventListener('click', () => {
+      searchInput.value = '';
+      btnClearSearch.style.display = 'none';
+      searchInput.focus();
       applyFilters();
     });
   }
 
-  const btnClearFilters = document.getElementById('btn-clear-filters');
-  if (btnClearFilters) {
-    btnClearFilters.addEventListener('click', () => {
-      activeRarities.clear();
-      activeDemands.clear();
-      activeStatuses.clear();
-      activeEvents.clear();
-      filterHasShiny = false;
-
-      document
-        .querySelectorAll('.cb-rarity, .cb-demand, .cb-status, .cb-event')
-        .forEach((cb) => (cb.checked = false));
-      if (cbShiny) cbShiny.checked = false;
-
-      updateFilterBadge();
-      applyFilters();
-    });
-  }
+  document.getElementById('sort-select')?.addEventListener('change', (e) => {
+    currentSort = e.target.value;
+    applyFilters();
+  });
 }
 
-// Multi-Source CSV Fallback Cascade
+function applyFilters() {
+  const query = sanitizeInput(document.getElementById('search')?.value || '').toLowerCase().trim();
+  let filtered = allItems.filter((item) => {
+    const itemType = (item.type || '').toLowerCase().trim();
+    const itemRarity = (item.rarity || '').trim().toLowerCase();
+    const itemEvent = (item.releaseEvent || '').trim();
+    const itemDemand = String(item.demandTier);
+    const itemStatus = (item.status || '').trim().toLowerCase();
+
+    if (currentFilter === 'hammer' && itemType !== 'hammer') return false;
+    if (currentFilter === 'gem' && itemType !== 'gem') return false;
+
+    if (activeRarities.size > 0) {
+      let matches = false;
+      for (const r of activeRarities) {
+        if (r.toLowerCase() === 'untradeable' && (itemRarity === 'untradeable' || itemRarity === 'unobtainable')) { matches = true; break; }
+        if (itemRarity === r.toLowerCase()) { matches = true; break; }
+      }
+      if (!matches) return false;
+    }
+
+    if (activeDemands.size > 0 && !activeDemands.has(itemDemand)) return false;
+    if (activeStatuses.size > 0 && !Array.from(activeStatuses).some(s => itemStatus === s.toLowerCase())) return false;
+    if (filterHasShiny && !item.hasShiny) return false;
+    if (activeEvents.size > 0 && !activeEvents.has(itemEvent)) return false;
+
+    return !query || (item.name && item.name.toLowerCase().includes(query)) || (item.setName && item.setName.toLowerCase().includes(query));
+  });
+
+  filtered.sort((a, b) => {
+    if (currentSort === 'val-desc') return b.baseValue - a.baseValue;
+    if (currentSort === 'val-asc') return a.baseValue - b.baseValue;
+    if (currentSort === 'dem-desc') return b.demandTier - a.demandTier;
+    if (currentSort === 'dem-asc') return a.demandTier - b.demandTier;
+    if (currentSort === 'name-asc') return a.name.localeCompare(b.name);
+    if (currentSort === 'name-desc') return b.name.localeCompare(a.name);
+    return 0;
+  });
+
+  renderItems(filtered);
+}
+
+window.forceSyncNow = async function(event) {
+  if (event) event.preventDefault();
+  const btn = document.getElementById('btn-force-sync');
+  const icon = btn?.querySelector('.sync-icon');
+  if (btn) btn.classList.add('is-syncing');
+  if (icon) icon.textContent = '⏳';
+  await loadData(true);
+  if (btn) btn.classList.remove('is-syncing');
+  if (icon) icon.textContent = '↻';
+};
+
 async function fetchFreshCSV() {
   const cacheBust = `&_t=${Date.now()}`;
-
   try {
     const res = await fetch(GVIZ_CSV_URL + cacheBust);
-    if (res.ok) {
-      const text = await res.text();
-      if (text && text.length > 50) return text;
-    }
-  } catch (err) {
-    console.warn('GVIZ CSV fetch failed...', err);
-  }
-
+    if (res.ok) { const text = await res.text(); if (text && text.length > 50) return text; }
+  } catch (e) {}
   try {
     const res = await fetch(PRIMARY_CSV_URL + cacheBust);
-    if (res.ok) {
-      const text = await res.text();
-      if (text && text.length > 50) return text;
-    }
-  } catch (err) {
-    console.warn('Publish-to-Web CSV fetch failed...', err);
-  }
-
+    if (res.ok) { const text = await res.text(); if (text && text.length > 50) return text; }
+  } catch (e) {}
   try {
     const res = await fetch(LOCAL_CSV_PATH + `?_t=${Date.now()}`);
-    if (res.ok) {
-      const text = await res.text();
-      if (text && text.length > 50) return text;
-    }
-  } catch (err) {
-    console.warn('Local CSV fetch failed...', err);
-  }
-
+    if (res.ok) { const text = await res.text(); if (text && text.length > 50) return text; }
+  } catch (e) {}
   try {
-    const cachedCSV = localStorage.getItem(CACHE_KEY_DATA);
-    if (cachedCSV) return cachedCSV;
-  } catch (err) {
-    console.warn('LocalStorage cache retrieval failed.', err);
-  }
-
+    const cached = localStorage.getItem(CACHE_KEY_DATA);
+    if (cached) return cached;
+  } catch (e) {}
   return null;
 }
 
 async function loadData(forceRefresh = false) {
   const statusEl = document.getElementById('status');
-
   performLocalStorageHousekeeping();
 
   if (!forceRefresh) {
     try {
-      const cachedCSV = localStorage.getItem(CACHE_KEY_DATA);
-      const cachedTime = Number(localStorage.getItem(CACHE_KEY_TIME)) || 0;
-      const isFresh = Date.now() - cachedTime < CACHE_TTL_MS;
-
-      if (cachedCSV) {
-        allItems = parseCSV(cachedCSV);
+      const cached = localStorage.getItem(CACHE_KEY_DATA);
+      const time = Number(localStorage.getItem(CACHE_KEY_TIME)) || 0;
+      if (cached && Date.now() - time < CACHE_TTL_MS) {
+        allItems = parseCSV(cached);
         if (allItems.length > 0) {
-          if (statusEl) {
-            statusEl.textContent = `✓ Loaded ${allItems.length} items (Cached)`;
-            statusEl.style.color = 'var(--accent-green)';
-          }
+          if (statusEl) { statusEl.textContent = `✓ Loaded ${allItems.length} items (Cached)`; statusEl.style.color = 'var(--accent-green)'; }
           populateEventFilters(allItems);
           applyFilters();
-
-          if (isFresh) {
-            loadTradeState();
-            renderTradeList(yourOffer, 'list-your');
-            renderTradeList(theirOffer, 'list-their');
-            updateTradeVerdict();
-            renderTradeHistory();
-            return;
-          }
+          loadTradeState();
+          updateCalculatorUI();
+          updateTradeVerdict();
+          renderTradeHistory();
+          return;
         }
       }
-    } catch (e) {
-      console.warn('LocalStorage access warning:', e);
-    }
-  } else {
-    if (statusEl) {
-      statusEl.textContent = 'Syncing live with Google Sheets...';
-      statusEl.style.color = 'var(--accent-cyan)';
-    }
+    } catch (e) {}
   }
 
-  const freshCSV = await fetchFreshCSV();
-  if (freshCSV) {
-    const parsed = parseCSV(freshCSV);
+  const fresh = await fetchFreshCSV();
+  if (fresh) {
+    const parsed = parseCSV(fresh);
     if (parsed.length > 0) {
       allItems = parsed;
-
       try {
-        localStorage.setItem(CACHE_KEY_DATA, freshCSV);
+        localStorage.setItem(CACHE_KEY_DATA, fresh);
         localStorage.setItem(CACHE_KEY_TIME, String(Date.now()));
-      } catch (e) {
-        console.warn('Failed to save to localStorage:', e);
-      }
-
+      } catch (e) {}
       if (statusEl) {
-        const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-        statusEl.textContent = forceRefresh
-          ? `✓ Live synced ${allItems.length} items (${timeStr})`
-          : `✓ Synced ${allItems.length} items successfully`;
+        statusEl.textContent = `✓ Synced ${allItems.length} items successfully`;
         statusEl.style.color = 'var(--accent-green)';
       }
       populateEventFilters(allItems);
       applyFilters();
       loadTradeState();
-      renderTradeList(yourOffer, 'list-your');
-      renderTradeList(theirOffer, 'list-their');
+      updateCalculatorUI();
       updateTradeVerdict();
       renderTradeHistory();
       return;
@@ -1712,21 +1209,11 @@ async function loadData(forceRefresh = false) {
   }
 
   if (allItems.length === 0 && statusEl) {
-    statusEl.textContent = '⚠️ Could not reach Google Sheets. Please verify permissions.';
+    statusEl.textContent = '⚠️ Could not reach Google Sheets.';
     statusEl.style.color = 'var(--accent-rose)';
   }
 }
 
-// Register PWA Service Worker for Offline Mode
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch((err) => {
-      console.warn('Service Worker registration failed:', err);
-    });
-  });
-}
-
-// Immediate Boot
 initTabNavigation();
 setupEventListeners();
 loadData();
